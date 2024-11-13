@@ -569,7 +569,7 @@ class weatherForecast extends eqLogic {
     $url = "http://api.openweathermap.org/data/2.5/weather?units=metric&lang=$lang&APPID=$apikeyOwm&lat=$lat&lon=$lon";
     $content = $this->fetchOpenweather($url);
     if($content == null) return;
-    $hdle = fopen(__DIR__ ."/../../data/current-" .$this->getId().".json", "wb");
+    $hdle = fopen(__DIR__ ."/../../data/OpenWeather-current-" .$this->getId().".json", "wb");
     if($hdle !== FALSE) { fwrite($hdle, $content); fclose($hdle); }
     $weather = json_decode($content,true);
     if($weather == null) {
@@ -619,7 +619,7 @@ class weatherForecast extends eqLogic {
     $url = "http://api.openweathermap.org/data/2.5/forecast?units=metric&lang=$lang&APPID=$apikeyOwm&lat=$lat&lon=$lon";
     $content = $this->fetchOpenweather($url);
     if($content == null) return;
-    $hdle = fopen(__DIR__ ."/../../data/forecastOWM-".$this->getId() .".json", "wb");
+    $hdle = fopen(__DIR__ ."/../../data/OpenWeather-forecast-".$this->getId() .".json", "wb");
     if($hdle !== FALSE) { fwrite($hdle, $content); fclose($hdle); }
     $forecast = json_decode($content,true);
     if($forecast == null) {
@@ -644,7 +644,6 @@ log::add(__CLASS__, 'warning', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1
       $condition_id = 0;
       $condition = 0;
       $rain = 0;
-      $nbInDay = 0;
 
       foreach ($forecast['list'] as $weather) {
         if(!isset($weather['dt_txt'])) {
@@ -652,30 +651,34 @@ log::add(__CLASS__, 'warning', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1
           continue;
         }
         $tsDt_txt = strtotime($weather['dt_txt']);
-        $sDate = date('Y-m-d',$ts);
+        $sDate = date('Y-m-d',$tsDt_txt);
         $Tmin = round($weather['main']['temp_min'], 1);
         $Tmax = round($weather['main']['temp_max'], 1);
         // log::add(__CLASS__, 'debug', $weather['dt_txt'] ." [$sDate] Weather temp: " .$weather['main']['temp']));
         // log::add(__CLASS__, 'debug', "Weather date: $sDate");
-        if ($date != $sDate) continue; // autre jour
-        $nbInDay++;
+        if ($date != $sDate) { // autre jour
+          // log::add(__CLASS__, 'debug', "Another day");
+          continue;
+        }
         if ($minTemp > $Tmin) $minTemp = $Tmin;
         if ($maxTemp < $Tmax) $maxTemp = $Tmax;
 
           // cumul des pluies de la journée
-        if(isset($weather['rain']['3h'])) $rain += $weather['rain']['3h'];
+        if(isset($weather['rain']['3h'])) {
+          $rain += $weather['rain']['3h'];
+          log::add(__CLASS__, 'debug', "$i " .date('Y-m-d H:i',$tsDt_txt) ." Rain: $rain");
+        }
 
-        // if($i == 0 && $search != '' && $weather['dt_txt'] == $search) { // plage recherchée
         if($i == 0 && $hour > 10 && $tsDt_txt > $tsNow) { // plage de l'heure suivante recherchée
           $title = date('G', $tsDt_txt) ."h - " .date('G',($tsDt_txt + 10800)) ."h";
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
           $condition = ucfirst($weather['weather'][0]['description']);
-log::add(__CLASS__, 'debug', "$midday Cond:$condition_id Desc:$condition");
           $changed = $this->checkAndUpdateCmd("condition_$i", $condition) || $changed;
           $changed = $this->checkAndUpdateCmd("condition_id_$i", $condition_id) || $changed;
           $rain3h =  (isset($weather['rain']['3h'])) ? $weather['rain']['3h'] : 0;
           $changed = $this->checkAndUpdateCmd("rain_$i", $rain3h) || $changed;
+log::add(__CLASS__, 'debug', "J$i $title Cond:$condition_id Desc:$condition Pluie: $rain");
           break;
         }
         else if($weather['dt_txt'] == $midday) { // condition à 12h uniquement
@@ -683,12 +686,11 @@ log::add(__CLASS__, 'debug', "$midday Cond:$condition_id Desc:$condition");
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
           $condition = ucfirst($weather['weather'][0]['description']);
-log::add(__CLASS__, 'debug', "$midday Cond:$condition_id Desc:$condition");
+log::add(__CLASS__, 'debug', "J$i $title Cond:$condition_id Desc:$condition");
           $changed = $this->checkAndUpdateCmd("condition_$i", $condition) || $changed;
           $changed = $this->checkAndUpdateCmd("condition_id_$i", $condition_id) || $changed;
         }
       }
-      log::add(__CLASS__, 'debug', "$date Nb : $nbInDay");
       if (abs($minTemp) != 666) {
         $changed = $this->checkAndUpdateCmd("temperature_min_$i", $minTemp) || $changed;
       }
@@ -696,6 +698,7 @@ log::add(__CLASS__, 'debug', "$midday Cond:$condition_id Desc:$condition");
         $changed = $this->checkAndUpdateCmd("temperature_max_$i", $maxTemp) || $changed;
       }
       if($i != 0) {
+log::add(__CLASS__, 'debug', "$i " .date('Y-m-d H:i',$tsDt_txt) ." Rain: $rain");
         $changed = $this->checkAndUpdateCmd("rain_$i", $rain) || $changed;
       }
     }
@@ -735,7 +738,7 @@ log::add(__CLASS__, 'debug', "$midday Cond:$condition_id Desc:$condition");
     $datas = json_decode($resu, true);
     if(isset($datas['error'])) {
       log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
-      $file = __DIR__ ."/../../data/resuBrut-" .$this->getId() .".json";
+      $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
       $hdle = fopen($file, "wb");
       if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
       else message::add(__CLASS__, "Unable to write $file");
@@ -754,7 +757,7 @@ log::add(__CLASS__, 'debug', "$midday Cond:$condition_id Desc:$condition");
     }
     
     $datas =  array_merge(array('state' => 'ok', 'datetime' => date('c')),$datas);
-    $file = __DIR__ ."/../../data/weatherApi-" .$this->getId() .".json";
+    $file = __DIR__ ."/../../data/weatherAPI-" .$this->getId() .".json";
     $hdle = fopen($file, "wb");
     if($hdle !== FALSE) {
       fwrite($hdle, json_encode($datas,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

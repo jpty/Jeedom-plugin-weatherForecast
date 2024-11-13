@@ -7,7 +7,7 @@
     "utilization": "Renseignez vos clés API openweathermap et/ou weatherapi dans la configuration du plugin. Créez un équipement, choisissez la source de données OpenWeather ou WeatherAPI et indiquez les coordonnées GPS du lieu désiré.",
     "licence": "AGPL",
     "author": "jpty",
-    "require": "4.4",
+    "require": "4.3",
     "category": "weather",
     "changelog": "https://jpty.github.io/jeedom/plugins/weatherForecast/fr_FR/changelog.html",
     "changelog_beta": "https://jpty.github.io/jeedom/plugins/weatherForecast/fr_FR/changelog.html",
