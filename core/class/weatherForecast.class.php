@@ -125,13 +125,21 @@ class weatherForecast extends eqLogic {
     if (trim($this->getConfiguration('datasource')) == '') {
       throw new Exception(__("La source des données doit être renseignée", __FILE__));
     }
-    if (trim($this->getConfiguration('positionGps')) == '') {
+    $gps = trim($this->getConfiguration('positionGps'));
+    if ($gps == '') {
       throw new Exception(__("Les coordonnées GPS doivent être renseignées", __FILE__));
     }
-/*
-    $apikeyOwm = trim(config::byKey('apikeyOwm', __CLASS__, ''));
-    $apikeyWapi = trim(config::byKey('apikeyWapi', __CLASS__));
-*/
+    $coord = explode(',', $gps);
+    if(count($coord) == 2) {
+      $lat = trim($coord[0]);
+      $lon = trim($coord[1]);
+      if(!is_numeric($lat))
+        throw new Exception(__("La latitude doit être un nombre [$lat]", __FILE__));
+      if(!is_numeric($lon))
+        throw new Exception(__("La longitude doit être un nombre [$lon]", __FILE__));
+    } else {
+      throw new Exception(__("Coordonnées GPS incorrectes [$gps]: Latitude , longitude", __FILE__));
+    }
   }
 
   public function preInsert() {
@@ -640,7 +648,7 @@ class weatherForecast extends eqLogic {
       $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
-log::add(__CLASS__, 'warning', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st forecast " .$forecast['list'][0]['dt_txt'] ." Dt : " .date('Y-m-d H:i:s', $forecast['list'][0]['dt']));
+log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st forecast " .$forecast['list'][0]['dt_txt'] ." Dt : " .date('Y-m-d H:i:s', $forecast['list'][0]['dt']));
     $tsNow = time();
     for ($i = 0; $i < $nbForecastDays; $i++) {
       $ts = strtotime("+{$i} day");
@@ -693,7 +701,7 @@ log::add(__CLASS__, 'warning', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
           $condition = ucfirst($weather['weather'][0]['description']);
-log::add(__CLASS__, 'debug', "J$i $title Cond:$condition_id Desc:$condition");
+// log::add(__CLASS__, 'debug', "J$i $title Cond:$condition_id Desc:$condition");
           $changed = $this->checkAndUpdateCmd("condition_$i", $condition) || $changed;
           $changed = $this->checkAndUpdateCmd("condition_id_$i", $condition_id) || $changed;
         }
@@ -705,7 +713,7 @@ log::add(__CLASS__, 'debug', "J$i $title Cond:$condition_id Desc:$condition");
         $changed = $this->checkAndUpdateCmd("temperature_max_$i", $maxTemp) || $changed;
       }
       if($i != 0) {
-log::add(__CLASS__, 'debug', "$i " .date('Y-m-d H:i',$tsDt_txt) ." Rain: $rain");
+// log::add(__CLASS__, 'debug', "$i " .date('Y-m-d H:i',$tsDt_txt) ." Rain: $rain");
         $changed = $this->checkAndUpdateCmd("rain_$i", round($rain,1)) || $changed;
       }
     }
@@ -873,7 +881,6 @@ log::add(__CLASS__, 'debug', "$i " .date('Y-m-d H:i',$tsDt_txt) ." Rain: $rain")
       $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
-    log::add(__CLASS__, 'debug', "WeatherApi NbDays : $nbForecastDays");
     for ($i = 0; $i < $nbForecastDays; $i++) {
       if(!isset($datas['forecast']['forecastday'][$i]['day'])) { 
         break;

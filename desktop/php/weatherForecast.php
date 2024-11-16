@@ -5,6 +5,8 @@
   $plugin = plugin::byId('weatherForecast');
   sendVarToJS('eqType', $plugin->getId());
   $eqLogics = eqLogic::byType($plugin->getId());
+  $apikeyOwm = trim(config::byKey('apikeyOwm', 'weatherForecast', ''));
+  $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
 ?>
 
 <div class="row row-overflow">
@@ -102,8 +104,20 @@
                 </label>
                 <div class="col-sm-4">
                   <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="datasource">
-                    <option value="openweathermap">{{OpenWeather}}</option>
-                    <option value="weatherapi">{{Weather API}}</option>
+                    <?php
+                      $nbkey= 0;
+                      if($apikeyOwm != '') {
+                        echo '<option value="openweathermap">{{OpenWeather}}</option>';
+                        $nbkey++;
+                      }
+                      if($apikeyWapi != '') {
+                        echo '<option value="weatherapi">{{Weather API}}</option>';
+                        $nbkey++;
+                      }
+                      if($nbkey == 0) {
+                        echo '<option value="">{{Aucune clé API renseignée dans la configuration du plugin}}</option>';
+                      }
+                    ?>
                   </select>
                 </div>
               </div>
