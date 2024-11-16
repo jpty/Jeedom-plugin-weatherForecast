@@ -122,9 +122,16 @@ class weatherForecast extends eqLogic {
   /*     * *********************Methode d'instance************************* */
 
   public function preUpdate() {
-    if ($this->getConfiguration('positionGps') == '') {
+    if (trim($this->getConfiguration('datasource')) == '') {
+      throw new Exception(__("La source des données doit être renseignée", __FILE__));
+    }
+    if (trim($this->getConfiguration('positionGps')) == '') {
       throw new Exception(__("Les coordonnées GPS doivent être renseignées", __FILE__));
     }
+/*
+    $apikeyOwm = trim(config::byKey('apikeyOwm', __CLASS__, ''));
+    $apikeyWapi = trim(config::byKey('apikeyWapi', __CLASS__));
+*/
   }
 
   public function preInsert() {
@@ -666,10 +673,10 @@ log::add(__CLASS__, 'warning', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1
           // cumul des pluies de la journée
         if(isset($weather['rain']['3h'])) {
           $rain += $weather['rain']['3h'];
-          log::add(__CLASS__, 'debug', "$i " .date('Y-m-d H:i',$tsDt_txt) ." Rain: $rain");
+          // log::add(__CLASS__, 'debug', "$i " .date('Y-m-d H:i',$tsDt_txt) ." Rain: $rain");
         }
 
-        if($i == 0 && $hour > 10 && $tsDt_txt > $tsNow) { // plage de l'heure suivante recherchée
+        if($i == 0 && $hour > 8 && $tsDt_txt > $tsNow) { // plage de l'heure suivante recherchée
           $title = date('G', $tsDt_txt) ."h - " .date('G',($tsDt_txt + 10800)) ."h";
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
@@ -678,7 +685,7 @@ log::add(__CLASS__, 'warning', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1
           $changed = $this->checkAndUpdateCmd("condition_id_$i", $condition_id) || $changed;
           $rain3h =  (isset($weather['rain']['3h'])) ? $weather['rain']['3h'] : 0;
           $changed = $this->checkAndUpdateCmd("rain_$i", $rain3h) || $changed;
-log::add(__CLASS__, 'debug', "J$i $title Cond:$condition_id Desc:$condition Pluie: $rain");
+// log::add(__CLASS__, 'debug', "J$i $title Cond:$condition_id Desc:$condition Pluie: $rain");
           break;
         }
         else if($weather['dt_txt'] == $midday) { // condition à 12h uniquement
@@ -699,7 +706,7 @@ log::add(__CLASS__, 'debug', "J$i $title Cond:$condition_id Desc:$condition");
       }
       if($i != 0) {
 log::add(__CLASS__, 'debug', "$i " .date('Y-m-d H:i',$tsDt_txt) ." Rain: $rain");
-        $changed = $this->checkAndUpdateCmd("rain_$i", $rain) || $changed;
+        $changed = $this->checkAndUpdateCmd("rain_$i", round($rain,1)) || $changed;
       }
     }
     return $changed;

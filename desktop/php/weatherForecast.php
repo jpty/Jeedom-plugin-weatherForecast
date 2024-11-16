@@ -57,14 +57,14 @@
             <div class="col-lg-6">
               <div class="form-group">
                 <label class="col-sm-3 control-label">{{Nom de l'équipement météo}}</label>
-                <div class="col-sm-3">
+                <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
                   <input type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l'équipement météo}}"/>
                 </div>
               </div>
               <div class="form-group">
                 <label class="col-sm-3 control-label" >{{Objet parent}}</label>
-                <div class="col-sm-3">
+                <div class="col-sm-4">
                   <select id="sel_object" class="eqLogicAttr form-control" data-l1key="object_id">
                     <option value="">{{Aucun}}</option>
                     <?php
@@ -100,7 +100,7 @@
                 <label class="col-sm-3 control-label">{{Source des données}}
                   <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez la source de données}}"></i></sup>
                 </label>
-                <div class="col-sm-6">
+                <div class="col-sm-4">
                   <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="datasource">
                     <option value="openweathermap">{{OpenWeather}}</option>
                     <option value="weatherapi">{{Weather API}}</option>
