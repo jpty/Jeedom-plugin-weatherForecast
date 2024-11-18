@@ -21,7 +21,7 @@ require_once __DIR__ . '/../../../../core/php/core.inc.php';
 
 class weatherForecast extends eqLogic {
   /*     * *************************Attributs****************************** */
-  public static $_widgetPossibility = array('custom' => true, 'custom::layout' => false);
+  public static $_widgetPossibility = array('custom' => true, 'custom::layout' => true);
 
   /*     * ***********************Methode static*************************** */
   public static function cron() {
@@ -90,6 +90,7 @@ class weatherForecast extends eqLogic {
       } else {
         return 'far fa-moon';
       }
+      log::add(__CLASS__, 'info', "Unknown $datasource condition : $_condition_id");
     } elseif($datasource == 'weatherapi') {
       if (in_array($_condition_id, array(1087, 1273, 1276, 1279, 1282))) {
         return 'meteo-orage';
@@ -115,8 +116,9 @@ class weatherForecast extends eqLogic {
       } else {
         return 'far fa-moon';
       }
+      log::add(__CLASS__, 'info', "Unknown $datasource condition : $_condition_id");
     }
-    else log::add(__CLASS__, 'info', "Unknown datasource : $datasource");
+    else log::add(__CLASS__, 'info', __FUNCTION__ ." Unknown datasource : $datasource");
   }
 
   /*     * *********************Methode d'instance************************* */
@@ -145,12 +147,14 @@ class weatherForecast extends eqLogic {
   public function preInsert() {
     $this->setIsVisible(1);
     $this->setIsEnable(1);
+    $this->setConfiguration('templateWeatherForecast','plugin');
   }
 
   public function postUpdate() {
     $wfCmd = $this->getCmd(null, 'temperature');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Température', __FILE__));
     $wfCmd->setLogicalId('temperature');
@@ -164,6 +168,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'humidity');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Humidité', __FILE__));
     $wfCmd->setLogicalId('humidity');
@@ -177,6 +182,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'pressure');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Pression', __FILE__));
     $wfCmd->setLogicalId('pressure');
@@ -190,6 +196,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'wind_speed');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Vitesse du vent', __FILE__));
     $wfCmd->setLogicalId('wind_speed');
@@ -203,6 +210,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'wind_direction');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Direction du vent', __FILE__));
     $wfCmd->setLogicalId('wind_direction');
@@ -217,6 +225,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'condition');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Condition actuelle', __FILE__));
     $wfCmd->setLogicalId('condition');
@@ -230,6 +239,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'condition_id');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Numéro condition actuelle', __FILE__));
     $wfCmd->setLogicalId('condition_id');
@@ -243,6 +253,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'rain');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Pluie', __FILE__));
     $wfCmd->setLogicalId('rain');
@@ -256,6 +267,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'sunrise');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Lever du soleil', __FILE__));
     $wfCmd->setLogicalId('sunrise');
@@ -270,6 +282,7 @@ class weatherForecast extends eqLogic {
     $wfCmd = $this->getCmd(null, 'sunset');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
     }
     $wfCmd->setName(__('Coucher du soleil', __FILE__));
     $wfCmd->setLogicalId('sunset');
@@ -287,6 +300,7 @@ class weatherForecast extends eqLogic {
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
       }
       $wfCmd->setName(__("Titre J+$i", __FILE__));
       $wfCmd->setLogicalId($id);
@@ -301,6 +315,7 @@ class weatherForecast extends eqLogic {
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
       }
       $wfCmd->setName(__("Température Min J+$i", __FILE__));
       $wfCmd->setLogicalId($id);
@@ -316,6 +331,7 @@ class weatherForecast extends eqLogic {
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
       }
       $wfCmd->setName(__("Température Max J+$i", __FILE__));
       $wfCmd->setLogicalId($id);
@@ -331,6 +347,7 @@ class weatherForecast extends eqLogic {
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
       }
       $wfCmd->setName(__("Condition J+$i", __FILE__));
       $wfCmd->setLogicalId($id);
@@ -346,6 +363,7 @@ class weatherForecast extends eqLogic {
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
       }
       $wfCmd->setName(__("Numéro condition J+$i", __FILE__));
       $wfCmd->setLogicalId($id);
@@ -361,6 +379,7 @@ class weatherForecast extends eqLogic {
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
       }
       $wfCmd->setName(__("Pluie J+$i", __FILE__));
       $wfCmd->setLogicalId($id);
@@ -373,9 +392,25 @@ class weatherForecast extends eqLogic {
       $wfCmd->save();
     }
 
+    $id = "MeteoHour0Json";
+    $wfCmd = $this->getCmd(null, $id);
+    if (!is_object($wfCmd)) {
+      $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(1);
+      $wfCmd->setIsHistorized(0);
+      $wfCmd->setName(__("Météo H0 - Json", __FILE__));
+      $wfCmd->setLogicalId($id);
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('string');
+      $wfCmd->setOrder(300);
+      $wfCmd->save();
+    }
+
     $refresh = $this->getCmd(null, 'refresh');
     if (!is_object($refresh)) {
       $refresh = new weatherForecastCmd();
+      $refresh->setIsVisible(1);
       $refresh->setName(__('Rafraichir', __FILE__));
     }
     $refresh->setEqLogic_id($this->getId());
@@ -409,11 +444,19 @@ class weatherForecast extends eqLogic {
     if (!is_array($replace)) {
       return $replace;
     }
+    $templateF = $this->getConfiguration('templateWeatherForecast','plugin');
+    if($templateF == 'none') return parent::toHtml($_version);
+    elseif($templateF == 'plugin') $templateFile = 'weatherForecast';
+    elseif($templateF == 'pluginImg') $templateFile = 'weatherForecastIMG';
+    elseif($templateF == 'custom') $templateFile = 'custom.weatherForecast';
+    else $templateFile = substr($templateF,0,-5);
+    // log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template: $templateFile");
+
     $version = jeedom::versionAlias($_version);
     $replace['#forecast#'] = '';
     $datasource = trim($this->getConfiguration('datasource', ''));
     if ($version != 'mobile' || $this->getConfiguration('fullMobileDisplay', 0) == 1) {
-      if ($this->getConfiguration('modeImage', 0) == 1) {
+      if (strpos($templateFile, 'weatherForecastIMG') !== false) {
         $forcast_template = getTemplate('core', $version, 'forecastIMG', __CLASS__);
       } else {
         $forcast_template = getTemplate('core', $version, 'forecast', __CLASS__);
@@ -552,11 +595,11 @@ class weatherForecast extends eqLogic {
       $replace['#condition#'] = '';
       $replace['#collectDate#'] = '';
     }
-    if ($this->getConfiguration('modeImage', 0) == 1) {
-      return $this->postToHtml($_version, template_replace($replace, getTemplate('core', $version, 'currentIMG', __CLASS__)));
-    } else {
-      return $this->postToHtml($_version, template_replace($replace, getTemplate('core', $version, 'current', __CLASS__)));
-    }
+
+    if (file_exists( __DIR__ ."/../template/$_version/$templateFile.html"))
+      return $this->postToHtml($_version, template_replace($replace, getTemplate('core', $version, $templateFile, __CLASS__)));
+    else
+      return $this->postToHtml($_version, template_replace($replace, getTemplate('core', $version, __CLASS__, __CLASS__)));
   }
 
   public function fetchOpenweather($url) {
@@ -575,7 +618,7 @@ class weatherForecast extends eqLogic {
     return($content);
   }
 
-  public function updateWeatherOwm($_updateConfig, $lat, $lon, $lang) {
+  public function updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array) {
     $changed = false;
     $apikeyOwm = trim(config::byKey('apikeyOwm', __CLASS__, ''));
     if(trim($apikeyOwm) == '' )
@@ -616,10 +659,12 @@ class weatherForecast extends eqLogic {
       $this->save(true);
     }
     log::add(__CLASS__, 'debug', json_encode($weather));
-    $changed = $this->checkAndUpdateCmd('temperature', round($weather['main']['temp'], 1)) || $changed;
+    $weatherTemp = round($weather['main']['temp'], 1);
+    $weatherDesc = ucfirst($weather['weather']['0']['description']);
+    $changed = $this->checkAndUpdateCmd('temperature', $weatherTemp) || $changed;
     $changed = $this->checkAndUpdateCmd('humidity', $weather['main']['humidity']) || $changed;
     $changed = $this->checkAndUpdateCmd('pressure', $weather['main']['pressure']) || $changed;
-    $changed = $this->checkAndUpdateCmd('condition', ucfirst($weather['weather']['0']['description'])) || $changed;
+    $changed = $this->checkAndUpdateCmd('condition', $weatherDesc) || $changed;
     $changed = $this->checkAndUpdateCmd('condition_id', $weather['weather'][0]['id']) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_speed', round($weather['wind']['speed'] * 3.6)) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_direction', $weather['wind']['deg']) || $changed;
@@ -628,7 +673,25 @@ class weatherForecast extends eqLogic {
     $changed = $this->checkAndUpdateCmd('cloudiness', $weather['clouds']['all']) || $changed;
     $rain1h =  (isset($weather['rain']['1h'])) ? $weather['rain']['1h'] : 0;
     $changed = $this->checkAndUpdateCmd('rain', $rain1h) || $changed;
+    $snow1h =  (isset($weather['snow']['1h'])) ? $weather['snow']['1h'] : 0;
     $timezone = config::byKey('timezone', 'core', 'Europe/Paris');
+    $icon = self::getIconFromCondition($weather['weather'][0]['id'], 'openweathermap', $H0array['sunrise'], $H0array['sunset']);
+
+    $H0array['weather'] = ['icon' => $icon, 'desc' => $weatherDesc];
+    $H0array['T'] = ['value' => $weatherTemp, 'windchill' => $weather['main']['feels_like']];
+    $H0array['wind'] = ['speed' => $weather['wind']['speed'],
+                        'gust' => $windGust,
+                        'direction' => $weather['wind']['deg'],
+                        'icon' =>  $this->convertDegrees2Compass($weather['wind']['deg'],0) ];
+ 
+    $H0array['humidity'] = $weather['main']['humidity'];
+    $H0array['sea_level'] = $weather['main']['sea_level'];
+    $H0array['rain'] = ['1h' => $rain1h];
+    $H0array['snow'] = ['1h' => $snow1h];
+    $H0array['clouds'] = $weather['clouds']['all'];
+
+    $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE));
+    $this->checkAndUpdateCmd("MeteoHour0Json", $contents);
 
     // forecast
     $url = "http://api.openweathermap.org/data/2.5/forecast?units=metric&lang=$lang&APPID=$apikeyOwm&lat=$lat&lon=$lon";
@@ -950,13 +1013,16 @@ log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st 
     } else {
       throw new Exception(__("Coordonnées GPS incorrectes [$gps]", __FILE__));
     }
+    $H0array = array();
     $sun_info = date_sun_info(time(), $lat, $lon);
     $sunrise = $sun_info['sunrise'];
+    $H0array['sunrise'] = $sunrise;
     if($sunrise === false) $sunrise = 0;
     elseif($sunrise === true) $sunrise = 1;
     else $sunrise = date('Gi',$sunrise);
     $this->checkAndUpdateCmd('sunrise', $sunrise);
     $sunset = $sun_info['sunset'];
+    $H0array['sunset'] = $sunset;
     if($sunset === false) $sunset = 0;
     elseif($sunset === true) $sunset = 1;
     else $sunset = date('Gi',$sunset);
@@ -965,7 +1031,7 @@ log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st 
     $datasource = trim($this->getConfiguration('datasource', ''));
     $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
     if($datasource == "openweathermap") {
-      $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang);
+      $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array);
       if ($changed) $this->refreshWidget();
     }
     else if($datasource == "weatherapi") {
@@ -980,20 +1046,10 @@ log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st 
 }
 
 class weatherForecastCmd extends cmd {
-  /*     * *************************Attributs****************************** */
-
-  public static $_widgetPossibility = array('custom' => false);
-
-  /*     * ***********************Methode static*************************** */
-
-  /*     * *********************Methode d'instance************************* */
-
   public function execute($_options = array()) {
     if ($this->getLogicalId() == 'refresh') {
       $this->getEqLogic()->updateWeatherData(0);
     }
     return false;
   }
-
-  /*     * **********************Getteur Setteur*************************** */
 }
