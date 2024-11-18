@@ -127,21 +127,47 @@
                   <input class="eqLogicAttr" data-l1key="configuration" data-l2key="positionGps" type="text" placeholder="{{Latitude,longitude}}"></span>
                 </div>
               </div>
-<!--
-              <div class="form-group">
-<label class="col-sm-3 control-label" style="line-height: normal">{{ID OpenWeatherMap ville.<br/>A rechercher <a target=_blank href="https://openweathermap.org/find?q=">ICI</a>}}
-        <sup><i class="fas fa-question-circle tooltips" title="{{et à récupérer dans l'URL de la ville choisie.}}"></i></sup>
-</label>
-                <div class="col-sm-3">
-                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="cityID" />
-                </div>
-              </div>
--->
               <div class="form-group">
                 <label class="col-sm-3 control-label" ></label>
                 <div class="col-sm-9">
                   <label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="fullMobileDisplay" />{{Affichage complet en mobile}}</label>
-                  <label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="modeImage" />{{Mode image}}</label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-3 control-label">{{Template}}
+                </label>
+                <div class="col-sm-6">
+                  <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="templateWeatherForecast">
+                    <option value="plugin">{{Template du plugin Icônes}}</option>
+                    <option value="pluginImg">{{Template du plugin Images}}</option>
+                    <option value="none">{{Pas de template}}</option>
+  <?php
+                    $files = array();
+                    if ($dh = opendir(__DIR__ .'/../../core/template/dashboard')) {
+                      while (($file = readdir($dh)) !== false) {
+                        if(substr($file,-5) == '.html') {
+                          if($file == 'custom.weatherForecast.html')
+                            $files[] = array('name' => 'Template custom Icônes', 'fileName' => $file);
+                          elseif(substr($file,0,23) == 'custom.weatherForecast.') {
+                            $files[] = array('name' => substr($file,23,-5).' (custom Icônes)', 'fileName' => $file);
+                          }
+                          elseif($file == 'custom.weatherForecastIMG.html')
+                            $files[] = array('name' => 'Template custom Images', 'fileName' => $file);
+                          elseif(substr($file,0,26) == 'custom.weatherForecastIMG.')
+                            $files[] = array('name' => substr($file,26,-5).' (custom Images)', 'fileName' => $file);
+                          // else $files[] = array('name' => 'Out', 'fileName' => $file);
+                        }
+                      }
+                      closedir($dh);
+                    }
+                    if(count($files)) {
+                      sort($files);
+                      foreach($files as $file) {
+                        echo '<option value="' .$file['fileName'] .'">' .$file['name'] .'</option>';
+                      }
+                    }
+  ?>
+                  </select>
                 </div>
               </div>
             </div>
