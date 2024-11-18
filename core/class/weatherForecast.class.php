@@ -403,6 +403,8 @@ class weatherForecast extends eqLogic {
       $wfCmd->setEqLogic_id($this->getId());
       $wfCmd->setType('info');
       $wfCmd->setSubType('string');
+      $wfCmd->setTemplate('dashboard', __CLASS__ .'::Clock');
+      $wfCmd->setTemplate('mobile', __CLASS__ .'::Clock');
       $wfCmd->setOrder(300);
       $wfCmd->save();
     }
