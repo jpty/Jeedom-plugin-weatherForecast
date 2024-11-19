@@ -48,7 +48,7 @@ class weatherForecast extends eqLogic {
     }
   }
 
-  public static function getIconFromCondition($_condition_id, $datasource, $_sunrise=null, $_sunset=null) {
+  public static function getIconFromCondition($_condition_id, $datasource, $_dayNight) {
     if($datasource == 'openweathermap') {
       if ($_condition_id >= 200 && $_condition_id <= 299) {
         return 'meteo-orage';
@@ -57,7 +57,8 @@ class weatherForecast extends eqLogic {
         return 'meteo-brouillard';
       }
       if ($_condition_id >= 500 && $_condition_id <= 510) {
-        return 'meteo-nuage-soleil-pluie';
+        if ($_dayNight == "day") return 'meteo-nuage-soleil-pluie';
+        else return 'meteo-pluie'; // TODO icone avec lune
       }
       if ($_condition_id >= 520 && $_condition_id <= 599) {
         return 'meteo-pluie';
@@ -72,24 +73,15 @@ class weatherForecast extends eqLogic {
         return 'meteo-vent';
       }
       if ($_condition_id > 800 && $_condition_id <= 899) {
-        if ($_sunrise == null || (date('Gi') >= $_sunrise && date('Gi') < $_sunset)) {
-          return 'meteo-nuageux';
-        } else {
-          return 'meteo-nuit-nuage';
-        }
+        if ($_dayNight == "day") return 'meteo-nuageux';
+        else return 'meteo-nuit-nuage';
       }
       if ($_condition_id == 800) {
-        if ($_sunrise == null || (date('Gi') >= $_sunrise && date('Gi') < $_sunset)) {
-          return 'meteo-soleil';
-        } else {
-          return 'far fa-moon';
-        }
+        if ($_dayNight == "day") return 'meteo-soleil';
+        else return 'far fa-moon';
       }
-      if ($_sunrise == null || (date('Gi') >= $_sunrise && date('Gi') < $_sunset)) {
-        return 'meteo-soleil';
-      } else {
-        return 'far fa-moon';
-      }
+      if ($_dayNight == "day") return 'meteo-soleil';
+      else return 'far fa-moon';
       log::add(__CLASS__, 'info', "Unknown $datasource condition : $_condition_id");
     } elseif($datasource == 'weatherapi') {
       if (in_array($_condition_id, array(1087, 1273, 1276, 1279, 1282))) {
@@ -105,17 +97,11 @@ class weatherForecast extends eqLogic {
         return 'meteo-neige';
       }
       if (in_array($_condition_id, array(1006, 1003, 1009))) {
-        if ($_sunrise == null || (date('Gi') >= $_sunrise && date('Gi') < $_sunset)) {
-          return 'meteo-nuageux';
-        } else {
-          return 'meteo-nuit-nuage';
-        }
+        if ($_dayNight == "day") return 'meteo-nuageux';
+        else return 'meteo-nuit-nuage';
       }
-      if ($_sunrise == null || (date('Gi') >= $_sunrise && date('Gi') < $_sunset)) {
-        return 'meteo-soleil';
-      } else {
-        return 'far fa-moon';
-      }
+      if ($_dayNight == "day") return 'meteo-soleil';
+      else return 'far fa-moon';
       log::add(__CLASS__, 'info', "Unknown $datasource condition : $_condition_id");
     }
     else log::add(__CLASS__, 'info', __FUNCTION__ ." Unknown datasource : $datasource");
@@ -392,13 +378,13 @@ class weatherForecast extends eqLogic {
       $wfCmd->save();
     }
 
-    $id = "MeteoHour0Json";
+    $id = "H0Json4Widget";
     $wfCmd = $this->getCmd(null, $id);
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(1);
       $wfCmd->setIsHistorized(0);
-      $wfCmd->setName(__("Météo H0 - Json", __FILE__));
+      $wfCmd->setName(__("Météo H0 - Json pour widget", __FILE__));
       $wfCmd->setLogicalId($id);
       $wfCmd->setEqLogic_id($this->getId());
       $wfCmd->setType('info');
@@ -525,8 +511,12 @@ class weatherForecast extends eqLogic {
         $replaceDay['#high_temperature#'] = is_object($temperature_max) ? $temperature_max->execCmd() : '';
         $replaceDay['#tempid#'] = is_object($temperature_max) ? $temperature_max->getId() : '';
         $conditionID = $this->getCmd(null, "condition_id_$i");
-  // public static function getIconFromWapiCondition($_condition_id, $_sunrise=null, $_sunset=null) {
-        $replaceDay['#icone#'] = is_object($conditionID) ? self::getIconFromCondition($conditionID->execCmd(),$datasource,$sunrise,$sunset) : '';
+        $dayNight = "day"; // day icon
+        if($i == 0) {
+          $t = date('Gi');
+          if($t < $sunrise || $t > $sunset) $dayNight = "night";
+        }
+        $replaceDay['#icone#'] = is_object($conditionID) ? self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight) : '';
         $condition = $this->getCmd(null, "condition_$i");
         $replaceDay['#condition#'] = is_object($condition) ? $condition->execCmd() : '';
         $rainCmd = $this->getCmd(null, "rain_$i");
@@ -580,7 +570,12 @@ class weatherForecast extends eqLogic {
     $sunrise_time = is_object($sunrise) ? $sunrise->execCmd() : null;
     $condition_id = $this->getCmd(null, 'condition_id');
     if (is_object($condition_id)) {
-      $replace['#icone#'] = self::getIconFromCondition($condition_id->execCmd(), $datasource, $sunrise_time, $sunset_time);
+      $dayNight = "day"; // day icon
+      if($i == 0) {
+        $t = date('Gi');
+        if($t < $sunrise_time || $t > $sunset_time) $dayNight = "night";
+      }
+      $replace['#icone#'] = self::getIconFromCondition($condition_id->execCmd(), $datasource, $dayNight);
       $replace['#condition_id#'] = $condition_id->execCmd();
     } else {
       $replace['#icone#'] = '';
@@ -620,7 +615,7 @@ class weatherForecast extends eqLogic {
     return($content);
   }
 
-  public function updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array) {
+  public function updateWeatherOwm($_updateConfig, $lat, $lon, $lang, &$H0array) {
     $changed = false;
     $apikeyOwm = trim(config::byKey('apikeyOwm', __CLASS__, ''));
     if(trim($apikeyOwm) == '' )
@@ -660,7 +655,8 @@ class weatherForecast extends eqLogic {
       $this->setConfiguration('otherInfo', "CityID : " .$weather['id']);
       $this->save(true);
     }
-    log::add(__CLASS__, 'debug', json_encode($weather));
+    log::add(__CLASS__, 'debug', $url . ' : ' . substr(json_encode($weather),0,100));
+    // log::add(__CLASS__, 'debug', json_encode($weather));
     $weatherTemp = round($weather['main']['temp'], 1);
     $weatherDesc = ucfirst($weather['weather']['0']['description']);
     $changed = $this->checkAndUpdateCmd('temperature', $weatherTemp) || $changed;
@@ -677,7 +673,10 @@ class weatherForecast extends eqLogic {
     $changed = $this->checkAndUpdateCmd('rain', $rain1h) || $changed;
     $snow1h =  (isset($weather['snow']['1h'])) ? $weather['snow']['1h'] : 0;
     $timezone = config::byKey('timezone', 'core', 'Europe/Paris');
-    $icon = self::getIconFromCondition($weather['weather'][0]['id'], 'openweathermap', $H0array['sunrise'], $H0array['sunset']);
+    $dayNight = "day"; // day icon
+    $t = time();
+    if($t < $H0array['sunrise'] || $t > $H0array['sunset']) $dayNight = "night";
+    $icon = self::getIconFromCondition($weather['weather'][0]['id'], 'openweathermap', $dayNight);
 
     $H0array['weather'] = ['icon' => $icon, 'desc' => $weatherDesc];
     $H0array['T'] = ['value' => $weatherTemp, 'windchill' => $weather['main']['feels_like']];
@@ -691,9 +690,6 @@ class weatherForecast extends eqLogic {
     $H0array['rain'] = ['1h' => $rain1h];
     $H0array['snow'] = ['1h' => $snow1h];
     $H0array['clouds'] = $weather['clouds']['all'];
-
-    $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE));
-    $this->checkAndUpdateCmd("MeteoHour0Json", $contents);
 
     // forecast
     $url = "http://api.openweathermap.org/data/2.5/forecast?units=metric&lang=$lang&APPID=$apikeyOwm&lat=$lat&lon=$lon";
@@ -805,7 +801,7 @@ log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st 
     return (round($distance,2)); 
   }
 
-  public function updateWeatherApi($_updateConfig, $lat, $lon, $lang) {
+  public function updateWeatherApi($_updateConfig, $lat, $lon, $lang, &$H0array) {
     $changed = false;
     $apikeyWapi = trim(config::byKey('apikeyWapi', __CLASS__));
     if(trim($apikeyWapi) == '' )
@@ -846,7 +842,7 @@ log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st 
     else message::add(__CLASS__, "Unable to write $file");
     log::add(__CLASS__, 'debug', $url . ' : ' . substr(json_encode($datas),0, 100) .'...');
     $current = $datas['current'];
-    log::add(__CLASS__, 'debug', "  Datas updated on " .$current['last_updated'] ." Condition: " .$current['condition']['text'] ." Icon: " .$current['condition']['icon']);
+    log::add(__CLASS__, 'debug', "  Datas updated on " .$current['last_updated'] ." Condition: " .$current['condition']['text']); // ." Icon: " .$current['condition']['icon']);
 
     if($_updateConfig) { // memo dans la config de l'équipement
       $this->setConfiguration('lat', $datas['location']['lat']);
@@ -1035,10 +1031,14 @@ log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st 
     if($datasource == "openweathermap") {
       $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array);
       if ($changed) $this->refreshWidget();
+      $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE));
+      $this->checkAndUpdateCmd("H0Json4Widget", $contents);
     }
     else if($datasource == "weatherapi") {
-      $changed = $this->updateWeatherApi($_updateConfig, $lat, $lon, $lang);
+      $changed = $this->updateWeatherApi($_updateConfig, $lat, $lon, $lang, $H0array);
       if ($changed) $this->refreshWidget();
+      $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE));
+      $this->checkAndUpdateCmd("H0Json4Widget", $contents);
     }
     else {
       throw new Exception(__("Type de données inconnu. $datasource", __FILE__));
