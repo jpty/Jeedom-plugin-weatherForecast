@@ -399,7 +399,8 @@
                 }
               }
               if('#displayError#' != '0')
-                cmd.querySelector('.errorMessage').innerHTML = "Informations créées à partir de données d'OpenWatherMap";
+                if(obj.datasource != undefined)
+                  cmd.querySelector('.errorMessage').innerHTML = "Source des données : "+obj.datasource;
             }
           }
           if ('#backgroundColor#' != '#backgroundColor' +'#') {

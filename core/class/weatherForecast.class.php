@@ -207,6 +207,19 @@ class weatherForecast extends eqLogic {
     $wfCmd->setDisplay('generic_type', 'WEATHER_WIND_DIRECTION');
     $wfCmd->save();
 
+    $wfCmd = $this->getCmd(null, 'wind_gust');
+    if (!is_object($wfCmd)) {
+      $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
+    }
+    $wfCmd->setName(__('Rafales de vent', __FILE__));
+    $wfCmd->setLogicalId('wind_gust');
+    $wfCmd->setEqLogic_id($this->getId());
+    $wfCmd->setUnite('km/h');
+    $wfCmd->setType('info');
+    $wfCmd->setSubType('numeric');
+    $wfCmd->setDisplay('generic_type', 'WEATHER_WIND_GUST');
+    $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'condition');
     if (!is_object($wfCmd)) {
@@ -549,6 +562,20 @@ class weatherForecast extends eqLogic {
     $wind_speed = $this->getCmd(null, 'wind_speed');
     $replace['#windspeed#'] = is_object($wind_speed) ? $wind_speed->execCmd() : '';
     $replace['#windid#'] = is_object($wind_speed) ? $wind_speed->getId() : '';
+    $windGustCmd = $this->getCmd(null, 'wind_gust');
+    if(is_object($windGustCmd)) {
+      $raf = $windGustCmd->execCmd();
+      if(!is_numeric($raf)) $raf = 0;
+    }
+    else $raf = 0;
+    if($raf) {
+      $replace['#windGust#'] = "&nbsp; {$raf}km/h &nbsp;";
+      $replace['#spacer#'] = '';
+    } else {
+      $replace['#windGust#'] = '';
+      $replace['#spacer#'] = '<br>';
+    }
+
 
     $wind_direction = $this->getCmd(null, 'wind_direction');
     if(is_object($wind_direction)) {
@@ -666,7 +693,7 @@ class weatherForecast extends eqLogic {
     $changed = $this->checkAndUpdateCmd('condition_id', $weather['weather'][0]['id']) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_speed', round($weather['wind']['speed'] * 3.6)) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_direction', $weather['wind']['deg']) || $changed;
-    $windGust =  (isset($weather['wind']['gust'])) ? $weather['wind']['gust'] : 0;
+    $windGust =  (isset($weather['wind']['gust'])) ? round($weather['wind']['gust'] * 3.6) : 0;
     $changed = $this->checkAndUpdateCmd('wind_gust', $windGust) || $changed;
     $changed = $this->checkAndUpdateCmd('cloudiness', $weather['clouds']['all']) || $changed;
     $rain1h =  (isset($weather['rain']['1h'])) ? $weather['rain']['1h'] : 0;
@@ -709,7 +736,7 @@ class weatherForecast extends eqLogic {
       $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
-log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st forecast " .$forecast['list'][0]['dt_txt'] ." Dt : " .date('Y-m-d H:i:s', $forecast['list'][0]['dt']));
+// log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st forecast " .$forecast['list'][0]['dt_txt'] ." Dt : " .date('Y-m-d H:i:s', $forecast['list'][0]['dt']) ." Timezone : ".$forecast['city']['timezone']);
     $tsNow = time();
     for ($i = 0; $i < $nbForecastDays; $i++) {
       $ts = strtotime("+{$i} day");
@@ -858,14 +885,33 @@ log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st 
       $this->setConfiguration('otherInfo', "Distance: $dist km");
       $this->save(true);
     }
-    $changed = $this->checkAndUpdateCmd('temperature', $current['temp_c']) || $changed;
+    $weatherTemp = $current['temp_c'];
+    $weatherDesc = $current['condition']['text'];
+    $changed = $this->checkAndUpdateCmd('temperature', $weatherTemp) || $changed;
     $changed = $this->checkAndUpdateCmd('humidity', $current['humidity']) || $changed;
     $changed = $this->checkAndUpdateCmd('pressure', $current['pressure_mb']) || $changed;
-    $changed = $this->checkAndUpdateCmd('condition', $current['condition']['text']) || $changed;
+    $changed = $this->checkAndUpdateCmd('condition', $weatherDesc) || $changed;
     $changed = $this->checkAndUpdateCmd('condition_id', $current['condition']['code']) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_speed', round($current['wind_kph'])) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_direction', $current['wind_degree']) || $changed;
     $changed = $this->checkAndUpdateCmd('rain', round($current['precip_mm'],1)) || $changed;
+    $windGust =  (isset($current['gust_kph'])) ? round($current['gust_kph']) : 0;
+    $changed = $this->checkAndUpdateCmd('wind_gust', $windGust) || $changed;
+    $dayNight = "day"; // day icon
+    $t = time();
+    if($t < $H0array['sunrise'] || $t > $H0array['sunset']) $dayNight = "night";
+    $icon = self::getIconFromCondition($current['condition']['code'], 'weatherapi', $dayNight);
+    $H0array['weather'] = ['icon' => $icon, 'desc' => $weatherDesc];
+    $H0array['T'] = ['value' => $weatherTemp, 'windchill' => $current['feelslike_c']];
+    $H0array['wind'] = ['speed' => ($current['wind_kph']/3.6),
+                        'gust' => round($windGust/3.6),
+                        'direction' => $current['wind_degree'],
+                        'icon' =>  $this->convertDegrees2Compass($current['wind_degree'],0) ];
+    $H0array['humidity'] = $current['humidity'];
+    $H0array['sea_level'] = $current['pressure_mb'];
+    $H0array['rain'] = ['1h' => $current['precip_mm']];
+    $H0array['snow'] = ['1h' => 0];
+    $H0array['clouds'] = $current['cloud'];
     /*
     $this->checkAndUpdateCmd('visibility_Hcur', $current['vis_km']);
     $this->checkAndUpdateCmd('uv_Hcur', $current['uv']);
@@ -1029,12 +1075,14 @@ log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st 
     $datasource = trim($this->getConfiguration('datasource', ''));
     $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
     if($datasource == "openweathermap") {
+      $H0array['datasource'] = "OpenWeatherMap";
       $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array);
       if ($changed) $this->refreshWidget();
       $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE));
       $this->checkAndUpdateCmd("H0Json4Widget", $contents);
     }
     else if($datasource == "weatherapi") {
+      $H0array['datasource'] = "WeatherApi";
       $changed = $this->updateWeatherApi($_updateConfig, $lat, $lon, $lang, $H0array);
       if ($changed) $this->refreshWidget();
       $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE));
