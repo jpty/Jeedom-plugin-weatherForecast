@@ -576,7 +576,6 @@ class weatherForecast extends eqLogic {
       $replace['#spacer#'] = '<br>';
     }
 
-
     $wind_direction = $this->getCmd(null, 'wind_direction');
     if(is_object($wind_direction)) {
       $windDirection = $wind_direction->execCmd();
@@ -598,10 +597,8 @@ class weatherForecast extends eqLogic {
     $condition_id = $this->getCmd(null, 'condition_id');
     if (is_object($condition_id)) {
       $dayNight = "day"; // day icon
-      if($i == 0) {
-        $t = date('Gi');
-        if($t < $sunrise_time || $t > $sunset_time) $dayNight = "night";
-      }
+      $t = date('Gi');
+      if($t < $sunrise_time || $t > $sunset_time) $dayNight = "night";
       $replace['#icone#'] = self::getIconFromCondition($condition_id->execCmd(), $datasource, $dayNight);
       $replace['#condition_id#'] = $condition_id->execCmd();
     } else {
@@ -609,14 +606,19 @@ class weatherForecast extends eqLogic {
       $replace['#condition_id#'] = '';
     }
     $replace['#cityName#'] = $this->getConfiguration('ville', "NA");
+    $replace['#country#'] = $this->getConfiguration('country', "NA");
+    $replace['#lat#'] = $this->getConfiguration('lat', "--");
+    $replace['#lon#'] = $this->getConfiguration('lon', "--");
 
       // Condition current hour
     $condition = $this->getCmd(null, 'condition');
     if (is_object($condition)) {
       $replace['#condition#'] = $condition->execCmd();
       $replace['#conditionid#'] = $condition->getId();
+      $replace['#collectDate#'] = $condition->getCollectDate();
     } else {
       $replace['#condition#'] = '';
+      $replace['#collectDate#'] = '';
       $replace['#collectDate#'] = '';
     }
 
@@ -631,7 +633,6 @@ class weatherForecast extends eqLogic {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
-
     $content = curl_exec($ch);
     if ($content === false) {
       log::add(__CLASS__,'warning', __FUNCTION__ ." $url Failed curl_error: (" .curl_errno($ch) .") " .curl_error($ch));
