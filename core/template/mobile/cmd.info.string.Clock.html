@@ -22,7 +22,7 @@
         </div>
           <div class="seconds#id#">00</div>
       </div>
-      <div id="weather#id#" class="wIcon">
+      <div id="weather#id#" class="wIcon#uid#">
         <div id="weatherTopLeft">
           <div class="widgetName#id#">#name#</div>
           <div style="font-size:14px;margin:0;padding:0" class="condition"></div>
@@ -133,7 +133,7 @@
       width: 100%;
     }
 
-    .wIcon {
+    .wIcon#uid# {
       background-position: center 0px;
       background-size: 160px 100px;
       background-repeat: no-repeat;
@@ -316,7 +316,7 @@
               dayTxt = cd.toLocaleDateString([], {timeZone: timezone#id#, month: 'long', day: 'numeric',weekday: 'long'});
 // console.log("Timezone: " +timezone#id# +" Date: " +dayTxt +" " +obj.dt);
               let icon = "url('plugins/weatherForecast/core/template/images/" +obj.weather.icon +".png')"
-              cmd.querySelector('.wIcon').style.setProperty('background-image', icon)
+              cmd.querySelector('.wIcon#uid#').style.setProperty('background-image', icon)
               cmd.querySelector('.condition').innerHTML = obj.weather.desc;
                   
               let Tvalue = Math.round(obj.T.value*10) / 10 + '°C';
@@ -355,10 +355,10 @@
               cmd.querySelector('.saintOfTheDay').innerHTML = saintOfTheDay;
 
               if('#displayWind#' != '0') {
-                let vent = Math.round(obj.wind.speed*3.6) +'km/h';
+                let vent = Math.round(obj.wind.speed) +'km/h';
                 let raf = obj.wind.gust;
                 let gust = '';
-                if(raf>0) gust += ' <span style="background: #ed1c24;color: #ffffff!important" title="Rafales">&nbsp;' +Math.round(raf*3.6) +'km/h&nbsp;</span>'; 
+                if(raf>0) gust += ' <span style="background: #ed1c24;color: #ffffff!important" title="Rafales">&nbsp;' +Math.round(raf) +'km/h&nbsp;</span>'; 
                 let wind = '';
                 if (obj.wind.icon == 'Variable')
                   wind = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve" width="15px" height="15px"><g><path fill="#3C73A5" d="M32.3,13.1c1.1,0.7,2.1,1.5,2.9,2.4c5.6,5.6,5.6,14.7,0,20.4c-5.5,5.6-14.5,5.6-20,0.1l-0.1-0.1 c-5.5-5.7-5.5-14.8,0.1-20.4l3.7,6.9l2.1-15.2L4.1,10.8l8,2c-7.2,7.2-7.2,18.8,0,26.1c7.1,7.2,18.5,7.3,25.7,0.3 c0.1-0.1,0.3-0.3,0.3-0.3c7.2-7.3,7.2-18.9,0-26.3c-1.5-1.3-3.1-2.5-4.8-3.3L32.3,13.1z"/></g></svg>';
@@ -399,7 +399,8 @@
                 }
               }
               if('#displayError#' != '0')
-                cmd.querySelector('.errorMessage').innerHTML = "Informations créées à partir de données d'OpenWatherMap";
+                if(obj.datasource != undefined)
+                  cmd.querySelector('.errorMessage').innerHTML = "Source des données : "+obj.datasource;
             }
           }
           if ('#backgroundColor#' != '#backgroundColor' +'#') {

@@ -1,4 +1,3 @@
-
 /* This file is part of Jeedom.
  *
  * Jeedom is free software: you can redistribute it and/or modify
@@ -21,37 +20,37 @@
     });
 });
 
- function addCmdToTable(_cmd) {
-    if (!isset(_cmd)) {
-        var _cmd = {configuration: {}};
-    }
-    if (!isset(_cmd.configuration)) {
-        _cmd.configuration = {};
-    }
-    var tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '">';
-    tr += '<td><span class="cmdAttr" data-l1key="id"></span></td>';
-    tr += '<td>'+_cmd.logicalId+'</td>';
-    tr += '<td>';
-    tr += '<input class="cmdAttr form-control input-sm" data-l1key="type" style="display : none;">';
-    tr += '<input class="cmdAttr form-control input-sm" data-l1key="subType" style="display : none;">';
-    tr += '<input class="cmdAttr form-control input-sm" data-l1key="name" style="width : 140px;" placeholder="{{Nom de la commande}}"></td>';
-    tr += '<td>';
-    tr += '<span><label class="checkbox-inline"><input type="checkbox" class="cmdAttr checkbox-inline" data-l1key="isVisible" checked/>{{Afficher}}</label></span>';
-    if(!isset(_cmd.type) || _cmd.type == 'info' ) {
-      tr += ' &nbsp; <span><label class="checkbox-inline"><input type="checkbox" class="cmdAttr checkbox-inline" data-l1key="isHistorized" checked/>{{Historiser}}</label></span>';
-    }
-    tr += '</td>';
-    tr += '<td><span class="cmdAttr" data-l1key="htmlstate"></span></td>';
-    tr += '<td>';
-    if (is_numeric(_cmd.id)) {
-        tr += '<a class="btn btn-default btn-xs cmdAction" data-action="configure"><i class="fas fa-cogs"></i></a> ';
-        tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fas fa-rss"></i> {{Tester}}</a>';
-    }
-    tr += '</tr>';
-    $('#table_cmd tbody').append(tr);
-    $('#table_cmd tbody tr').last().setValues(_cmd, '.cmdAttr');
-    if (isset(_cmd.type)) {
-        $('#table_cmd tbody tr:last .cmdAttr[data-l1key=type]').value(init(_cmd.type));
-    }
-    jeedom.cmd.changeType($('#table_cmd tbody tr').last(), init(_cmd.subType));
+function addCmdToTable(_cmd) {
+  if (!isset(_cmd)) {
+      var _cmd = {configuration: {}};
+  }
+  if (!isset(_cmd.configuration)) {
+      _cmd.configuration = {};
+  }
+  var tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '">';
+  tr += '<td><span class="cmdAttr" data-l1key="id"></span></td>';
+  tr += '<td>'+_cmd.logicalId+'</td>';
+  tr += '<td>';
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="type" style="display : none;">';
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="subType" style="display : none;">';
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="name" style="width : 140px;" placeholder="{{Nom de la commande}}"></td>';
+  tr += '<td>';
+  tr += '<span><label class="checkbox-inline"><input type="checkbox" class="cmdAttr checkbox-inline" data-l1key="isVisible" checked/>{{Afficher}}</label></span>';
+  if(!isset(_cmd.type) || _cmd.type == 'info' ) {
+    tr += ' &nbsp; <span><label class="checkbox-inline"><input type="checkbox" class="cmdAttr checkbox-inline" data-l1key="isHistorized" checked/>{{Historiser}}</label></span>';
+  }
+  tr += '</td>';
+  tr += '<td><span class="cmdAttr" data-l1key="htmlstate"></span></td>';
+  tr += '<td>';
+  if (is_numeric(_cmd.id)) {
+      tr += '<a class="btn btn-default btn-xs cmdAction" data-action="configure"><i class="fas fa-cogs"></i></a> ';
+      tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fas fa-rss"></i> {{Tester}}</a>';
+  }
+  tr += '</tr>';
+  $('#table_cmd tbody').append(tr);
+  $('#table_cmd tbody tr').last().setValues(_cmd, '.cmdAttr');
+  if (isset(_cmd.type)) {
+      $('#table_cmd tbody tr:last .cmdAttr[data-l1key=type]').value(init(_cmd.type));
+  }
+  jeedom.cmd.changeType($('#table_cmd tbody tr').last(), init(_cmd.subType));
 }

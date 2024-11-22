@@ -115,7 +115,7 @@ class weatherForecast extends eqLogic {
     }
     $gps = trim($this->getConfiguration('positionGps'));
     if ($gps == '') {
-      throw new Exception(__("Les coordonnées GPS doivent être renseignées", __FILE__));
+      throw new Exception(__("Les coordonnées doivent être renseignées", __FILE__));
     }
     $coord = explode(',', $gps);
     if(count($coord) == 2) {
@@ -126,9 +126,15 @@ class weatherForecast extends eqLogic {
       if(!is_numeric($lon))
         throw new Exception(__("La longitude doit être un nombre [$lon]", __FILE__));
     } else {
-      throw new Exception(__("Coordonnées GPS incorrectes [$gps]: Latitude , longitude", __FILE__));
+      throw new Exception(__("Coordonnées incorrectes [$gps]: Latitude , longitude", __FILE__));
     }
   }
+
+	public function preSave() {
+		if (trim($this->getConfiguration('positionGps','')) == '') {
+			$this->setConfiguration('positionGps', config::byKey('info::latitude') .' , ' .config::byKey('info::longitude'));
+		}
+	}
 
   public function preInsert() {
     $this->setIsVisible(1);
@@ -397,7 +403,7 @@ class weatherForecast extends eqLogic {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(1);
       $wfCmd->setIsHistorized(0);
-      $wfCmd->setName(__("Météo H0 - Json pour widget", __FILE__));
+      $wfCmd->setName(__("H0Json pour widget", __FILE__));
       $wfCmd->setLogicalId($id);
       $wfCmd->setEqLogic_id($this->getId());
       $wfCmd->setType('info');
@@ -511,7 +517,7 @@ class weatherForecast extends eqLogic {
             $val = $condition->execCmd();
             if($val == '') continue;
           }
-          if($hour == 23) continue; // Pas d'affichage si dernière heure du jour
+          // if($hour == 23) continue; // Pas d'affichage si dernière heure du jour
         }
         $replaceDay = array();
         $titleCmd = $this->getCmd(null, "title_day$i");
@@ -1056,7 +1062,7 @@ class weatherForecast extends eqLogic {
       $lat = trim($coord[0]);
       $lon = trim($coord[1]);
     } else {
-      throw new Exception(__("Coordonnées GPS incorrectes [$gps]", __FILE__));
+      throw new Exception(__("Coordonnées incorrectes [$gps]", __FILE__));
     }
     $H0array = array();
     $sun_info = date_sun_info(time(), $lat, $lon);
