@@ -20,7 +20,7 @@
             <div class="number">0</div>
           </div>
         </div>
-          <div class="seconds#id#">00</div>
+          <div class="seconds#id#">0</div>
       </div>
       <div id="weather#id#" class="wIcon#uid#">
         <div id="weatherTopLeft">
@@ -54,14 +54,15 @@
   <style>
     #digital_container#id# {
       width: 440px;
+      min-height: 204px;
       z-index: 98;
       overflow: hidden;
       background-color: transparent;
     }
     .clock#id# {
       text-align: center;
-      margin-top: -20px;
-      height: 170px;
+      margin-top: 0px;
+      height: 150px;
       font-size: 150px;
       font-weight: 400;
       font-family: sans-serif;
@@ -81,26 +82,26 @@
     .hours#id# {
       background: transparent;
       color: white;
-      margin-top: 20px;
-      margin-left: 10px;
+      margin-top: 10px;
+      margin-left: 14px;
       border-radius: 18px;
     }
     .minutes#id# {
       background: transparent;
       color: white;
-      margin-top: 20px;
+      margin-top: 10px;
       border-radius: 18px;
     }
 
     .seconds#id# {
       background:transparent;
       color: white;
-      margin-top: 32px;
-      margin-left: 2px;
+      margin-top: 18px;
+      margin-left: 8px;
       height: 150px;
-      max-width:18px;
+      line-height: 0.85;
       text-align: center;
-      font-size: 50px;
+      font-size: 70px;
       text-shadow: 2px 2px 1px rgba(0, 0, 0, 1);
     }
     .tick#id# {
@@ -190,9 +191,12 @@
     <div>clockFontColor: {{Couleur des textes Heures, minutes, secondes.}} white</div>
     <div>clockBackgroundColor: {{Couleur de fond des textes de l'heure.}} transparent</div>
     <div>clockBorder: {{Couleur des bordures autour de l'heure et des minutes. Ex: 8px ridge green}}</div>
-    <div>clockMarginLeft: {{Marge gauche des textes de l'horloge. Défaut: 10px}}</div>
-    <div>clockSecondsFontSize: {{Taille du texte des secondes sur l'horloge. Défaut: 50px}}</div>
-    <div>clockSecondsMarginTop: {{Marge haute du texte des secondes sur l'horloge. Défaut: 32px}}</div>
+    <div>clockMarginLeft: {{Marge gauche des textes de l'horloge. Défaut: 14px}}</div>
+    <div>clockSecondsFontSize: {{Taille du texte des secondes sur l'horloge. Défaut: 70px}}</div>
+    <div>clockSecondsLineSpace: {{Ratio hauteur/interligne du texte des secondes sur l'horloge. Défaut: 0.85}}</div>
+    <div>clockSecondsMarginTop: {{Marge haute du texte des secondes sur l'horloge. Défaut: 18px}}</div>
+    <div>clockSecondsMarginLeft: {{Marge gauche du texte des secondes sur l'horloge. Défaut: 8px}}</div>
+    <div>clockSecondsOn2Lines: {{Texte des secondes sur 2 lignes. 0/1 Défaut: 1}}</div>
     <div>clockAnimation: {{Animation: Blur, ScrollV, Random Défaut: Random}}</div>
     <div>clockTimezone: {{Fuseau horaire si pas de météo associée. Défaut: Europe/Paris}}</div>
     <div>weatherFontColor: {{Couleur des textes de la météo.}}</div>
@@ -206,7 +210,7 @@
     <div>displaySeconds: {{Affichage des secondes sur l'horloge. 0/1 Défaut: 1}}</div>
     <div>displaySaintOfTheDay: {{Affichage du saint du jour. 0/1 Défaut: 0 }}</div>
     <div>displayCollectDate: {{Affichage de la date de collecte. 0/1 Défaut: 1}}</div>
-    <div>displayError: {{Affichage des erreurs JS. 0/1 Défaut: 1}}</div>
+    <div>displayError: {{Affichage des erreurs JS et Copyright. 0/1 Défaut: 1}}</div>
   </template>
   <script type="text/javascript">
     var hoursContainer#id# = document.querySelector('.hours#id#')
@@ -219,6 +223,9 @@
     var timezone#id# = '';
     if ('#clockTimezone#' != '#clockTimezone'+'#')  timezone#id# = '#clockTimezone#';
     else timezone#id# = 'Europe/Paris';
+    var seconds2lines#id# = 1;
+    if ('#clockSecondsOn2Lines#' != '#clockSecondsOn2Lines'+'#')
+      seconds2lines#id# = '#clockSecondsOn2Lines#';
 
     var last#id# = '00:00';
 
@@ -252,7 +259,9 @@
           dateText#id#.innerText = dateText;
         }
       }
-      secondsText#id#.innerText = nowSeconds;    
+      if(seconds2lines#id# == 1)
+        secondsText#id#.innerText = nowSeconds.substring(0,1) +"\n" +nowSeconds.substring(1,2);    
+      else secondsText#id#.innerText = nowSeconds;    
       last#id# = nowTime;
     }
 
@@ -403,6 +412,8 @@
                   cmd.querySelector('.errorMessage').innerHTML = "Source des données : "+obj.datasource;
             }
           }
+          else cmd.querySelector('#weather#id#').style.height = '40px';
+
           if ('#backgroundColor#' != '#backgroundColor' +'#') {
             cmd.querySelector('.content').style.backgroundColor = '#backgroundColor#';
           }
@@ -426,12 +437,15 @@
               cmd.querySelector('.weatherLeft#id#').style.color = 'var(--link-color)';
           }
 
+          if ('#clockSecondsLineSpace#' != '#clockSecondsLineSpace'+'#')
+            cmd.querySelector('.seconds#id#').style.lineHeight = '#clockSecondsSpace#';
           if ('#clockSecondsFontSize#' != '#clockSecondsFontSize'+'#') {
             cmd.querySelector('.seconds#id#').style.fontSize = '#clockSecondsFontSize#';
-            cmd.querySelector('.seconds#id#').style.maxWidth = '#clockSecondsFontSize#';
           }
           if ('#clockSecondsMarginTop#' != '#clockSecondsMarginTop'+'#')
             cmd.querySelector('.seconds#id#').style.marginTop = '#clockSecondsMarginTop#';
+          if ('#clockSecondsMarginLeft#' != '#clockSecondsMarginLeft'+'#')
+            cmd.querySelector('.seconds#id#').style.marginLeft = '#clockSecondsMarginLeft#';
               
           if ('#clockMarginLeft#' != '#clockMarginLeft'+'#')
             cmd.querySelector('.hours#id#').style.marginLeft = '#clockMarginLeft#';
@@ -450,8 +464,6 @@
             cmd.querySelector('.seconds#id#').style.display = 'none';
           if ('#displayBackgroundImage#' != '0') {
             cmd.querySelector('#digital_container#id#').style.background = 'url(plugins/weatherForecast/core/template/images/clockBackground.png) no-repeat';
-          } else {
-            if('#displayWeather#' == '0') cmd.querySelector('#weather#id#').style.height = '40px';
           }
           cmd.querySelector('.dateText#id#').innerHTML = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1); // ucfirst
         }
