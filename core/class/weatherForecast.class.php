@@ -604,7 +604,7 @@ class weatherForecast extends eqLogic {
       $dayNight = "day"; // day icon
       $t = date('Gi');
       if($t < $sunrise_time || $t > $sunset_time) $dayNight = "night";
-// message::add(__CLASS__, 'debug', "DayNight $dayNight $t Rise:$sunrise_time Set:$sunset_time");
+// log::add(__CLASS__, 'debug', "DayNight $dayNight $t Rise:$sunrise_time Set:$sunset_time");
       $replace['#icone#'] = self::getIconFromCondition($condition_id->execCmd(), $datasource, $dayNight);
       $replace['#condition_id#'] = $condition_id->execCmd();
     } else {
