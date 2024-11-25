@@ -30,7 +30,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
 		<legend><i class="fas fa-table"></i> {{Mes équipements Météos}}</legend>
 			<?php
     if (count($eqLogics) == 0) {
-      echo '<br><div class="text-center" style="font-size:1.2em;font-weight:bold;">{{Aucun équipement RteEcowatt trouvé, cliquer sur "Ajouter" pour commencer}}</div>';
+      echo '<br><div class="text-center" style="font-size:1.2em;font-weight:bold;">{{Aucun équipement Météo trouvé, cliquer sur "Ajouter" pour commencer}}</div>';
     } else {
       // Champ de recherche
       echo '<div class="input-group" style="margin:5px;">';
