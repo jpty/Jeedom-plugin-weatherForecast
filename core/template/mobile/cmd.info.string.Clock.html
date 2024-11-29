@@ -1,4 +1,4 @@
-<div class="cmd cmd-widget widget-MFweather #history#" data-type="info" data-subtype="string" data-template="MFweather" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
+<div class="cmd cmd-widget widget-weatherForecast #history#" data-type="info" data-subtype="string" data-template="weatherForecast" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
   <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.min.css" />
   <div class="content" style="background:transparent">
     <div id="digital_container#id#">
@@ -42,11 +42,11 @@
           <div id="date" class="dateText#id#" style="font-size:20px;line-height:18px;padding:0"></div>
           <div class="saintOfTheDay" style="font-size:14px;line-height:17px;margin:0;padding:0;text-shadow: 3px 3px 2px rgba(0, 0, 0, 1);"></div>
           <div class="sunRiseSet" style="font-size:14px;line-height:17px;margin:0;padding:0"></div>
-          <div class="Tvalue" style="margin-top:0px;font-size:40px;line-height:42px;padding:0;text-shadow: 3px 3px 2px rgba(0, 0, 0, 1);"></div>
+          <div class="Tvalue" style="margin-top:0px;font-size:40px;line-height:0.9;padding:0;text-shadow: 3px 3px 2px rgba(0, 0, 0, 1);"></div>
         </div>
       </div>
       <div id="collect#id#">
-        <span class="collectDate"></span>
+        <span class="collectDate">.</span>
         <span class="errorMessage"></span>
       </div>
     </div>
@@ -209,6 +209,7 @@
     <div>displayPressure: {{Affichage de la pression atmosphèrique. 0/1 Défaut: 1}}</div>
     <div>displaySeconds: {{Affichage des secondes sur l'horloge. 0/1 Défaut: 1}}</div>
     <div>displaySaintOfTheDay: {{Affichage du saint du jour. 0/1 Défaut: 0 }}</div>
+    <div>displayDayOfTheYear: {{Affichage du jour de l'année. 0/1 Défaut: 0 }}</div>
     <div>displayCollectDate: {{Affichage de la date de collecte. 0/1 Défaut: 1}}</div>
     <div>displayError: {{Affichage des erreurs JS et Copyright. 0/1 Défaut: 1}}</div>
   </template>
@@ -313,7 +314,7 @@
    */
     jeedom.cmd.addUpdateFunction('#id#',function(_options) {
       if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
-        cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
+        cmd.querySelector('.errorMessage').innerHTML = '.'; // clean previous error
         let cd = new Date();
         let dayTxt = cd.toLocaleDateString([], { month: 'long', day: 'numeric',weekday: 'long'});
         try {
@@ -360,6 +361,10 @@
               if('#displaySaintOfTheDay#' == '1') {
                 if(typeof obj.saintOfTheDay !== 'undefined') 
                   saintOfTheDay = obj.saintOfTheDay;
+              }
+              if('#displayDayOfTheYear#' == '1') {
+                if(typeof obj.dayOfTheYear !== 'undefined') 
+                  saintOfTheDay += ' ' + obj.dayOfTheYear;
               }
               cmd.querySelector('.saintOfTheDay').innerHTML = saintOfTheDay;
 
