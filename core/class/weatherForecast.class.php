@@ -24,6 +24,37 @@ class weatherForecast extends eqLogic {
   public static $_widgetPossibility = array('custom' => true, 'custom::layout' => true);
 
   /*     * ***********************Methode static*************************** */
+  public static function saintOfTheDay($month,$day) {
+    $saints = array(
+           1 => array(
+                1 => "Jour de l'an", 2 => "St Basile", 3 => "Ste Geneviève", 4 => "St Odilon", 5 => "St Edouard", 6 => "Ste Mélanie", 7 => "St Raymond", 8 => "St Lucien", 9 => "Ste Alix", 10 => "St Guillaume", 11 => "St Paulin", 12 => "Ste Tatiana", 13 => "Ste Yvette", 14 => "Ste Nina", 15 => "St Rémi", 16 => "St Marcel", 17 => "Ste Roseline", 18 => "Ste Prisca", 19 => "St Marius", 20 => "St Sébastien", 21 => "Ste Agnès", 22 => "St Vincent", 23 => "St Barnard", 24 => "St François", 25 => "Conv de St Paul", 26 => "St Timothée", 27 => "Ste Angèle", 28 => "St Thomas d'Aquin", 29 => "St Gildas", 30 => "Ste Martine", 31 => "Ste Marcelle"),
+            2 => array(
+                 1 => "Ste Ella", 2 => "Présentation", 3 => "St Blaise", 4 => "Ste Véronique", 5 => "Ste Agathe", 6 => "St Gaston", 7 => "Ste Eugénie", 8 => "Ste Jacqueline", 9 => "Ste Apolline", 10 => "St Arnaud", 11 => "N-D de Lourdes", 12 => "St Félix", 13 => "Ste Béatrice", 14 => "St Valentin", 15 => "St Claude", 16 => "Ste Julienne", 17 => "St Alexis", 18 => "Ste Bernadette", 19 => "St Gabin", 20 => "Ste Aimée", 21 => "St Damien", 22 => "Ste Isabelle", 23 => "St Lazare", 24 => "St Modeste", 25 => "St Roméo", 26 => "St Nestor", 27 => "Ste Honorine", 28 => "St Romain", 29 => "St Auguste"),
+           3 => array(
+                1 => "St Aubin", 2 => "St Charles", 3 => "St Guénolé", 4 => "St Casimir", 5 => "Ste Olive", 6 => "Ste Colette", 7 => "Ste Félicité", 8 => "St Jean de Dieu", 9 => "Ste Françoise", 10 => "St Vivien", 11 => "Ste Rosine", 12 => "Ste Justine", 13 => "St Rodrigue", 14 => "Ste Mathilde", 15 => "Ste Louise", 16 => "Ste Bénédicte", 17 => "St Patrice", 18 => "St Cyrille", 19 => "St Joseph", 20 => "St Herbert", 21 => "Ste Clémence", 22 => "Ste Léa", 23 => "St Victorien", 24 => "Ste Catherine de Suède", 25 => "Annonciation", 26 => "Ste Larissa", 27 => "St Habib", 28 => "St Gontran", 29 => "Ste Gwladys", 30 => "St Amédée", 31 => "St Benjamin"),
+           4 => array(
+                1 => "St Hughes", 2 => "Ste Sandrine", 3 => "St Richard", 4 => "St Isidore", 5 => "Ste Irène", 6 => "St Marcellin", 7 => "St J-B de la Salle", 8 => "Ste Julie", 9 => "St Gautier", 10 => "St Fulbert", 11 => "St Stanislas", 12 => "Ste Jules", 13 => "Ste Ida", 14 => "St Maxime", 15 => "St Paterne", 16 => "St Benoît-Joseph", 17 => "St Anicet", 18 => "St Parfait", 19 => "Ste Emma", 20 => "Ste Odette", 21 => "St Anselme", 22 => "St Alexandre", 23 => "St Georges", 24 => "St Fidèle", 25 => "St Marc", 26 => "Ste Alida", 27 => "Ste Zita", 28 => "Ste Valérie", 29 => "Ste Cath. de Sienne", 30 => "St Robert"),
+           5 => array(
+                1 => "Fête du Travail", 2 => "St Boris", 3 => "St Philippe - Jacques", 4 => "St Sylvain", 5 => "Ste Judith", 6 => "Ste Prudence", 7 => "Ste Gisèle", 8 => "Armistice 1945", 9 => "Ste Pacôme", 10 => "Ste Solange", 11 => "Ste Estelle", 12 => "St Achille", 13 => "Ste Rolande", 14 => "St Matthias", 15 => "Ste Denise", 16 => "St Honoré", 17 => "St Pascal", 18 => "St Eric", 19 => "St Yves", 20 => "St Bernardin", 21 => "St Constantin", 22 => "St Emile", 23 => "St Didier", 24 => "St Donatien", 25 => "Ste Sophie", 26 => "St Béranger", 27 => "St Augustin", 28 => "St Germain", 29 => "St Aymard", 30 => "St Ferdinand", 31 => "Visitation"),
+           6 => array(
+                1 => "St Justin", 2 => "Ste Blandine", 3 => "St Kévin", 4 => "Ste Clotilde", 5 => "St Igor", 6 => "St Norbert", 7 => "St Gilbert", 8 => "St Médard", 9 => "Ste Diane", 10 => "St Landry", 11 => "St Barnabé", 12 => "St Guy", 13 => "St Antoine de P.", 14 => "St Elisée", 15 => "Ste Germaine", 16 => "St J-F Régis", 17 => "St Hervé", 18 => "St Léonce", 19 => "St Romuald", 20 => "St Silvère", 21 => "Eté", 22 => "St Alban", 23 => "Ste Audrey", 24 => "St Jean-Baptiste", 25 => "St Prosper", 26 => "St Anthelme", 27 => "St Fernand", 28 => "St Irénée", 29 => "St Pierre - Paul", 30 => "St Martial"),
+           7 => array(
+                1 => "St Thierry", 2 => "St Martinien", 3 => "St Thomas", 4 => "St Florent", 5 => "St Antoine-Marie", 6 => "Ste Mariette", 7 => "St Raoul", 8 => "St Thibaut", 9 => "Ste Amandine", 10 => "St Ulrich", 11 => "St Benoît", 12 => "St Olivier", 13 => "St Henri - Joël", 14 => "Fête Nationale", 15 => "St Donald", 16 => "N-D du Mt-Carmel", 17 => "Ste Charlotte", 18 => "St Frédéric", 19 => "St Arsène", 20 => "Ste Marina", 21 => "St Victor", 22 => "Ste Marie-Madeleine", 23 => "Ste Brigitte", 24 => "Ste Christine", 25 => "St Jacques", 26 => "Ste Anne - Joachim", 27 => "Ste Nathalie", 28 => "St Samson", 29 => "Ste Marthe", 30 => "Ste Juliette", 31 => "St Ignace de Loyola"),
+           8 => array(
+                1 => "St Alphonse", 2 => "St Julien Eymard", 3 => "Ste Lydie", 4 => "St J-M Vianney", 5 => "St Abel", 6 => "Transfiguration", 7 => "St Gaëtan", 8 => "St Dominique", 9 => "St Amour", 10 => "St Laurent", 11 => "Ste Claire", 12 => "Ste Clarisse", 13 => "St Hippolyte", 14 => "St Evrard", 15 => "Assomption", 16 => "St Armel", 17 => "St Hyacinthe", 18 => "Ste Hélène", 19 => "St Jean Eudes", 20 => "St Bernard", 21 => "St Christophe", 22 => "St Fabrice", 23 => "Ste Rose de Lima", 24 => "St Barthélémy", 25 => "St Louis", 26 => "Ste Natacha", 27 => "Ste Monique", 28 => "St Augustin", 29 => "Ste Sabine", 30 => "St Fiacre", 31 => "St Aristide"),
+           9 => array(
+                1 => "St Gilles", 2 => "Ste Ingrid", 3 => "St Grégoire", 4 => "Ste Rosalie", 5 => "Ste Raïssa", 6 => "St Bertrand", 7 => "Ste Reine", 8 => "Nativité de N-D", 9 => "St Alain", 10 => "Ste Inès", 11 => "St Adolphe", 12 => "St Apollinaire", 13 => "St Aimé", 14 => "La Ste-Croix", 15 => "St Roland", 16 => "Ste Edith", 17 => "St Renaud", 18 => "Ste Nadège", 19 => "Ste Emilie", 20 => "St Davy", 21 => "St Matthieu", 22 => "St Maurice", 23 => "St Constant", 24 => "St Thècle", 25 => "St Hermann", 26 => "St Côme - Damien", 27 => "St Vincent de Paul", 28 => "St Venceslas", 29 => "St Michel", 30 => "St Jérôme"),
+           10 => array(
+                1 => "Ste Thérèse de l'E-J", 2 => "St Léger", 3 => "St Gérard", 4 => "St François d'Assise", 5 => "Ste Fleur", 6 => "St Bruno", 7 => "St Serge", 8 => "Ste Pélagie", 9 => "St Denis", 10 => "St Ghislain", 11 => "St Firmin", 12 => "St Wilfrid", 13 => "St Géraud", 14 => "St Juste", 15 => "Ste Thérèse d'Avila", 16 => "Ste Edwige", 17 => "St Baudouin", 18 => "St Luc", 19 => "St René", 20 => "Ste Adeline", 21 => "Ste Céline", 22 => "Ste Elodie", 23 => "St Jean de Capistran", 24 => "St Florentin", 25 => "St Crépin", 26 => "St Dimitri", 27 => "Ste Emeline", 28 => "St Simon - Juda", 29 => "St Narcisse", 30 => "St Bienvenu", 31 => "St Quentin"),
+           11 => array(
+                1 => "Toussaint", 2 => "Défunts", 3 => "St Hubert", 4 => "St Charles", 5 => "Ste Sylvie", 6 => "Ste Bertille", 7 => "Ste Carine", 8 => "St Geoffroy", 9 => "St Théodore", 10 => "St Léon", 11 => "St Martin", 12 => "St Christian", 13 => "St Brice", 14 => "St Sidoine", 15 => "St Albert", 16 => "Ste Marguerite", 17 => "Ste Elisabeth", 18 => "Ste Aude", 19 => "St Tanguy", 20 => "St Edmond", 21 => "Prés. de Marie", 22 => "Ste Cécile", 23 => "St Clément", 24 => "Ste Flora", 25 => "Ste Catherine", 26 => "Ste Delphine", 27 => "St Séverin", 28 => "St Jacques de la Marche", 29 => "St Saturnin", 30 => "St André"),
+           12 => array(
+                1 => "Ste Florence", 2 => "Ste Viviane", 3 => "St Xavier", 4 => "Ste Barbara", 5 => "St Gérald", 6 => "St Nicolas", 7 => "St Ambroise", 8 => "Imm. Conception", 9 => "St P. Fourier", 10 => "St Romaric", 11 => "St Daniel", 12 => "Ste Jeanne F.-C.", 13 => "Ste Lucie", 14 => "Ste Odile", 15 => "Ste Ninon", 16 => "Ste Alice", 17 => "St Gaël", 18 => "St Gatien", 19 => "St Urbain", 20 => "St Abraham", 21 => "St P. Cenisius", 22 => "Ste Françoise-Xavière", 23 => "St Armand", 24 => "St Adèle", 25 => "Noël", 26 => "St Etienne", 27 => "St Jean", 28 => "St Innocents", 29 => "St David", 30 => "St Roger", 31 => "St Sylvestre")
+              );
+    if(isset($saints[$month][$day])) return($saints[$month][$day]);
+    else return("NA");
+  }
+
   public static function cron() {
     $minute = date('i');
     $eqLogics = self::byType(__CLASS__, true);
@@ -73,7 +104,7 @@ class weatherForecast extends eqLogic {
         return 'meteo-vent';
       }
       if ($_condition_id > 800 && $_condition_id <= 899) {
-        if ($_dayNight == "day") return 'meteo-nuageux';
+        if ($_dayNight == "day") return 'meteo-nuageux'; // Pas assez de nuages
         else return 'meteo-nuit-nuage';
       }
       if ($_condition_id == 800) {
@@ -691,6 +722,7 @@ class weatherForecast extends eqLogic {
     }
     log::add(__CLASS__, 'debug', $url . ' : ' . substr(json_encode($weather),0,100));
     // log::add(__CLASS__, 'debug', json_encode($weather));
+    $H0array['updated_on'] = $weather['dt'];
     $weatherTemp = round($weather['main']['temp'], 1);
     $weatherDesc = ucfirst($weather['weather']['0']['description']);
     $changed = $this->checkAndUpdateCmd('temperature', $weatherTemp) || $changed;
@@ -867,16 +899,17 @@ class weatherForecast extends eqLogic {
     }
     
     $datas =  array_merge(array('state' => 'ok', 'datetime' => date('c')),$datas);
-    $file = __DIR__ ."/../../data/weatherAPI-" .$this->getId() .".json";
+    $file = __DIR__ ."/../../data/weatherForecastAPI-" .$this->getId() .".json";
     $hdle = fopen($file, "wb");
     if($hdle !== FALSE) {
-      fwrite($hdle, json_encode($datas,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+      fwrite($hdle, json_encode($datas,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
       fclose($hdle);
     }
     else message::add(__CLASS__, "Unable to write $file");
     log::add(__CLASS__, 'debug', $url . ' : ' . substr(json_encode($datas),0, 100) .'...');
     $current = $datas['current'];
     log::add(__CLASS__, 'debug', "  Datas updated on " .$current['last_updated'] ." Condition: " .$current['condition']['text']); // ." Icon: " .$current['condition']['icon']);
+    $H0array['updated_on'] = strtotime($current['last_updated']);
 
     if($_updateConfig) { // memo dans la config de l'équipement
       $this->setConfiguration('lat', $datas['location']['lat']);
@@ -899,7 +932,8 @@ class weatherForecast extends eqLogic {
     $changed = $this->checkAndUpdateCmd('pressure', $current['pressure_mb']) || $changed;
     $changed = $this->checkAndUpdateCmd('condition', $weatherDesc) || $changed;
     $changed = $this->checkAndUpdateCmd('condition_id', $current['condition']['code']) || $changed;
-    $changed = $this->checkAndUpdateCmd('wind_speed', round($current['wind_kph'])) || $changed;
+    $windSpeed =  (isset($current['wind_kph'])) ? round($current['wind_kph']) : 0;
+    $changed = $this->checkAndUpdateCmd('wind_speed', $windSpeed) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_direction', $current['wind_degree']) || $changed;
     $changed = $this->checkAndUpdateCmd('rain', round($current['precip_mm'],1)) || $changed;
     $windGust =  (isset($current['gust_kph'])) ? round($current['gust_kph']) : 0;
@@ -910,8 +944,7 @@ class weatherForecast extends eqLogic {
     $icon = self::getIconFromCondition($current['condition']['code'], 'weatherapi', $dayNight);
     $H0array['weather'] = ['icon' => $icon, 'desc' => $weatherDesc];
     $H0array['T'] = ['value' => $weatherTemp, 'windchill' => $current['feelslike_c']];
-    $H0array['wind'] = ['speed' => ($current['wind_kph']/3.6),
-                        'gust' => round($windGust/3.6),
+    $H0array['wind'] = ['speed' => $windSpeed, 'gust' => $windGust,
                         'direction' => $current['wind_degree'],
                         'icon' =>  $this->convertDegrees2Compass($current['wind_degree'],0) ];
     $H0array['humidity'] = $current['humidity'];
@@ -982,7 +1015,7 @@ class weatherForecast extends eqLogic {
                  }
                }
              ';
-            $this->checkAndUpdateCmd("forecast_H{$numCmd}_JSON", str_replace('"','&quot;',json_encode($forecasthour[$i],JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)));
+            $this->checkAndUpdateCmd("forecast_H{$numCmd}_JSON", str_replace('"','&quot;',json_encode($forecasthour[$i],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)));
             $numCmd++;
           }
         }
@@ -1049,7 +1082,7 @@ class weatherForecast extends eqLogic {
              }
             }
              */
-        $this->checkAndUpdateCmd("forecast_D{$i}_JSON", str_replace('"','&quot;',json_encode($forecastday[$i],JSON_UNESCAPED_UNICODE)));
+        $this->checkAndUpdateCmd("forecast_D{$i}_JSON", str_replace('"','&quot;',json_encode($forecastday[$i],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)));
       }
     }
     return $changed;
@@ -1078,6 +1111,8 @@ class weatherForecast extends eqLogic {
     elseif($sunset === true) $sunset = 1;
     else $sunset = date('Gi',$sunset);
     $this->checkAndUpdateCmd('sunset', $sunset);
+    $H0array['dayOfTheYear'] = (date('z')+1) .'/' .((date('L'))? '366' : '365');
+    $H0array['saintOfTheDay'] = self::saintOfTheDay(date('n'),date('j'));
 
     $datasource = trim($this->getConfiguration('datasource', ''));
     $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
@@ -1085,14 +1120,14 @@ class weatherForecast extends eqLogic {
       $H0array['datasource'] = "OpenWeatherMap";
       $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array);
       if ($changed) $this->refreshWidget();
-      $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE));
+      $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
       $this->checkAndUpdateCmd("H0Json4Widget", $contents);
     }
     else if($datasource == "weatherapi") {
       $H0array['datasource'] = "WeatherApi";
       $changed = $this->updateWeatherApi($_updateConfig, $lat, $lon, $lang, $H0array);
       if ($changed) $this->refreshWidget();
-      $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE));
+      $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
       $this->checkAndUpdateCmd("H0Json4Widget", $contents);
     }
     else {
