@@ -25,7 +25,7 @@
             <div class="number">0</div>
           </div>
         </div>
-          <div class="tick#id#">:</div>
+        <div class="tick#id#">:</div>
         <div class="minutes#id#">
           <div class="first">
             <div class="number">0</div>
@@ -101,7 +101,7 @@
       border-radius: 18px;
     }
     .tick#id# {
-      font-size: 0.85em;
+      margin-top: -10px;
     }
 
     .seconds#id# {
@@ -446,15 +446,17 @@
               cmd.querySelector('.clock#id#').style.marginBottom = '15px';
               cmd.querySelector('.clock#id#').style.fontSize = '160px';
               cmd.querySelector('.hours#id#').style.marginLeft = '16px';
+              cmd.querySelector('.tick#id#').style.marginTop = '0px';
               cmd.querySelector('.seconds#id#').style.marginTop = '40px';
               cmd.querySelector('.seconds#id#').style.lineHeight = 0.8;
             }
             else if ('#clockTheme#' == 'KrisKringle') {
               cmd.querySelector('.clock#id#').style.fontFamily = '"KRIS KINGLE", sans-serif';
-              cmd.querySelector('.clock#id#').style.fontSize = '100px';
+              cmd.querySelector('.clock#id#').style.fontSize = '96px';
               cmd.querySelector('.clock#id#').style.marginTop = '-14px';
               cmd.querySelector('.clock#id#').style.marginBottom = '14px';
-              cmd.querySelector('.hours#id#').style.marginLeft = '14px';
+              cmd.querySelector('.hours#id#').style.marginLeft = '8px';
+              cmd.querySelector('.tick#id#').style.marginTop = '0px';
               cmd.querySelector('.seconds#id#').style.fontSize = '45px';
               cmd.querySelector('.seconds#id#').style.marginTop = '34px';
               cmd.querySelector('.seconds#id#').style.lineHeight = 1.2;
