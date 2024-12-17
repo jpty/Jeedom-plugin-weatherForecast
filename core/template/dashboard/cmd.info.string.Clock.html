@@ -1,5 +1,19 @@
 <div class="cmd cmd-widget widget-weatherForecast #history#" data-type="info" data-subtype="string" data-template="weatherForecast" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
   <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.min.css" />
+  <style>
+    @font-face {
+      font-family: "Digital-7 Mono";
+      src: url("plugins/weatherForecast/desktop/fonts/digital-7.mono.ttf") format("truetype");
+      font-weight:normal;
+      font-style:normal;
+    }
+    @font-face {
+      font-family: "KRIS KINGLE";
+      src: url("plugins/weatherForecast/desktop/fonts/KrisKringle.ttf") format("truetype");
+      font-weight:normal;
+      font-style:normal;
+    }
+  </style>
   <div class="content" style="background:transparent">
     <div id="digital_container#id#">
       <div class="clock#id#" style="background:transparent">
@@ -11,7 +25,7 @@
             <div class="number">0</div>
           </div>
         </div>
-          <div class="tick#id#">:</div>
+        <div class="tick#id#">:</div>
         <div class="minutes#id#">
           <div class="first">
             <div class="number">0</div>
@@ -61,7 +75,8 @@
     }
     .clock#id# {
       text-align: center;
-      margin-top: 0px;
+      margin-top: -10px;
+      margin-bottom: 10px;
       height: 150px;
       font-size: 150px;
       font-weight: 400;
@@ -70,44 +85,33 @@
       display: flex;
       position: relative;
       overflow: hidden;
-      width: 96%;
+      width: 440px;
     }
     .clock#id# > div {
       display: flex;
-    }
-    .number {
-      margin-top: -20px;
+      color: white;
     }
 
     .hours#id# {
       background: transparent;
-      color: white;
-      margin-top: 10px;
-      margin-left: 14px;
       border-radius: 18px;
     }
     .minutes#id# {
       background: transparent;
-      color: white;
-      margin-top: 10px;
       border-radius: 18px;
+    }
+    .tick#id# {
+      margin-top: -10px;
     }
 
     .seconds#id# {
       background:transparent;
-      color: white;
-      margin-top: 16px;
       margin-left: 8px;
+      margin-top: 26px;
       height: 150px;
       line-height: 0.85;
       text-align: center;
       font-size: 70px;
-      text-shadow: 2px 2px 1px rgba(0, 0, 0, 1);
-    }
-    .tick#id# {
-      color: white;
-      margin-top: 45px;
-      font-size: 80px;
     }
 
     .animScrollV#id# {
@@ -186,32 +190,38 @@
     }
   </style>    
   <template>
-    <div>displayWidgetName: {{Affichage du nom du widget. 0/1 Défaut: 1}}</div>
     <div>backgroundColor: {{Couleur de fond du widget}}</div>
-    <div>clockFontColor: {{Couleur des textes Heures, minutes, secondes.}} white</div>
+    <div>clockAnimation: {{Animation: Blur, ScrollV, Random Défaut: Random}}</div>
     <div>clockBackgroundColor: {{Couleur de fond des textes de l'heure.}} transparent</div>
     <div>clockBorder: {{Couleur des bordures autour de l'heure et des minutes. Ex: 8px ridge green}}</div>
+    <div>clockFontColor: {{Couleur des textes Heures, minutes, secondes.}} white</div>
+    <div>clockFontFamily: {{Police de l'horloge. Défaut: sans-serif}}</div>
+    <div>clockFontSize: {{Taille des textes Heures et minutes. Défaut: 150px}}</div>
+    <div>clockMarginBottom: {{Marge basse des textes de l'horloge. Défaut: 10px}}</div>
     <div>clockMarginLeft: {{Marge gauche des textes de l'horloge. Défaut: 14px}}</div>
+    <div>clockMarginTop: {{Marge haute des textes de l'horloge. Défaut: -10px}}</div>
+    <div>clockLineHeight: {{Hauteur des lignes du texte de l'horloge. Défaut: 1}}</div>
     <div>clockSecondsFontSize: {{Taille du texte des secondes sur l'horloge. Défaut: 70px}}</div>
-    <div>clockSecondsLineSpace: {{Ratio hauteur/interligne du texte des secondes sur l'horloge. Défaut: 0.85}}</div>
-    <div>clockSecondsMarginTop: {{Marge haute du texte des secondes sur l'horloge. Défaut: 16px}}</div>
+    <div>clockSecondsLineHeight: {{Hauteur des lignes du texte des secondes sur l'horloge. Défaut: 0.85}}</div>
     <div>clockSecondsMarginLeft: {{Marge gauche du texte des secondes sur l'horloge. Défaut: 8px}}</div>
+    <div>clockSecondsMarginTop: {{Marge haute du texte des secondes sur l'horloge. Défaut: 26px}}</div>
     <div>clockSecondsOn2Lines: {{Texte des secondes sur 2 lignes. 0/1 Défaut: 1}}</div>
-    <div>clockAnimation: {{Animation: Blur, ScrollV, Random Défaut: Random}}</div>
+    <div>clockTheme: {{Thème de l'horloge.}} Digital, KrisKringle</div>
     <div>clockTimezone: {{Fuseau horaire si pas de météo associée. Défaut: Europe/Paris}}</div>
-    <div>weatherFontColor: {{Couleur des textes de la météo.}}</div>
     <div>displayBackgroundImage: {{Affichage de l'image de fond. 0/1 Défaut: 1}}</div>
-    <div>displayWeather: {{Affichage de la météo. 0/1 Défaut: 1}}</div>
     <div>displayClouds: {{Affichage du pourcentage de nuages. 0/1 Défaut: 1}}</div>
-    <div>displayWind: {{Affichage des vitesses et direction du vent. 0/1 Défaut: 1}}</div>
-    <div>displayRain: {{Affichage de la quantité de pluie dans l'heure. 0/1 Défaut: 1}}</div>
-    <div>displayHumidity: {{Affichage du pourcentage d'humidité. 0/1 Défaut: 1}}</div>
-    <div>displayPressure: {{Affichage de la pression atmosphèrique. 0/1 Défaut: 1}}</div>
-    <div>displaySeconds: {{Affichage des secondes sur l'horloge. 0/1 Défaut: 1}}</div>
-    <div>displaySaintOfTheDay: {{Affichage du saint du jour. 0/1 Défaut: 0 }}</div>
     <div>displayDayOfTheYear: {{Affichage du jour de l'année. 0/1 Défaut: 0 }}</div>
     <div>displayCollectDate: {{Affichage de la date de collecte. 0/1 Défaut: 1}}</div>
     <div>displayError: {{Affichage des erreurs JS et Copyright. 0/1 Défaut: 1}}</div>
+    <div>displayHumidity: {{Affichage du pourcentage d'humidité. 0/1 Défaut: 1}}</div>
+    <div>displayPressure: {{Affichage de la pression atmosphèrique. 0/1 Défaut: 1}}</div>
+    <div>displayRain: {{Affichage de la quantité de pluie dans l'heure. 0/1 Défaut: 1}}</div>
+    <div>displaySaintOfTheDay: {{Affichage du saint du jour. 0/1 Défaut: 0 }}</div>
+    <div>displaySeconds: {{Affichage des secondes sur l'horloge. 0/1 Défaut: 1}}</div>
+    <div>displayWeather: {{Affichage de la météo. 0/1 Défaut: 1}}</div>
+    <div>displayWidgetName: {{Affichage du nom du widget. 0/1 Défaut: 1}}</div>
+    <div>displayWind: {{Affichage des vitesses et direction du vent. 0/1 Défaut: 1}}</div>
+    <div>weatherFontColor: {{Couleur des textes de la météo.}}</div>
   </template>
   <script type="text/javascript">
     var hoursContainer#id# = document.querySelector('.hours#id#')
@@ -314,7 +324,7 @@
    */
     jeedom.cmd.addUpdateFunction('#id#',function(_options) {
       if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
-        cmd.querySelector('.errorMessage').innerHTML = '.'; // clean previous error
+        cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
         let cd = new Date();
         let dayTxt = cd.toLocaleDateString([], { month: 'long', day: 'numeric',weekday: 'long'});
         try {
@@ -359,11 +369,11 @@
                 // Saint du jour
               saintOfTheDay = '';
               if('#displaySaintOfTheDay#' == '1') {
-                if(typeof obj.saintOfTheDay !== 'undefined') 
+                if(typeof obj.saintOfTheDay !== undefined) 
                   saintOfTheDay = obj.saintOfTheDay;
               }
               if('#displayDayOfTheYear#' == '1') {
-                if(typeof obj.dayOfTheYear !== 'undefined') 
+                if(typeof obj.dayOfTheYear !== undefined) 
                   saintOfTheDay += ' ' + obj.dayOfTheYear;
               }
               cmd.querySelector('.saintOfTheDay').innerHTML = saintOfTheDay;
@@ -412,9 +422,12 @@
                   cmd.querySelector('.collectDate').innerHTML = "Collecte: " +collectDate +'.';
                 }
               }
-              if('#displayError#' != '0')
+              if('#displayError#' != '0') {
                 if(obj.datasource != undefined)
                   cmd.querySelector('.errorMessage').innerHTML = "Source des données : "+obj.datasource;
+                else
+                  cmd.querySelector('.errorMessage').innerHTML = 'Informations créées à partir de données Internet';
+              }
             }
           }
           else cmd.querySelector('#weather#id#').style.height = '40px';
@@ -425,6 +438,34 @@
           if ('#clockBackgroundColor#' != '#clockBackgroundColor'+'#') {
             cmd.querySelector('.hours#id#').style.backgroundColor = '#clockBackgroundColor#';
             cmd.querySelector('.minutes#id#').style.backgroundColor = '#clockBackgroundColor#';
+          }
+          if ('#clockTheme#' != '#clockTheme'+'#') {
+            if ('#clockTheme#' == 'Digital') {
+              cmd.querySelector('.clock#id#').style.fontFamily = 'Digital-7 Mono, sans-serif';
+              cmd.querySelector('.clock#id#').style.marginTop = '-15px';
+              cmd.querySelector('.clock#id#').style.marginBottom = '15px';
+              cmd.querySelector('.clock#id#').style.fontSize = '160px';
+              cmd.querySelector('.hours#id#').style.marginLeft = '16px';
+              cmd.querySelector('.tick#id#').style.marginTop = '0px';
+              cmd.querySelector('.seconds#id#').style.marginTop = '40px';
+              cmd.querySelector('.seconds#id#').style.lineHeight = 0.8;
+            }
+            else if ('#clockTheme#' == 'KrisKringle') {
+              cmd.querySelector('.clock#id#').style.fontFamily = '"KRIS KINGLE", sans-serif';
+              cmd.querySelector('.clock#id#').style.fontSize = '96px';
+              cmd.querySelector('.clock#id#').style.marginTop = '-14px';
+              cmd.querySelector('.clock#id#').style.marginBottom = '14px';
+              cmd.querySelector('.hours#id#').style.marginLeft = '8px';
+              cmd.querySelector('.tick#id#').style.marginTop = '0px';
+              cmd.querySelector('.seconds#id#').style.fontSize = '45px';
+              cmd.querySelector('.seconds#id#').style.marginTop = '34px';
+              cmd.querySelector('.seconds#id#').style.lineHeight = 1.2;
+              seconds2lines#id# = 0;
+            }
+          }
+
+          if ('#clockFontSize#' != '#clockFontSize'+'#') {
+            cmd.querySelector('.clock#id#').style.fontSize = '#clockFontSize#';
           }
           if ('#clockFontColor#' != '#clockFontColor'+'#') {
             cmd.querySelector('.hours#id#').style.color = '#clockFontColor#';
@@ -442,11 +483,19 @@
               cmd.querySelector('.weatherLeft#id#').style.color = 'var(--link-color)';
           }
 
-          if ('#clockSecondsLineSpace#' != '#clockSecondsLineSpace'+'#')
-            cmd.querySelector('.seconds#id#').style.lineHeight = '#clockSecondsSpace#';
+          if ('#clockSecondsLineHeight#' != '#clockSecondsLineHeight'+'#')
+            cmd.querySelector('.seconds#id#').style.lineHeight = '#clockSecondsLineHeight#';
           if ('#clockSecondsFontSize#' != '#clockSecondsFontSize'+'#') {
             cmd.querySelector('.seconds#id#').style.fontSize = '#clockSecondsFontSize#';
           }
+          if ('#clockLineHeight#' != '#clockLineHeight'+'#')
+            cmd.querySelector('.clock#id#').style.lineHeight = '#clockLineHeight#';
+          if ('#clockFontFamily#' != '#clockFontFamily'+'#')
+            cmd.querySelector('.clock#id#').style.fontFamily = '#clockFontFamily#, sans-serif';
+          if ('#clockMarginTop#' != '#clockMarginTop'+'#')
+            cmd.querySelector('.clock#id#').style.marginTop = '#clockMarginTop#';
+          if ('#clockMarginBottom#' != '#clockMarginBottom'+'#')
+            cmd.querySelector('.clock#id#').style.marginBottom = '#clockMarginBottom#';
           if ('#clockSecondsMarginTop#' != '#clockSecondsMarginTop'+'#')
             cmd.querySelector('.seconds#id#').style.marginTop = '#clockSecondsMarginTop#';
           if ('#clockSecondsMarginLeft#' != '#clockSecondsMarginLeft'+'#')
