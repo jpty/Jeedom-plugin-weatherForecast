@@ -13,6 +13,12 @@
       font-weight:normal;
       font-style:normal;
     }
+    @font-face {
+      font-family: "Easter Egg";
+      src: url("plugins/weatherForecast/desktop/fonts/EasterEggRedu.ttf") format("truetype");
+      font-weight:normal;
+      font-style:normal;
+    }
   </style>
   <div class="content" style="background:transparent">
     <div id="digital_container#id#">
@@ -206,8 +212,8 @@
     <div>clockSecondsMarginLeft: {{Marge gauche du texte des secondes sur l'horloge. Défaut: 8px}}</div>
     <div>clockSecondsMarginTop: {{Marge haute du texte des secondes sur l'horloge. Défaut: 26px}}</div>
     <div>clockSecondsOn2Lines: {{Texte des secondes sur 2 lignes. 0/1 Défaut: 1}}</div>
-    <div>clockTheme: {{Thème de l'horloge.}} Digital, KrisKringle</div>
-    <div>clockTimezone: {{Fuseau horaire si pas de météo associée. Défaut: Europe/Paris}}</div>
+    <div>clockTheme: {{Thème de l'horloge.}} Digital, KrisKringle, EasterEgg</div>
+    <div>clockTimezone: {{Fuseau horaire. Défaut: Le fuseau horaire du navigateur}}</div>
     <div>displayBackgroundImage: {{Affichage de l'image de fond. 0/1 Défaut: 1}}</div>
     <div>displayClouds: {{Affichage du pourcentage de nuages. 0/1 Défaut: 1}}</div>
     <div>displayDayOfTheYear: {{Affichage du jour de l'année. 0/1 Défaut: 0 }}</div>
@@ -231,9 +237,9 @@
     var clockAnimation#id# = '';
     if ('#clockAnimation#' != '#clockAnimation'+'#')  clockAnimation#id# = '#clockAnimation#';
     else clockAnimation#id# = 'Random';
-    var timezone#id# = '';
+    var timezone#id# = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    console.log("Browser TimeZone " +timezone#id#);
     if ('#clockTimezone#' != '#clockTimezone'+'#')  timezone#id# = '#clockTimezone#';
-    else timezone#id# = 'Europe/Paris';
     var seconds2lines#id# = 1;
     if ('#clockSecondsOn2Lines#' != '#clockSecondsOn2Lines'+'#')
       seconds2lines#id# = '#clockSecondsOn2Lines#';
@@ -248,17 +254,18 @@
       else if(clockAnimation#id#.toUpperCase() == 'SCROLLV') anim = 'animScrollV#id#';
       let lastHours = last#id#.substring(0,2);
       let lastMinutes = last#id#.substring(3,5);
+      if ('#clockTimezone#' != '#clockTimezone'+'#')  timezone#id# = '#clockTimezone#';
       let now = new Date();
       let nowTime = now.toLocaleTimeString('fr-FR', {timeZone:timezone#id#});
       let nowHours = nowTime.substring(0,2);
       let nowMinutes = nowTime.substring(3,5);
       let nowSeconds = nowTime.substring(6,8);
-// console.log("Timezone:" +timezone#id# +" " +nowTime);
+// console.log("UpdateTimeDate Timezone:" +timezone#id# +" " +nowTime);
 // console.log("Timezone:" +timezone#id# +" " +nowHours +"/" +nowMinutes +"/" +nowSeconds);
-      if (lastHours !== nowHours) {
+      if (lastHours != nowHours) {
           updateContainer#id#(hoursContainer#id#, nowHours, anim)
       }
-      if(lastMinutes !== nowMinutes) {
+      if(lastMinutes != nowMinutes) {
         updateContainer#id#(minutesContainer#id#, nowMinutes, anim)
       }
 // console.log("Timezone:" +timezone#id# +" " +lastHours +" " +nowHours +":" +nowMinutes);
@@ -282,11 +289,11 @@
           time.unshift('0');
       }
       let first = container.firstElementChild
-      if (first.lastElementChild.textContent !== time[0]) {
+      if (first.lastElementChild.textContent != time[0]) {
         updateNumber#id#(first, time[0], anim);
       }
       let last = container.lastElementChild
-      if (last.lastElementChild.textContent !== time[1]) {
+      if (last.lastElementChild.textContent != time[1]) {
         updateNumber#id#(last, time[1], anim);
       }
     }
@@ -332,9 +339,9 @@
             let json = _options.display_value.replaceAll('&quot;','"');
             let obj = JSON.parse(json);
             if(obj != null) {
-              timezone#id# = obj.timezone;
+              if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
               dayTxt = cd.toLocaleDateString([], {timeZone: timezone#id#, month: 'long', day: 'numeric',weekday: 'long'});
-// console.log("Timezone: " +timezone#id# +" Date: " +dayTxt +" " +obj.dt);
+// console.log("addUpdateFunction Timezone: " +timezone#id# +" Date: " +dayTxt +" " +obj.dt);
               let icon = "url('plugins/weatherForecast/core/template/images/" +obj.weather.icon +".png')"
               cmd.querySelector('.wIcon#uid#').style.setProperty('background-image', icon)
               cmd.querySelector('.condition').innerHTML = obj.weather.desc;
@@ -344,7 +351,7 @@
               cmd.querySelector('.Tvalue').setAttribute('title', 'Ressentie: '+obj.T.windchill);
 
               let sunrise = '--'; let sunset = '--';
-              if(typeof obj.sunrise !== 'undefined') {
+              if(typeof obj.sunrise != 'undefined') {
                 if(obj.sunrise == true) sunrise = '<i class="wi wi-day-sunny"></i>';
                 else if(obj.sunrise == false) sunrise = '<i class="wi wi-night-clear"></i>';
                 else {
@@ -352,7 +359,7 @@
                   sunrise = '<i class="wi wi-day-sunny"></i>&nbsp;' + cdrise.toLocaleTimeString([], { timeZone: timezone#id#, hour: "2-digit", minute: "2-digit", hour12: false });
                 }
               }
-              if(typeof obj.sunset !== 'undefined') {
+              if(typeof obj.sunset != 'undefined') {
                 if(obj.sunset == true) sunset = '<i class="wi wi-day-sunny"></i>';
                 else if(obj.sunset == false) sunset = '<i class="wi wi-night-clear"></i>';
                 else {
@@ -369,11 +376,11 @@
                 // Saint du jour
               saintOfTheDay = '';
               if('#displaySaintOfTheDay#' == '1') {
-                if(typeof obj.saintOfTheDay !== undefined) 
+                if(typeof obj.saintOfTheDay != 'undefined') 
                   saintOfTheDay = obj.saintOfTheDay;
               }
               if('#displayDayOfTheYear#' == '1') {
-                if(typeof obj.dayOfTheYear !== undefined) 
+                if(typeof obj.dayOfTheYear != 'undefined') 
                   saintOfTheDay += ' ' + obj.dayOfTheYear;
               }
               cmd.querySelector('.saintOfTheDay').innerHTML = saintOfTheDay;
@@ -452,13 +459,27 @@
             }
             else if ('#clockTheme#' == 'KrisKringle') {
               cmd.querySelector('.clock#id#').style.fontFamily = '"KRIS KINGLE", sans-serif';
-              cmd.querySelector('.clock#id#').style.fontSize = '96px';
+              cmd.querySelector('.clock#id#').style.fontSize = '92px';
               cmd.querySelector('.clock#id#').style.marginTop = '-14px';
               cmd.querySelector('.clock#id#').style.marginBottom = '14px';
               cmd.querySelector('.hours#id#').style.marginLeft = '8px';
               cmd.querySelector('.tick#id#').style.marginTop = '0px';
-              cmd.querySelector('.seconds#id#').style.fontSize = '45px';
+              cmd.querySelector('.seconds#id#').style.fontSize = '42px';
               cmd.querySelector('.seconds#id#').style.marginTop = '34px';
+              cmd.querySelector('.seconds#id#').style.marginLeft = '4px';
+              cmd.querySelector('.seconds#id#').style.lineHeight = 1.2;
+              seconds2lines#id# = 0;
+            }
+            else if ('#clockTheme#' == 'EasterEgg') {
+              cmd.querySelector('.clock#id#').style.fontFamily = '"Easter Egg", sans-serif';
+              cmd.querySelector('.clock#id#').style.fontSize = '110px';
+              cmd.querySelector('.clock#id#').style.marginTop = '-14px';
+              cmd.querySelector('.clock#id#').style.marginBottom = '14px';
+              cmd.querySelector('.hours#id#').style.marginLeft = '8px';
+              cmd.querySelector('.tick#id#').style.marginTop = '0px';
+              cmd.querySelector('.seconds#id#').style.fontSize = '48px';
+              cmd.querySelector('.seconds#id#').style.marginTop = '27px';
+              cmd.querySelector('.seconds#id#').style.marginLeft = '4px';
               cmd.querySelector('.seconds#id#').style.lineHeight = 1.2;
               seconds2lines#id# = 0;
             }
