@@ -512,6 +512,21 @@ class weatherForecast extends eqLogic {
         $wfCmd->save();
       }
 
+      $id = "Vigilancelist";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(1);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Vigilance - Général", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
+
       $id = "Vigilancecolor_max";
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
