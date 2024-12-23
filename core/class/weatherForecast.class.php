@@ -1357,7 +1357,7 @@ class weatherForecast extends eqLogic {
     }
   }
 
-  public function downloadVigDataArchive($fileUrl,$json,$fileResu) {
+  public static function downloadVigDataArchive($fileUrl,$json,$fileResu) {
     log::add(__CLASS__, 'debug', "  " .__FUNCTION__ ." Fetching archive data Url: $fileUrl");
     $curl = curl_init();
     curl_setopt_array($curl, array( CURLOPT_URL => $fileUrl,
