@@ -1409,7 +1409,7 @@ class weatherForecast extends eqLogic {
     return 0;
   }
 
-  public function getVigilanceDataArchiveMF() {
+  public static function getVigilanceDataArchiveMF() {
     log::add(__CLASS__, 'debug', __FUNCTION__ ." http://storage.gra.cloud.ovh.net/v1/AUTH_555bdc85997f4552914346d4550c421e/gra-vigi6-archive_public");
     $fileAlert = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
     $fileAlertTxt = __DIR__ ."/../../data/CDP_TEXTES_VIGILANCE.json";
