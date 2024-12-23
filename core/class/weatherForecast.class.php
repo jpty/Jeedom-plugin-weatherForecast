@@ -77,8 +77,7 @@ class weatherForecast extends eqLogic {
 
   public static function cronDaily() {
     foreach ($eqLogics as $equipt) {
-      if(trim($equipt->getConfiguration('numDeptFr')) != '')
-        $equipt->refreshWidget();
+      $equipt->updateWeatherData(0);
     }
   }
 
@@ -509,6 +508,21 @@ class weatherForecast extends eqLogic {
         $wfCmd->setSubType('string');
         $wfCmd->setTemplate('dashboard', __CLASS__ .'::Vigilance');
         $wfCmd->setTemplate('mobile', __CLASS__ .'::Vigilance');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
+
+      $id = "Vigilancelist";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(1);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Vigilance - Général", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
         $wfCmd->setOrder($ord++);
         $wfCmd->save();
       }
@@ -1329,15 +1343,7 @@ class weatherForecast extends eqLogic {
     $H0array['dayOfTheYear'] = (date('z')+1) .'/' .((date('L'))? '366' : '365');
     $H0array['saintOfTheDay'] = self::saintOfTheDay(date('n'),date('j'));
       // update vigilances if department is informed 
-    if(trim($this->getConfiguration('numDeptFr')) != '') $this->getVigilance();
-    else {
-      foreach(self::$_vigilanceType as $i => $vig) {
-        $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0);
-        $this->checkAndUpdateCmd("Vigilancephases$i",'');
-      }
-      $this->checkAndUpdateCmd("Vigilancecolor_max",0);
-    }
-      
+    $this->getVigilance();
 
     $datasource = trim($this->getConfiguration('datasource', ''));
     $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
@@ -1515,6 +1521,13 @@ class weatherForecast extends eqLogic {
     $numDept = $this->getConfiguration('numDeptFr');
     if($numDept == '') {
       log::add(__CLASS__, 'debug', __FUNCTION__ ." Département non défini.");
+      foreach(self::$_vigilanceType as $i => $vig) {
+        $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0);
+        $this->checkAndUpdateCmd("Vigilancephases$i",'');
+        $this->checkAndUpdateCmd('Vigilancecolor_max', 0);
+        $this->checkAndUpdateCmd('Vigilancelist', '');
+        $this->checkAndUpdateCmd("VigilanceJson", '[]');
+      }
       return;
     }
     log::add(__CLASS__, 'debug', __FUNCTION__ ." Département: $numDept");
