@@ -1,0 +1,194 @@
+<div class="cmd cmd-widget #history#" data-type="info" data-subtype="string" data-template="custom" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
+  <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.min.css" />
+  <div class="title #hide_name#">
+    <div  class="cmdName">#name_display#</div>
+  </div>
+  <div class="dateText"></div>
+  <table>
+    <tr style="background-color:transparent !important;">
+      <td>
+        <a href="https://vigilance.meteofrance.fr/fr" target="_blank">
+          <div class="vigilanceMap" style="margin-top: -5px;margin-bottom: -5px"></div>
+        </a>
+      </td>
+      <td>
+        <div class="maxDeptColor"></div>
+      </td>
+    </tr>
+  </table>
+  <div class="weatherAlerts" style="text-align:left;margin-top: 4px"></div>
+  <div title="Message" class="errorMessage"></div>
+  <template>
+    <div>color: rgb(20,20,20) ({{Couleur de fond}})</div>
+    <div>fontColor: rgb(20,20,20) ({{Couleur du texte}})</div>
+    <div>displayDate: 0/1 ({{Affichage du jour}})</div>
+    <div>displayTime: 0/1 ({{Affichage de l'heure}})</div>
+    <div>displayMapFr: 0/1 ({{Affichage de la carte de France des vigilances du jour}})</div>
+    <div>displayMapDept: 0/1 ({{Affichage de la carte du département}})</div>
+    <div>displayDeptLevel: 0/1 ({{Affichage du niveau de vigilance du département}})</div>
+    <div>displayAlerts: 0/1 ({{Affichage des vigilances}})</div>
+  </template>
+  <script>
+    jeedom.cmd.addUpdateFunction('#id#',function(_options) {
+      try {
+        if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
+          const colors = [
+            ["Non défini",'#888888'],
+            ["Vert",'#31AA35'],
+            ["Jaune",'#FFF600'],
+            ["Orange",'#FFB82B'],
+            ["Rouge",'#CC0000']
+          ];
+          const vigilanceColors = [
+            ["Non défini",'<i class="fa fa-circle" style="color: '+colors[0][1] +'"></i>'],
+            ["Vert",'<i class="fa fa-circle" style="color: '+colors[1][1] +'"></i>'],
+            ["Jaune",'<i class="fa fa-circle" style="color: '+colors[2][1] +'"></i>'],
+            ["Orange",'<i class="fa fa-circle" style="color: '+colors[3][1] +'"></i>'],
+            ["Rouge",'<i class="fa fa-circle" style="color: '+colors[4][1] +'"></i>']
+          ];
+          // console.log("Vigilance length: " +_options.display_value.length);
+          // console.log("TyOf cmd: " +typeof(cmd));
+          cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
+          let json = _options.display_value.replaceAll('&quot;','"');
+          let jsonData = JSON.parse(json);
+          if(jsonData != null) {
+            if('#displayMapFr#' != '0') {
+              cmd.querySelector('.vigilanceMap').innerHTML = '<img style="width:70px" src="plugins/meteofrance/data/' +jsonData.image +'">';
+            }
+
+            let cd = new Date(jsonData.begin_validity_time);
+            let dateTime = '';
+            let dayTxt = cd.toLocaleDateString('fr-FR', {month: 'short', day: 'numeric',weekday: 'short'});
+            let day = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1); // ucfirst
+            if('#displayDate#' != '0') dateTime += day;
+            let vigilanceIconTitle = day;
+            let cdEnd = new Date(jsonData.end_validity_time);
+            if('#displayTime#' != '0') {
+              if(dateTime.length) dateTime += ' ';
+              dateTime += cd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
+              dateTime += ' - ' +cdEnd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
+            }
+            else {
+              vigilanceIconTitle += ' ' +cd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
+              vigilanceIconTitle += ' - ' +cdEnd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
+            }
+                
+            cmd.querySelector('.dateText').innerHTML = dateTime;
+            cmd.querySelector('.vigilanceMap').setAttribute('title', vigilanceIconTitle);
+            cmd.querySelector('.dateText').setAttribute('title', '{{Date de valeur}} : '+_options.valueDate+'<br/>{{Date de collecte}} : '+_options.collectDate);
+           
+
+            if('#displayDeptLevel#' != '0') {
+              let maxColorTxt = '';
+              switch(jsonData.dept.max_color_id) {
+                case 1: maxColorTxt = vigilanceColors[1][1]; break;
+                case 2: maxColorTxt = vigilanceColors[2][1]; break;
+                case 3: maxColorTxt = vigilanceColors[3][1]; break;
+                case 4: maxColorTxt = vigilanceColors[4][1]; break;
+                default: maxColorTxt = vigilanceColors[0][1]; break;
+              }
+              if(jsonData.domain_id_picture == 'none' || '#displayMapDept#' != '1')
+                cmd.querySelector('.maxDeptColor').innerHTML = jsonData.dept.domain_id +" " +maxColorTxt;
+              else
+                cmd.querySelector('.maxDeptColor').innerHTML = '<img style="margin-top:4px;height:50px" src="plugins/meteofrance/data/' +jsonData.domain_id_picture +'">';
+              cmd.querySelector('.maxDeptColor').setAttribute('title', "Vigilance du département: " +jsonData.dept.domain_id);
+            }
+          }
+              // Affichage des vigilances météo
+          let txtWeatherAlerts = '';
+          if('#displayAlerts#' != '0') {
+            const vigilanceType = [
+              ["Vent","wi-strong-wind"],
+              ["Pluie-inondation","wi-rain-wind"],
+              ["Orages","wi-lightning"],
+              ["Crues","wi-flood"],
+              ["Neige-verglas","wi-snow"],
+              ["Canicule","wi-hot"],
+              ["Grand-froid","wi-thermometer-exterior"],
+              ["Avalanches","wi-na"],
+              ["Vagues-submersion","wi-tsunami"],
+              ["Incendie","wi-fire"]
+            ];
+           
+            for(i=0;i<jsonData.dept.phenomenon_items.length;i++) {
+              phenom = jsonData.dept.phenomenon_items[i];
+              colmax = phenom.phenomenon_max_color_id;
+              if(colmax > 1) { // exclude green
+                id = phenom.phenomenon_id;
+                tlaps = phenom.timelaps_items;
+                txtWeatherAlerts += '<i class="wi '+vigilanceType[parseInt(id)-1][1] +'" title="'+vigilanceType[parseInt(id)-1][0] +'" style="font-size:18px;color:'+ colors[colmax][1]+'"></i>';
+                if(tlaps.length) {
+                  for(j=0;j<tlaps.length;j++) {
+                    col = tlaps[j].color_id;
+                    if(col > 1) { // exclude green
+                      txtWeatherAlerts += ' ' +vigilanceColors[col][1];
+                      start = new Date(tlaps[j].begin_time);
+                      txtWeatherAlerts += '&nbsp;' +start.toLocaleTimeString().substr(0,5);
+                      end = new Date(tlaps[j].end_time);
+                      txtWeatherAlerts += '&nbsp;-&nbsp;' +end.toLocaleTimeString().substr(0,5);
+                    }
+                  }
+                }
+                else
+                  txtWeatherAlerts += ' &nbsp; ' +vigilanceColors[colmax][1];
+                txtWeatherAlerts += '<br>';
+              }
+            }
+            if(typeof jsonData.littoral !== "undefined") {
+              for(i=0;i<jsonData.littoral.phenomenon_items.length;i++) {
+                phenom = jsonData.littoral.phenomenon_items[i];
+                colmax = phenom.phenomenon_max_color_id;
+                if(colmax > 1) { // exclude green
+                  id = phenom.phenomenon_id;
+                  tlaps = phenom.timelaps_items;
+                  txtWeatherAlerts += vigilanceType[parseInt(id)-1][0] +': ';
+                  if(tlaps.length) {
+                    for(j=0;j<tlaps.length;j++) {
+                      col = tlaps[j].color_id;
+                      txtWeatherAlerts += ' ' +vigilanceColors[col][1];
+                      start = new Date(tlaps[j].begin_time);
+                      txtWeatherAlerts += '&nbsp;' +start.toLocaleTimeString().substr(0,5);
+                      end = new Date(tlaps[j].end_time);
+                      txtWeatherAlerts += '&nbsp;-&nbsp;' +end.toLocaleTimeString().substr(0,5);
+                    }
+                  }
+                  else
+                    txtWeatherAlerts += ' ' +vigilanceColors[colmax][1];
+                  txtWeatherAlerts += '<br>';
+                }
+              }
+            }
+          }
+          cmd.querySelector('.weatherAlerts').innerHTML = txtWeatherAlerts;
+
+              // Couleur de fond du widget
+          if ('#color'+ '#' != '#color#')
+            cmd.style('background-color', '#color#', 'important');
+              // Couleur de la police du widget
+          if ('#fontColor'+ '#' != '#fontColor#')
+            cmd.style('color', '#fontColor#', 'important');
+        }
+      }
+      catch(err) {
+        cmd.querySelector('.errorMessage').innerHTML = err.message;
+      }
+    });
+    jeedom.cmd.refreshValue([{cmd_id :'#id#',display_value: '#state#', valueDate: '#valueDate#', collectDate: '#collectDate#', alertLevel: '#alertLevel#', unit: '#unite#'}])
+  </script>
+</div>
+<!--
+{
+"begin_validity_time":"2024-03-28T15:00:00Z",
+"end_validity_time":"2024-03-28T23:00:00Z",
+"domain_id_picture":"none","image":"VIGNETTE_NATIONAL_J_500X500.png?ts=1711638387",
+"dept":{"domain_id":"62","max_color_id":2,
+"phenomenon_items":[
+{"phenomenon_id":"1","phenomenon_max_color_id":2,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T19:00:00Z","color_id":2},{"begin_time":"2024-03-28T19:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]},
+{"phenomenon_id":"4","phenomenon_max_color_id":2,"timelaps_items":[]},
+{"phenomenon_id":"3","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]},
+{"phenomenon_id":"2","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]},
+{"phenomenon_id":"5","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]},
+{"phenomenon_id":"7","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]}]
+},
+"littoral":{"domain_id":"6210","max_color_id":1,"phenomenon_items":[{"phenomenon_id":"9","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]}]}}
+-->
