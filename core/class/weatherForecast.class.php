@@ -77,7 +77,7 @@ class weatherForecast extends eqLogic {
 
   public static function cronDaily() {
     foreach ($eqLogics as $equipt) {
-      if(trim($this->getConfiguration('numDeptFr')) != '')
+      if(trim($equipt->getConfiguration('numDeptFr')) != '')
         $equipt->refreshWidget();
     }
   }
@@ -91,10 +91,13 @@ class weatherForecast extends eqLogic {
     if ($minuteVigilance == -1) {
       config::save('minuteVigilance', rand(1,59), __CLASS__);
     }
-    if($minute == $minuteVigilance || (!file_exists($fileAlert))) {
-      self::getVigilanceDataArchiveMF();
-    }
     foreach ($eqLogics as $equipt) {
+      if($recupVig == 1 && trim($equipt->getConfiguration('numDeptFr')) != '') {
+        if($minute == $minuteVigilance || !file_exists($fileAlert)) {
+          self::getVigilanceDataArchiveMF();
+          $recupVig = 0;
+        }
+      }
       $refreshMinute = $equipt->getConfiguration('refreshMinute', -1);
       // log::add(__CLASS__, 'info', $equipt->getName() ." Refresh minute : $refreshMinute");
       if ($refreshMinute == -1) {
