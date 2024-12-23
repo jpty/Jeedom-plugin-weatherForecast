@@ -77,7 +77,7 @@ class weatherForecast extends eqLogic {
 
   public static function cronDaily() {
     foreach ($eqLogics as $equipt) {
-      $equipt->updateWeatherData(0);
+      $equipt->updateWeatherData(2);
     }
   }
 
@@ -1345,24 +1345,26 @@ class weatherForecast extends eqLogic {
       // update vigilances if department is informed 
     $this->getVigilance();
 
-    $datasource = trim($this->getConfiguration('datasource', ''));
-    $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
-    if($datasource == "openweathermap") {
-      $H0array['datasource'] = "OpenWeatherMap";
-      $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array);
-      if ($changed) $this->refreshWidget();
-      $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-      $this->checkAndUpdateCmd("H0Json4Widget", $contents);
-    }
-    else if($datasource == "weatherapi") {
-      $H0array['datasource'] = "WeatherApi";
-      $changed = $this->updateWeatherApi($_updateConfig, $lat, $lon, $lang, $H0array);
-      if ($changed) $this->refreshWidget();
-      $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-      $this->checkAndUpdateCmd("H0Json4Widget", $contents);
-    }
-    else {
-      throw new Exception(__("Type de données inconnu. $datasource", __FILE__));
+    if($_updateConfig != 2) { // Pas de maj meteo si cronDaily
+      $datasource = trim($this->getConfiguration('datasource', ''));
+      $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
+      if($datasource == "openweathermap") {
+        $H0array['datasource'] = "OpenWeatherMap";
+        $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array);
+        if ($changed) $this->refreshWidget();
+        $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+        $this->checkAndUpdateCmd("H0Json4Widget", $contents);
+      }
+      else if($datasource == "weatherapi") {
+        $H0array['datasource'] = "WeatherApi";
+        $changed = $this->updateWeatherApi($_updateConfig, $lat, $lon, $lang, $H0array);
+        if ($changed) $this->refreshWidget();
+        $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+        $this->checkAndUpdateCmd("H0Json4Widget", $contents);
+      }
+      else {
+        throw new Exception(__("Type de données inconnu. $datasource", __FILE__));
+      }
     }
   }
 
