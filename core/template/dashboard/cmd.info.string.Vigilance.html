@@ -57,7 +57,7 @@
           cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
           let json = _options.display_value.replaceAll('&quot;','"');
           let jsonData = JSON.parse(json);
-          if(jsonData != null) {
+          if(jsonData != null && typeof(jsonData.image) != "undefined" && typeof(jsonData.dept) != "undefined") {
             if('#displayMapFr#' != '0') {
               cmd.querySelector('.vigilanceMap').innerHTML = '<img style="width:70px" src="plugins/meteofrance/data/' +jsonData.image +'">';
             }
@@ -99,83 +99,83 @@
                 cmd.querySelector('.maxDeptColor').innerHTML = '<img style="margin-top:4px;height:50px" src="plugins/meteofrance/data/' +jsonData.domain_id_picture +'">';
               cmd.querySelector('.maxDeptColor').setAttribute('title', "Vigilance du département: " +jsonData.dept.domain_id);
             }
-          }
-              // Affichage des vigilances météo
-          let txtWeatherAlerts = '';
-          if('#displayAlerts#' != '0') {
-            const vigilanceType = [
-              ["Vent","wi-strong-wind"],
-              ["Pluie-inondation","wi-rain-wind"],
-              ["Orages","wi-lightning"],
-              ["Crues","wi-flood"],
-              ["Neige-verglas","wi-snow"],
-              ["Canicule","wi-hot"],
-              ["Grand-froid","wi-thermometer-exterior"],
-              ["Avalanches","wi-na"],
-              ["Vagues-submersion","wi-tsunami"],
-              ["Incendie","wi-fire"]
-            ];
-           
-            for(i=0;i<jsonData.dept.phenomenon_items.length;i++) {
-              phenom = jsonData.dept.phenomenon_items[i];
-              colmax = phenom.phenomenon_max_color_id;
-              if(colmax > 1) { // exclude green
-                id = phenom.phenomenon_id;
-                tlaps = phenom.timelaps_items;
-                txtWeatherAlerts += '<i class="wi '+vigilanceType[parseInt(id)-1][1] +'" title="'+vigilanceType[parseInt(id)-1][0] +'" style="font-size:18px;color:'+ colors[colmax][1]+'"></i>';
-                if(tlaps.length) {
-                  for(j=0;j<tlaps.length;j++) {
-                    col = tlaps[j].color_id;
-                    if(col > 1) { // exclude green
-                      txtWeatherAlerts += ' ' +vigilanceColors[col][1];
-                      start = new Date(tlaps[j].begin_time);
-                      txtWeatherAlerts += '&nbsp;' +start.toLocaleTimeString().substr(0,5);
-                      end = new Date(tlaps[j].end_time);
-                      txtWeatherAlerts += '&nbsp;-&nbsp;' +end.toLocaleTimeString().substr(0,5);
-                    }
-                  }
-                }
-                else
-                  txtWeatherAlerts += ' &nbsp; ' +vigilanceColors[colmax][1];
-                txtWeatherAlerts += '<br>';
-              }
-            }
-            if(typeof jsonData.littoral !== "undefined") {
-              for(i=0;i<jsonData.littoral.phenomenon_items.length;i++) {
-                phenom = jsonData.littoral.phenomenon_items[i];
+                // Affichage des vigilances météo
+            let txtWeatherAlerts = '';
+            if('#displayAlerts#' != '0') {
+              const vigilanceType = [
+                ["Vent","wi-strong-wind"],
+                ["Pluie-inondation","wi-rain-wind"],
+                ["Orages","wi-lightning"],
+                ["Crues","wi-flood"],
+                ["Neige-verglas","wi-snow"],
+                ["Canicule","wi-hot"],
+                ["Grand-froid","wi-thermometer-exterior"],
+                ["Avalanches","wi-na"],
+                ["Vagues-submersion","wi-tsunami"],
+                ["Incendie","wi-fire"]
+              ];
+             
+              for(i=0;i<jsonData.dept.phenomenon_items.length;i++) {
+                phenom = jsonData.dept.phenomenon_items[i];
                 colmax = phenom.phenomenon_max_color_id;
                 if(colmax > 1) { // exclude green
                   id = phenom.phenomenon_id;
                   tlaps = phenom.timelaps_items;
-                  txtWeatherAlerts += vigilanceType[parseInt(id)-1][0] +': ';
+                  txtWeatherAlerts += '<i class="wi '+vigilanceType[parseInt(id)-1][1] +'" title="'+vigilanceType[parseInt(id)-1][0] +'" style="font-size:18px;color:'+ colors[colmax][1]+'"></i>';
                   if(tlaps.length) {
                     for(j=0;j<tlaps.length;j++) {
                       col = tlaps[j].color_id;
-                      txtWeatherAlerts += ' ' +vigilanceColors[col][1];
-                      start = new Date(tlaps[j].begin_time);
-                      txtWeatherAlerts += '&nbsp;' +start.toLocaleTimeString().substr(0,5);
-                      end = new Date(tlaps[j].end_time);
-                      txtWeatherAlerts += '&nbsp;-&nbsp;' +end.toLocaleTimeString().substr(0,5);
+                      if(col > 1) { // exclude green
+                        txtWeatherAlerts += ' ' +vigilanceColors[col][1];
+                        start = new Date(tlaps[j].begin_time);
+                        txtWeatherAlerts += '&nbsp;' +start.toLocaleTimeString().substr(0,5);
+                        end = new Date(tlaps[j].end_time);
+                        txtWeatherAlerts += '&nbsp;-&nbsp;' +end.toLocaleTimeString().substr(0,5);
+                      }
                     }
                   }
                   else
-                    txtWeatherAlerts += ' ' +vigilanceColors[colmax][1];
+                    txtWeatherAlerts += ' &nbsp; ' +vigilanceColors[colmax][1];
                   txtWeatherAlerts += '<br>';
                 }
               }
+              if(typeof jsonData.littoral !== "undefined") {
+                for(i=0;i<jsonData.littoral.phenomenon_items.length;i++) {
+                  phenom = jsonData.littoral.phenomenon_items[i];
+                  colmax = phenom.phenomenon_max_color_id;
+                  if(colmax > 1) { // exclude green
+                    id = phenom.phenomenon_id;
+                    tlaps = phenom.timelaps_items;
+                    txtWeatherAlerts += vigilanceType[parseInt(id)-1][0] +': ';
+                    if(tlaps.length) {
+                      for(j=0;j<tlaps.length;j++) {
+                        col = tlaps[j].color_id;
+                        txtWeatherAlerts += ' ' +vigilanceColors[col][1];
+                        start = new Date(tlaps[j].begin_time);
+                        txtWeatherAlerts += '&nbsp;' +start.toLocaleTimeString().substr(0,5);
+                        end = new Date(tlaps[j].end_time);
+                        txtWeatherAlerts += '&nbsp;-&nbsp;' +end.toLocaleTimeString().substr(0,5);
+                      }
+                    }
+                    else
+                      txtWeatherAlerts += ' ' +vigilanceColors[colmax][1];
+                    txtWeatherAlerts += '<br>';
+                  }
+                }
+              }
+              if('#displayAlertsBelow#' != '0')
+                cmd.querySelector('.weatherAlertsBelow').innerHTML = txtWeatherAlerts;
+              else
+                cmd.querySelector('.weatherAlertsLine').innerHTML = txtWeatherAlerts;
             }
-            if('#displayAlertsBelow#' != '0')
-              cmd.querySelector('.weatherAlertsBelow').innerHTML = txtWeatherAlerts;
-            else
-              cmd.querySelector('.weatherAlertsLine').innerHTML = txtWeatherAlerts;
-          }
 
-              // Couleur de fond du widget
-          if ('#color'+ '#' != '#color#')
-            cmd.querySelector('.content').style.backgroundColor = '#color#';
-              // Couleur de la police du widget
-          if ('#fontColor'+ '#' != '#fontColor#')
-            cmd.querySelector('.content').style.color = '#fontColor#';
+                // Couleur de fond du widget
+            if ('#color'+ '#' != '#color#')
+              cmd.querySelector('.content').style.backgroundColor = '#color#';
+                // Couleur de la police du widget
+            if ('#fontColor'+ '#' != '#fontColor#')
+              cmd.querySelector('.content').style.color = '#fontColor#';
+          }
         }
       }
       catch(err) {
