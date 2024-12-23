@@ -1,32 +1,38 @@
 <div class="cmd cmd-widget #history#" data-type="info" data-subtype="string" data-template="custom" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
   <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.min.css" />
-  <div class="title #hide_name#">
-    <div  class="cmdName">#name_display#</div>
+  <div class="content">
+    <div class="title #hide_name#">
+      <div  class="cmdName">#name_display#</div>
+    </div>
+    <div class="dateText"></div>
+    <table>
+      <tr style="background-color:transparent !important;">
+        <td>
+          <a href="https://vigilance.meteofrance.fr/fr" target="_blank">
+            <div class="vigilanceMap" style="margin-top: -5px;margin-bottom: -5px"></div>
+          </a>
+        </td>
+        <td>
+          <div class="maxDeptColor"></div>
+        </td>
+        <td>
+          <div class="weatherAlertsLine" style="text-align:left;margin-left:8px"></div>
+        </td>
+      </tr>
+    </table>
+    <div class="weatherAlertsBelow" style="text-align:left;margin-top:4px"></div>
+    <div title="Message" class="errorMessage"></div>
   </div>
-  <div class="dateText"></div>
-  <table>
-    <tr style="background-color:transparent !important;">
-      <td>
-        <a href="https://vigilance.meteofrance.fr/fr" target="_blank">
-          <div class="vigilanceMap" style="margin-top: -5px;margin-bottom: -5px"></div>
-        </a>
-      </td>
-      <td>
-        <div class="maxDeptColor"></div>
-      </td>
-    </tr>
-  </table>
-  <div class="weatherAlerts" style="text-align:left;margin-top: 4px"></div>
-  <div title="Message" class="errorMessage"></div>
   <template>
     <div>color: rgb(20,20,20) ({{Couleur de fond}})</div>
     <div>fontColor: rgb(20,20,20) ({{Couleur du texte}})</div>
-    <div>displayDate: 0/1 ({{Affichage du jour}})</div>
-    <div>displayTime: 0/1 ({{Affichage de l'heure}})</div>
-    <div>displayMapFr: 0/1 ({{Affichage de la carte de France des vigilances du jour}})</div>
-    <div>displayMapDept: 0/1 ({{Affichage de la carte du département}})</div>
-    <div>displayDeptLevel: 0/1 ({{Affichage du niveau de vigilance du département}})</div>
-    <div>displayAlerts: 0/1 ({{Affichage des vigilances}})</div>
+    <div>displayDate: 0/1 ({{Affichage du jour. Défaut 1}})</div>
+    <div>displayTime: 0/1 ({{Affichage de l'heure. Défaut 1}})</div>
+    <div>displayMapFr: 0/1 ({{Affichage de la carte de France des vigilances du jour. Défaut 1}})</div>
+    <!-- <div>displayMapDept: 0/1 ({{Affichage de la carte du département. Défaut 1}})</div> -->
+    <div>displayDeptLevel: 0/1 ({{Affichage du niveau de vigilance du département. Défaut 1}})</div>
+    <div>displayAlerts: 0/1 ({{Affichage des vigilances. Défaut 1}})</div>
+    <div>displayAlertsBelow: 0/1 ({{Affichage du détail des vigilances en dessous. Défaut 1}})</div>
   </template>
   <script>
     jeedom.cmd.addUpdateFunction('#id#',function(_options) {
@@ -158,15 +164,18 @@
                 }
               }
             }
+            if('#displayAlertsBelow#' != '0')
+              cmd.querySelector('.weatherAlertsBelow').innerHTML = txtWeatherAlerts;
+            else
+              cmd.querySelector('.weatherAlertsLine').innerHTML = txtWeatherAlerts;
           }
-          cmd.querySelector('.weatherAlerts').innerHTML = txtWeatherAlerts;
 
               // Couleur de fond du widget
           if ('#color'+ '#' != '#color#')
-            cmd.style('background-color', '#color#', 'important');
+            cmd.querySelector('.content').style.backgroundColor = '#color#';
               // Couleur de la police du widget
           if ('#fontColor'+ '#' != '#fontColor#')
-            cmd.style('color', '#fontColor#', 'important');
+            cmd.querySelector('.content').style.color = '#fontColor#';
         }
       }
       catch(err) {
