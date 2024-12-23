@@ -87,11 +87,11 @@ class weatherForecast extends eqLogic {
     $eqLogics = self::byType(__CLASS__, true);
     $recupVig = 1;
     $minuteVigilance = config::byKey('minuteVigilance', __CLASS__, -1);
+    $fileAlert = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
     if ($minuteVigilance == -1) {
       config::save('minuteVigilance', rand(1,59), __CLASS__);
-      self::getVigilanceDataArchiveMF(); // get vigilances immediately
     }
-    else if($minute == $minuteVigilance) {
+    if($minute == $minuteVigilance || (!file_exists($fileAlert))) {
       self::getVigilanceDataArchiveMF();
     }
     foreach ($eqLogics as $equipt) {
