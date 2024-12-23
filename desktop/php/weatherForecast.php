@@ -158,6 +158,12 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
+                <label class="col-sm-3 control-label">{{Département vigilances FR}}</label>
+                <div class="col-sm-4">
+                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="numDeptFr"/>
+                </div>
+              </div>
+              <div class="form-group">
                 <label class="col-sm-3 control-label" ></label>
                 <div class="col-sm-4">
                   <label class="checkbox-inline">
@@ -249,14 +255,6 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 <label class="col-sm-4 control-label">{{Décalage horaire}}</label>
                 <div class="col-sm-6">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="timezone" readonly/>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-sm-4 control-label">{{Précision distance}}
-                  <sup><i class="fas fa-question-circle tooltips" title="{{A partir de la localisation utilisée, OpenweatherMap fournit les prévisions pour l'endroit décrit ci-dessus. La distance entre ces 2 localisations est de:}}"></i></sup>
-                </label>
-                <div class="col-sm-6">
-                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="distanceLocMF" readonly/>
                 </div>
               </div>
 -->
