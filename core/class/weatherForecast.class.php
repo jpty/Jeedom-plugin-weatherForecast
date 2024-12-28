@@ -213,6 +213,9 @@ class weatherForecast extends eqLogic {
 		if (trim($this->getConfiguration('positionGps','')) == '') {
 			$this->setConfiguration('positionGps', config::byKey('info::latitude') .' , ' .config::byKey('info::longitude'));
 		}
+		if (trim($this->getConfiguration('timezone','')) == '') {
+			$this->setConfiguration('timezone', config::byKey('timezone','core'));
+		}
 	}
 
   public function preInsert() {
@@ -363,6 +366,21 @@ class weatherForecast extends eqLogic {
     $wfCmd->setDisplay('generic_type', 'WEATHER_SUNRISE');
     $wfCmd->save();
 
+    $wfCmd = $this->getCmd(null, 'sunriseTs');
+    if (!is_object($wfCmd)) {
+      $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
+    }
+    $wfCmd->setName(__('Timestamp lever du soleil', __FILE__));
+    $wfCmd->setLogicalId('sunriseTs');
+    $wfCmd->setEqLogic_id($this->getId());
+    $wfCmd->setUnite('');
+    $wfCmd->setType('info');
+    $wfCmd->setSubType('numeric');
+    $wfCmd->setOrder(51);
+    $wfCmd->setDisplay('generic_type', 'WEATHER_SUNRISE');
+    $wfCmd->save();
+
     $wfCmd = $this->getCmd(null, 'sunset');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
@@ -374,7 +392,22 @@ class weatherForecast extends eqLogic {
     $wfCmd->setUnite('');
     $wfCmd->setType('info');
     $wfCmd->setSubType('numeric');
-    $wfCmd->setOrder(51);
+    $wfCmd->setOrder(52);
+    $wfCmd->setDisplay('generic_type', 'WEATHER_SUNSET');
+    $wfCmd->save();
+
+    $wfCmd = $this->getCmd(null, 'sunsetTs');
+    if (!is_object($wfCmd)) {
+      $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
+    }
+    $wfCmd->setName(__('Timestamp coucher du soleil', __FILE__));
+    $wfCmd->setLogicalId('sunsetTs');
+    $wfCmd->setEqLogic_id($this->getId());
+    $wfCmd->setUnite('');
+    $wfCmd->setType('info');
+    $wfCmd->setSubType('numeric');
+    $wfCmd->setOrder(52);
     $wfCmd->setDisplay('generic_type', 'WEATHER_SUNSET');
     $wfCmd->save();
 
@@ -516,7 +549,7 @@ class weatherForecast extends eqLogic {
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
-        $wfCmd->setIsVisible(1);
+        $wfCmd->setIsVisible(0);
         $wfCmd->setIsHistorized(0);
         $wfCmd->setName(__("Vigilance - Général", __FILE__));
         $wfCmd->setLogicalId($id);
@@ -617,58 +650,72 @@ class weatherForecast extends eqLogic {
     elseif($templateF == 'pluginImg') $templateFile = 'weatherForecastIMG';
     elseif($templateF == 'custom') $templateFile = 'custom.weatherForecast';
     else $templateFile = substr($templateF,0,-5);
-    // log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template: $templateFile");
+log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template: $templateFile");
+
 
     $version = jeedom::versionAlias($_version);
     $replace['#forecast#'] = '';
     $datasource = trim($this->getConfiguration('datasource', ''));
+    $timezone = $this->getConfiguration('timezone',config::byKey('timezone','core'));
     if ($version != 'mobile' || $this->getConfiguration('fullMobileDisplay', 0) == 1) {
       if (strpos($templateFile, 'weatherForecastIMG') !== false) {
         $forcast_template = getTemplate('core', $version, 'forecastIMG', __CLASS__);
       } else {
         $forcast_template = getTemplate('core', $version, 'forecast', __CLASS__);
       }
+      $dateTime = new DateTime();
+      $dateTime->setTimezone(new DateTimeZone($timezone));
+      $dateTime->setTimestamp(time());
+      $replace['#localDateTime#'] = "Date et heure locale: " .date_fr($dateTime->format('l d-m-Y H:i (\U\T\CP)'));
+      if($timezone == config::byKey('timezone','core')) $replace['#timezone#'] = '';
+      else $replace['#timezone#'] = $dateTime->format('e (\U\T\CP)');
+      $replace['#sunrise_sunset#'] = '';
+      $sunrise = null; $sunset = null;
+      $H0Cmd = $this->getCmd(null, 'H0Json4Widget');
+      if(is_object($H0Cmd)) {
+        $H0 = $H0Cmd->execCmd();
+        $H0 = str_replace('&quot;', '"', $H0);
+        $json = json_decode($H0,true);
+        if($json != null) {
+          $sunrise = $json['sunrise'];
+          if($sunrise === false) {
+            $replace['#sunrise#'] = 'never';
+            $replace['#sunrise_sunset#'] = '<i title="Nuit polaire" class="icon far fa-moon"></i>';
+          }
+          elseif($sunrise === true) {
+            $replace['#sunrise#'] = 'always';
+            $replace['#sunrise_sunset#'] = '<i title="Jour polaire" class="icon far fa-sun"></i>';
+          }
+          else {
+            $replace['#sunrise_sunset#'] = '<i title="Lever - Coucher du soleil" class="fas fa-sun icon_yellow"></i> ';
+            $dateTime->setTimestamp($sunrise);
+            $replace['#sunrise#'] = $dateTime->format('H:i');
+            $replace['#sunrise_sunset#'] .= $replace['#sunrise#'];
+          }
+          $sunset = $json['sunset'];
+          if($sunset === false) {
+            $replace['#sunset#'] = 'never';
+            $replace['#sunrise_sunset#'] = '<i title="Nuit polaire" class="icon far fa-moon"></i>';
+          }
+          elseif($sunset === true) {
+            $replace['#sunset#'] = 'always';
+            $replace['#sunrise_sunset#'] = '<i title="Jour polaire" class="icon far fa-sun"></i>';
+          }
+          else {
+            $dateTime->setTimestamp($sunset);
+            $replace['#sunset#'] = $dateTime->format('H:i');
+            $replace['#sunrise_sunset#'] .= ' - ' .$replace['#sunset#'];
+          }
+        }
+      }
+      
       $sunriseCmd = $this->getCmd(null, 'sunrise');
       $replace['#sunid#'] = is_object($sunriseCmd) ? $sunriseCmd->getId() : '';
-      $replace['#sunrise_sunset#'] = '';
-      if(is_object($sunriseCmd)) {
-        $sunrise = $sunriseCmd->execCmd();
-        if($sunrise == 0) {
-          $replace['#sunrise#'] = 'never';
-          $replace['#sunrise_sunset#'] = '<i title="Nuit polaire" class="icon far fa-moon"></i>';
-        }
-        elseif($sunrise == 1) {
-          $replace['#sunrise#'] = 'always';
-          $replace['#sunrise_sunset#'] = '<i title="Jour polaire" class="icon far fa-sun"></i>';
-        }
-        else {
-          $replace['#sunrise_sunset#'] = '<i title="Lever - Coucher du soleil" class="fas fa-sun icon_yellow"></i> ';
-          if(strlen($sunrise) == 1) $replace['#sunrise#'] = "0:0$sunrise";
-          if(strlen($sunrise) == 2) $replace['#sunrise#'] = "0:$sunrise";
-          else $replace['#sunrise#'] = substr_replace($sunrise,':',-2,0);
-          $replace['#sunrise_sunset#'] .= $replace['#sunrise#'];
-        }
-      }
-      else $sunrise = null;
-
       $sunsetCmd = $this->getCmd(null, 'sunset');
-      $sunset = is_object($sunsetCmd) ? $sunsetCmd->execCmd() : '';
-      if(is_object($sunsetCmd)) {
-        $sunset = $sunsetCmd->execCmd();
-        if($sunset == 0)
-          $replace['#sunset#'] = 'never';
-        elseif($sunset == 1)
-          $replace['#sunset#'] = 'always';
-        else  {
-          if(strlen($sunset) == 2) $replace['#sunset#'] = "0:$sunset";
-          else $replace['#sunset#'] = substr_replace($sunset,':',-2,0);
-          $replace['#sunsetid#'] = $sunsetCmd->getId();
-          $replace['#sunrise_sunset#'] .= ' - ' .$replace['#sunset#'];
-        }
-      }
-      else $sunset = null;
+      $replace['#sunsetid#'] = is_object($sunsetCmd) ? $sunsetCmd->getId() : '';
 
-      $hour =  date('G');
+      $dateTime->setTimestamp(time());
+      $hour = $dateTime->format('G');
       $nbForecastDays = $this->getConfiguration('forecastDaysNumber', 5);
       for ($i = 0; $i < $nbForecastDays; $i++) {
         if($i == 0) {
@@ -692,8 +739,11 @@ class weatherForecast extends eqLogic {
         $conditionID = $this->getCmd(null, "condition_id_$i");
         $dayNight = "day"; // day icon
         if($i == 0) {
-          $t = date('Gi');
-          if($t < $sunrise || $t > $sunset) $dayNight = "night";
+          if($sunrise === false) $dayNight = "night";
+          else if($sunrise !== true) {
+            $t = time();
+            if($t < $sunrise || $t > $sunset) $dayNight = "night";
+          }
         }
         $replaceDay['#icone#'] = is_object($conditionID) ? self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight) : '';
         $condition = $this->getCmd(null, "condition_$i");
@@ -757,14 +807,14 @@ class weatherForecast extends eqLogic {
     $refresh = $this->getCmd(null, 'refresh');
     $replace['#refresh_id#'] = is_object($refresh) ? $refresh->getId() : '';
 
-    $sunset_time = is_object($sunsetCmd) ? $sunsetCmd->execCmd() : null;
-    $sunrise_time = is_object($sunriseCmd) ? $sunriseCmd->execCmd() : null;
     $condition_id = $this->getCmd(null, 'condition_id');
     if (is_object($condition_id)) {
       $dayNight = "day"; // day icon
-      $t = date('Gi');
-      if($t < $sunrise_time || $t > $sunset_time) $dayNight = "night";
-// log::add(__CLASS__, 'debug', "DayNight $dayNight $t Rise:$sunrise_time Set:$sunset_time");
+      if($sunrise === false) $dayNight = "night";
+      else if($sunrise !== true) {
+        $t = time();
+        if($t < $sunrise || $t > $sunset) $dayNight = "night";
+      }
       $replace['#icone#'] = self::getIconFromCondition($condition_id->execCmd(), $datasource, $dayNight);
       $replace['#condition_id#'] = $condition_id->execCmd();
     } else {
@@ -818,7 +868,7 @@ class weatherForecast extends eqLogic {
           }
           // if($_version != 'mobile')
           $replace['#vigilance#'] = '<table border=0 style="border-spacing: 0px; width: 100%;">
-        <tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts1)) .'<br>Collecte: ' .date('d-m-Y H:i:s',$ts1) .'"><a href="https://vigilance.meteofrance.fr/fr" target="_blank"><img style="width:70px" src="plugins/meteofrance/data/' .$img .'"/></a></td>';
+        <tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts1)) .'<br>Collecte: ' .date('d-m-Y H:i:s',$ts1) .'"><a href="https://vigilance.meteofrance.fr/fr" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img .'"/></a></td>';
           foreach(self::$_vigilanceType as $i => $vig) {
             if($i == 10) continue; // Météo des forêts
             $vigilance = $this->getCmd(null, "Vigilancephenomenon_max_color_id$i");
@@ -877,7 +927,7 @@ class weatherForecast extends eqLogic {
 
           // Carte demain
           if($img2 != '' && $_version != 'mobile')
-            $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts2)) .'"><a href="https://vigilance.meteofrance.fr/fr/demain" target="_blank"><img style="width:70px" src="plugins/meteofrance/data/' .$img2 .'"/></a></td>';
+            $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts2)) .'"><a href="https://vigilance.meteofrance.fr/fr/demain" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img2 .'"/></a></td>';
         }
         else {
           $replace['#vigilance#'] = '<table border=0 style="border-spacing: 0px; width: 100%;"><tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilances">Pas de données de vigilance pour le département: ' .$numDept .'</td>';
@@ -967,10 +1017,12 @@ class weatherForecast extends eqLogic {
     $rain1h =  (isset($weather['rain']['1h'])) ? $weather['rain']['1h'] : 0;
     $changed = $this->checkAndUpdateCmd('rain', $rain1h) || $changed;
     $snow1h =  (isset($weather['snow']['1h'])) ? $weather['snow']['1h'] : 0;
-    $timezone = config::byKey('timezone', 'core', 'Europe/Paris');
     $dayNight = "day"; // day icon
-    $t = time();
-    if($t < $H0array['sunrise'] || $t > $H0array['sunset']) $dayNight = "night";
+    if($H0array['sunrise'] === false) $dayNight = "night";
+    else if($H0array['sunrise'] !== true) {
+      $t = time();
+      if($t < $H0array['sunrise'] || $t > $H0array['sunset']) $dayNight = "night";
+    }
     $icon = self::getIconFromCondition($weather['weather'][0]['id'], 'openweathermap', $dayNight);
 
     $H0array['weather'] = ['icon' => $icon, 'desc' => $weatherDesc];
@@ -998,7 +1050,11 @@ class weatherForecast extends eqLogic {
       return;
     }
     // log::add(__CLASS__, 'debug', "Nb forecast: " .count($forecast['forecast']['time']));
-    $hour = date('G');
+    $timezone = $this->getConfiguration('timezone',config::byKey('timezone','core'));
+    $dateTime = new DateTime();
+    $dateTime->setTimezone(new DateTimeZone($timezone));
+    $dateTime->setTimestamp(time());
+    $hour = $dateTime->format('G');
     $nbForecastDays = 5;
     if($_updateConfig) { // memo dans la config de l'équipement
       $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
@@ -1008,8 +1064,9 @@ class weatherForecast extends eqLogic {
     $tsNow = time();
     for ($i = 0; $i < $nbForecastDays; $i++) {
       $ts = strtotime("+{$i} day");
-      $date = date('Y-m-d', $ts);
-      $midday = date('Y-m-d 12:00:00', $ts);
+      $dateTime->setTimestamp($ts);
+      $date = $dateTime->format('Y-m-d');
+      $midday = $dateTime->format('Y-m-d 12:00:00');
       $maxTemp = -666;
       $minTemp = 666;
       $condition_id = 0;
@@ -1021,8 +1078,10 @@ class weatherForecast extends eqLogic {
           log::add(__CLASS__, 'warning'," From value not set: " .json_encode($weather));
           continue;
         }
-        $tsDt_txt = strtotime($weather['dt_txt']);
-        $sDate = date('Y-m-d',$tsDt_txt);
+        // $tsDt_txt = strtotime($weather['dt_txt']);
+        $tsDt_txt = $weather['dt'];
+        $dateTime->setTimestamp($tsDt_txt);
+        $sDate = $dateTime->format('Y-m-d');
         $Tmin = round($weather['main']['temp_min'], 1);
         $Tmax = round($weather['main']['temp_max'], 1);
         // log::add(__CLASS__, 'debug', $weather['dt_txt'] ." [$sDate] Weather temp: " .$weather['main']['temp']));
@@ -1041,7 +1100,10 @@ class weatherForecast extends eqLogic {
         }
 
         if($i == 0 && $hour > 8 && $tsDt_txt > $tsNow) { // plage de l'heure suivante recherchée
-          $title = date('G', $tsDt_txt) ."h - " .date('G',($tsDt_txt + 10800)) ."h";
+          $dateTime->setTimestamp($tsDt_txt);
+          $title = $dateTime->format('G') ."h - ";
+          $dateTime->setTimestamp($tsDt_txt +10800);
+          $title .= $dateTime->format('G') ."h";
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
           $condition = ucfirst($weather['weather'][0]['description']);
@@ -1053,7 +1115,10 @@ class weatherForecast extends eqLogic {
           break;
         }
         else if($weather['dt_txt'] == $midday) { // condition à 12h uniquement
-          $title = date_fr(date('D. j', $tsDt_txt));
+          $dateTime->setTimestamp($tsDt_txt);
+          // $middayDate = $dateTime->format('D. j H:i');
+          $middayDate = $dateTime->format('D. j');
+          $title = date_fr($middayDate);
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
           $condition = ucfirst($weather['weather'][0]['description']);
@@ -1168,8 +1233,11 @@ class weatherForecast extends eqLogic {
     $windGust =  (isset($current['gust_kph'])) ? round($current['gust_kph']) : 0;
     $changed = $this->checkAndUpdateCmd('wind_gust', $windGust) || $changed;
     $dayNight = "day"; // day icon
-    $t = time();
-    if($t < $H0array['sunrise'] || $t > $H0array['sunset']) $dayNight = "night";
+    if($H0array['sunrise'] === false) $dayNight = "night";
+    else if($H0array['sunrise'] !== true) {
+      $t = time();
+      if($t < $H0array['sunrise'] || $t > $H0array['sunset']) $dayNight = "night";
+    }
     $icon = self::getIconFromCondition($current['condition']['code'], 'weatherapi', $dayNight);
     $H0array['weather'] = ['icon' => $icon, 'desc' => $weatherDesc];
     $H0array['T'] = ['value' => $weatherTemp, 'windchill' => $current['feelslike_c']];
@@ -1329,23 +1397,37 @@ class weatherForecast extends eqLogic {
     $H0array = array();
     $sun_info = date_sun_info(time(), $lat, $lon);
     $sunrise = $sun_info['sunrise'];
+    $this->checkAndUpdateCmd('sunriseTs', $sunrise);
     $H0array['sunrise'] = $sunrise;
     if($sunrise === false) $sunrise = 0;
     elseif($sunrise === true) $sunrise = 1;
     else $sunrise = date('Gi',$sunrise);
     $this->checkAndUpdateCmd('sunrise', $sunrise);
     $sunset = $sun_info['sunset'];
+    $this->checkAndUpdateCmd('sunsetTs', $sunset);
     $H0array['sunset'] = $sunset;
     if($sunset === false) $sunset = 0;
     elseif($sunset === true) $sunset = 1;
     else $sunset = date('Gi',$sunset);
     $this->checkAndUpdateCmd('sunset', $sunset);
-    $H0array['dayOfTheYear'] = (date('z')+1) .'/' .((date('L'))? '366' : '365');
-    $H0array['saintOfTheDay'] = self::saintOfTheDay(date('n'),date('j'));
+    $timezone = $this->getConfiguration('timezone',config::byKey('timezone','core'));
+    $dateTime = new DateTime();
+    $dateTime->setTimezone(new DateTimeZone($timezone));
+    $dateTime->setTimestamp(time());
+    $date_z = $dateTime->format('z');
+    $date_L = $dateTime->format('L');
+    $date_n = $dateTime->format('n');
+    $date_j = $dateTime->format('j');
+    $H0array['dayOfTheYear'] = ($date_z+1) .'/' .($date_L? '366' : '365');
+    $H0array['saintOfTheDay'] = self::saintOfTheDay($date_n,$date_j);
+    $H0array['timezone'] = $timezone;
       // update vigilances if department is informed 
     $this->getVigilance();
 
-    if($_updateConfig != 2) { // Pas de maj meteo si cronDaily
+    if($_updateConfig == 2) { // Called by cronDaily
+      $this->refreshWidget();
+    }
+    else {
       $datasource = trim($this->getConfiguration('datasource', ''));
       $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
       if($datasource == "openweathermap") {
