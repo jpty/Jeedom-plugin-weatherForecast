@@ -213,6 +213,9 @@ class weatherForecast extends eqLogic {
 		if (trim($this->getConfiguration('positionGps','')) == '') {
 			$this->setConfiguration('positionGps', config::byKey('info::latitude') .' , ' .config::byKey('info::longitude'));
 		}
+		if (trim($this->getConfiguration('timezone','')) == '') {
+			$this->setConfiguration('timezone', config::byKey('timezone','core'));
+		}
 	}
 
   public function preInsert() {
@@ -664,7 +667,8 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
       $dateTime->setTimezone(new DateTimeZone($timezone));
       $dateTime->setTimestamp(time());
       $replace['#localDateTime#'] = "Date et heure locale: " .date_fr($dateTime->format('l d-m-Y H:i (\U\T\CP)'));
-      $replace['#timezone#'] = $dateTime->format('e (\U\T\CP)');
+      if($timezone == config::byKey('timezone','core')) $replace['#timezone#'] = '';
+      else $replace['#timezone#'] = $dateTime->format('e (\U\T\CP)');
       $replace['#sunrise_sunset#'] = '';
       $sunrise = null; $sunset = null;
       $H0Cmd = $this->getCmd(null, 'H0Json4Widget');
