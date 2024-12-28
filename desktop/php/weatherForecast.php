@@ -130,7 +130,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
               <legend><i class="fas fa-cogs"></i> {{Paramètres spécifiques}}</legend>
               <div class="form-group">
                 <label class="col-sm-3 control-label">{{Source des données}}
-                  <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez la source de données}}"></i></sup>
+                  <sup><i class="fas fa-question-circle tooltips" title="{{Sélection de la source de données météo}}"></i></sup>
                 </label>
                 <div class="col-sm-4">
                   <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="datasource">
@@ -161,6 +161,37 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 <label class="col-sm-3 control-label">{{Département vigilances FR}}</label>
                 <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="numDeptFr"/>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-3 control-label">{{Fuseau horaire}}
+                  <sup><i class="fas fa-question-circle" tooltip="{{Sélection du fuseau horaire pour l'affichage de la météo}}"></i></sup>
+                </label>
+                <div class="col-sm-4">
+                  <div class="input-group">
+                    <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="timezone">
+<?php
+                      $timezone_identifiers = DateTimeZone::listIdentifiers();
+                      $nb = count($timezone_identifiers);
+                      $group = '';
+                      for ($i=0; $i < $nb; $i++) {
+                        $tz = $timezone_identifiers[$i];
+                        $lieu = date_create('now', timezone_open($tz));
+                        $decal = date_offset_get($lieu);
+                        $h = sprintf('%+d',intval($decal/3600));
+                        $min = sprintf('%02d',($decal % 3600)/60);
+                        $pos= strpos($tz,'/');
+                        $newgroup = substr($tz,0,$pos);
+                        if($group != $newgroup) {
+                          if($group != '') echo "</optrgoup>";
+                          echo "<optgroup label=\"--- $newgroup ---\">";
+                          $group = $newgroup;
+                        }
+                        echo "<option value=\"$tz\">$tz (UTC$h:$min)</option>";
+                      }
+?>
+                    </select>
+                  </div>
                 </div>
               </div>
               <div class="form-group">
@@ -254,7 +285,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
               <div class="form-group">
                 <label class="col-sm-4 control-label">{{Décalage horaire}}</label>
                 <div class="col-sm-6">
-                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="timezone" readonly/>
+                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="timezoneWF" readonly/>
                 </div>
               </div>
 -->
