@@ -158,12 +158,6 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label">{{Département vigilances FR}}</label>
-                <div class="col-sm-4">
-                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="numDeptFr"/>
-                </div>
-              </div>
-              <div class="form-group">
                 <label class="col-sm-3 control-label">{{Fuseau horaire}}
                   <sup><i class="fas fa-question-circle" tooltip="{{Sélection du fuseau horaire pour l'affichage de la météo}}"></i></sup>
                 </label>
@@ -178,8 +172,11 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                         $tz = $timezone_identifiers[$i];
                         $lieu = date_create('now', timezone_open($tz));
                         $decal = date_offset_get($lieu);
-                        $h = sprintf('%+d',intval($decal/3600));
-                        $min = sprintf('%02d',($decal % 3600)/60);
+                        $absDecal = abs($decal);
+                        if($decal != $absDecal) $sign = '-';
+                        else $sign ='+';
+                        $h = sprintf('%02d',intval($absDecal/3600));
+                        $min = sprintf('%02d',($absDecal % 3600)/60);
                         $pos= strpos($tz,'/');
                         $newgroup = substr($tz,0,$pos);
                         if($group != $newgroup) {
@@ -187,7 +184,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                           echo "<optgroup label=\"--- $newgroup ---\">";
                           $group = $newgroup;
                         }
-                        echo "<option value=\"$tz\">$tz (UTC$h:$min)</option>";
+                        echo "<option value=\"$tz\">$tz (UTC$sign$h:$min)</option>";
                       }
 ?>
                     </select>
@@ -195,12 +192,9 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label" ></label>
+                <label class="col-sm-3 control-label">{{Département vigilances FR}}</label>
                 <div class="col-sm-4">
-                  <label class="checkbox-inline">
-                    <input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="fullMobileDisplay" />{{Affichage complet en mobile}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Cocher la case pour afficher les informations météo des jours suivants sur les appareils mobiles}}"></i></sup>
-</label>
+                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="numDeptFr"/>
                 </div>
               </div>
               <div class="form-group">
@@ -240,56 +234,69 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                   </select>
                 </div>
               </div>
+              <div class="form-group">
+                <label class="col-sm-3 control-label" ></label>
+                <div class="col-sm-4">
+                  <label class="checkbox-inline">
+                    <input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="fullMobileDisplay" />{{Affichage complet en mobile}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Cocher la case pour afficher les informations météo des jours suivants sur les appareils mobiles}}"></i></sup>
+</label>
+                </div>
+              </div>
             </div>
 
             <!-- Partie droite de l'onglet "Équipement" -->
             <div class="col-lg-6">
               <legend><i class="fas fa-info"></i> {{Données de la localisation}}</legend>
               <div class="form-group">
-                <label class="col-sm-4 control-label">{{Latitude}}</label>
-                <div class="col-sm-6">
+                <label class="col-sm-3 control-label">{{Latitude}}</label>
+                <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="lat" readonly/>
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-4 control-label">{{Longitude}}</label>
-                <div class="col-sm-6">
+                <label class="col-sm-3 control-label">{{Longitude}}</label>
+                <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="lon" readonly/>
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-4 control-label">{{Ville}}</label>
-                <div class="col-sm-6">
+                <label class="col-sm-3 control-label">{{Ville}}</label>
+                <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="ville" readonly/>
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-4 control-label">{{Pays}}</label>
-                <div class="col-sm-6">
+                <label class="col-sm-3 control-label">{{Pays}}</label>
+                <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="country" readonly/>
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-4 control-label">{{Infos}}</label>
-                <div class="col-sm-6">
+                <label class="col-sm-3 control-label">{{Infos}}</label>
+                <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="otherInfo" readonly/>
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-4 control-label">{{Refresh minute}}</label>
-                <div class="col-sm-6">
+                <label class="col-sm-3 control-label">{{Fuseau horaire}}</label>
+                <div class="col-sm-4">
+                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="timezoneApi" readonly/>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <legend><i class="fas fa-info"></i> {{Fonctionnement}}</legend>
+              <div class="form-group">
+                <label class="col-sm-3 control-label">{{Refresh minute}}
+                  <sup><i class="fas fa-question-circle" tooltip="{{Les équipements sont rafraichis à cette minute.<br>Chaque demi-heure pour la source OpenWeather<br>Chaque quart d'heure pour Weather API}}"></i></sup>
+                </label>
+                <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="refreshMinute" readonly/>
                 </div>
               </div>
-<!--
-              <div class="form-group">
-                <label class="col-sm-4 control-label">{{Décalage horaire}}</label>
-                <div class="col-sm-6">
-                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="timezoneWF" readonly/>
-                </div>
-              </div>
--->
             </div>
+
           </fieldset>
         </form>
       </div><!-- /.tabpanel #eqlogictab-->
@@ -302,8 +309,8 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
             <thead>
               <tr>
                 <th class="hidden-xs" style="min-width:50px;width:70px;">ID</th>
-                <th style="min-width:50px;">{{LogicalId}}</th>
-                <th style="min-width:100px;">{{Nom}}</th>
+                <th style="min-width:100px;width:200px;">{{LogicalId}}</th>
+                <th style="min-width:120px;width:250px;">{{Nom}}</th>
                 <th>{{Paramètres}}</th>
                 <th>{{Etat}}</th>
                 <th style="min-width:80px;">{{Actions}}</th>

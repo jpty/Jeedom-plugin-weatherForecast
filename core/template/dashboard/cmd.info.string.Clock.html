@@ -43,10 +43,10 @@
           <div class="seconds#id#">0</div>
       </div>
       <div id="weather#id#" class="wIcon#uid#">
-        <div id="weatherTopLeft">
+        <div id="weatherTopLeft#id#">
           <div class="widgetName#id#">#name#</div>
           <div style="font-size:14px;margin:0;padding:0" class="condition"></div>
-          <div id="weatherLeft" class="weatherLeft#id#">
+          <div id="weatherLeft#id#" class="weatherLeft#id#">
             <div class="wind"></div>
             <div>
               <span class="humidity"></span>&nbsp;
@@ -58,7 +58,7 @@
             </div>
           </div>
         </div>
-        <div id="weatherRight">
+        <div id="weatherRight#id#">
           <div id="date" class="dateText#id#" style="font-size:20px;line-height:18px;padding:0"></div>
           <div class="saintOfTheDay" style="font-size:14px;line-height:17px;margin:0;padding:0;text-shadow: 3px 3px 2px rgba(0, 0, 0, 1);"></div>
           <div class="sunRiseSet" style="font-size:14px;line-height:16px;margin:0;padding:0"></div>
@@ -152,14 +152,14 @@
       overflow: visible !important;
     }
 
-    #weather#id# #weatherTopLeft {
+    #weather#id# #weatherTopLeft#id# {
       float: left;
       text-align:left;
       min-width:100px;
       line-height:18px;
-      margin: 0px 0 0 10px;
+      margin: 0px 0 0 8px;
     }
-    #weather#id# #weatherLeft {
+    #weather#id# #weatherLeft#id# {
       margin: 8px 0 0 4px;
       width: 200px;
       font-size: 12px;
@@ -174,11 +174,11 @@
       text-shadow: 2px 2px 1px rgba(0, 0, 0, 1);
     }
 
-    #weather#id# #weatherRight {
+    #weather#id# #weatherRight#id# {
       text-align:right;
       float: right;
       clear: none;
-      margin: 0px 10px 0 0px;
+      margin: 0px 8px 0 0px;
     }
 
     #weather#id# #date,
@@ -277,6 +277,7 @@
           dateText#id#.innerText = dateText;
         }
       }
+          /* dateText#id#.innerText = "Dimanche 29 septembre"; // Largeur maxi de la date */
       if(seconds2lines#id# == 1)
         secondsText#id#.innerText = nowSeconds.substring(0,1) +"\n" +nowSeconds.substring(1,2);    
       else secondsText#id#.innerText = nowSeconds;    
