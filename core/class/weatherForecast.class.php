@@ -542,8 +542,8 @@ class weatherForecast extends eqLogic {
         $wfCmd->setEqLogic_id($this->getId());
         $wfCmd->setType('info');
         $wfCmd->setSubType('string');
-        $wfCmd->setTemplate('dashboard', __CLASS__ .'::Vigilance');
-        $wfCmd->setTemplate('mobile', __CLASS__ .'::Vigilance');
+        $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
+        $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
         $wfCmd->setOrder($ord++);
         $wfCmd->save();
       }
@@ -1188,28 +1188,30 @@ if(1 || $this->getId() == 2271) {
     $apikeyWapi = trim(config::byKey('apikeyWapi', __CLASS__));
     if(trim($apikeyWapi) == '' )
       throw new Exception(__("La clé API Weather API n'est pas renseignée.", __FILE__));
-    $nbdays = 14;
+    $nbdays = 5;
     $url = "http://api.weatherapi.com/v1/forecast.json?key=$apikeyWapi&q=$lat,$lon&lang=$lang&days=$nbdays&aqi=yes&alerts=yes";
     $request_http = new com_http($url);
     $resu = $request_http->exec(10);
     
     $datas = json_decode($resu, true);
-    if(isset($datas['error'])) {
+    if($datas === null || isset($datas['error'])) {
       log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
       $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
       $hdle = fopen($file, "wb");
       if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
-      else message::add(__CLASS__, "Unable to write $file");
+      else log::add(__CLASS__, 'info', "Unable to write $file");
         // {"error":{"code":1006,"message":"No matching location found."}}
-      if(isset($datas['error'])) {
-        $this->setConfiguration('lat', '');
-        $this->setConfiguration('lon', '');
-        $this->setConfiguration('ville', '');
-        $this->setConfiguration('country', '');
-        $errMsg = "Erreur: " .$datas['error']['code'] ." " .$datas['error']['message'];
-        $this->setConfiguration('otherInfo', $errMsg);
-        log::add(__CLASS__, 'warning', $errMsg);
-        $this->save(true);
+      if($_updateConfig) { // memo dans la config de l'équipement
+        if(isset($datas['error'])) {
+          $this->setConfiguration('lat', '');
+          $this->setConfiguration('lon', '');
+          $this->setConfiguration('ville', '');
+          $this->setConfiguration('country', '');
+          $errMsg = "Erreur: " .$datas['error']['code'] ." " .$datas['error']['message'];
+          $this->setConfiguration('otherInfo', $errMsg);
+          log::add(__CLASS__, 'warning', $errMsg);
+          $this->save(true);
+        }
       }
       return;
     }
