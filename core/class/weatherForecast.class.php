@@ -1183,6 +1183,21 @@ if(1 || $this->getId() == 2271) {
     return (round($distance,2)); 
   }
 
+  public function fetchWeatherApi($url) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 40);
+    $content = curl_exec($ch);
+    if ($content === false) {
+      log::add(__CLASS__,'warning', __FUNCTION__ ." $url Failed curl_error: (" .curl_errno($ch) .") " .curl_error($ch));
+      curl_close($ch); unset($ch);
+      return(null);
+    }
+    curl_close($ch); unset($ch);
+    return($content);
+  }
+
   public function updateWeatherApi($_updateConfig, $lat, $lon, $lang, &$H0array) {
     $changed = false;
     $apikeyWapi = trim(config::byKey('apikeyWapi', __CLASS__));
@@ -1190,35 +1205,38 @@ if(1 || $this->getId() == 2271) {
       throw new Exception(__("La clé API Weather API n'est pas renseignée.", __FILE__));
     $nbdays = 5;
     $url = "http://api.weatherapi.com/v1/forecast.json?key=$apikeyWapi&q=$lat,$lon&lang=$lang&days=$nbdays&aqi=yes&alerts=yes";
-    $request_http = new com_http($url);
-    $resu = $request_http->exec(10);
-    
-    $datas = json_decode($resu, true);
-    if($datas !== null) {
-      if(isset($datas['error'])) {
-        log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
-        $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
-        $hdle = fopen($file, "wb");
-        if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
-        else log::add(__CLASS__, 'info', "Unable to write $file");
-          // {"error":{"code":1006,"message":"No matching location found."}}
-        if($_updateConfig == 1) { // memo dans la config de l'équipement
-          if(isset($datas['error'])) {
-            $this->setConfiguration('lat', '');
-            $this->setConfiguration('lon', '');
-            $this->setConfiguration('ville', '');
-            $this->setConfiguration('country', '');
-            $errMsg = "Erreur: " .$datas['error']['code'] ." " .$datas['error']['message'];
-            $this->setConfiguration('otherInfo', $errMsg);
-            log::add(__CLASS__, 'warning', $errMsg);
-            $this->setConfiguration('timezoneApi', '');
-            $this->save(true);
-          }
-        }
-        return;
-      }
+    /* $request_http = new com_http($url); $resu = $request_http->exec(10); */
+
+    $content = $this->fetchWeatherApi($url);
+    if($content == null) return;
+    $hdle = fopen(__DIR__ ."/../../data/OpenWeather-current-" .$this->getId().".json", "wb");
+    if($hdle !== FALSE) { fwrite($hdle, $content); fclose($hdle); }
+    $datas = json_decode($content,true);
+    if($datas == null) {
+      log::add(__CLASS__, 'warning', __FUNCTION__ ." L:" .__LINE__ ." Json_decode error : " .json_last_error_msg() ." [" . substr($content,0,50) ."] ... [" .substr($content,-50) ."]");
+      return;
     }
-    else {
+    
+    if(isset($datas['error'])) {
+      log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
+      $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
+      $hdle = fopen($file, "wb");
+      if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
+      else log::add(__CLASS__, 'info', "Unable to write $file");
+        // {"error":{"code":1006,"message":"No matching location found."}}
+      if($_updateConfig == 1) { // memo dans la config de l'équipement
+        if(isset($datas['error'])) {
+          $this->setConfiguration('lat', '');
+          $this->setConfiguration('lon', '');
+          $this->setConfiguration('ville', '');
+          $this->setConfiguration('country', '');
+          $errMsg = "Erreur: " .$datas['error']['code'] ." " .$datas['error']['message'];
+          $this->setConfiguration('otherInfo', $errMsg);
+          log::add(__CLASS__, 'warning', $errMsg);
+          $this->setConfiguration('timezoneApi', '');
+          $this->save(true);
+        }
+      }
       return;
     }
     

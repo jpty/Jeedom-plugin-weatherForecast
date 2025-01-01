@@ -269,13 +269,11 @@
         updateContainer#id#(minutesContainer#id#, nowMinutes, anim)
       }
 // console.log("Timezone:" +timezone#id# +" " +lastHours +" " +nowHours +":" +nowMinutes);
-      if((parseInt(nowMinutes)%5) == 0 && parseInt(nowSeconds) < 5) { // Update Date
-        let dayTxt = now.toLocaleDateString([], {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'});
-        let dateText = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1) // ucfirst
-        if(dateText != dateText#id#.innerText) {
-          // console.log("Update Date Timezone: " +timezone#id# +" Date: " +dateText);
-          dateText#id#.innerText = dateText;
-        }
+      let dayTxt = now.toLocaleDateString([], {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'});
+      let dateText = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1) // ucfirst
+      if(dateText != dateText#id#.innerText) {
+        // console.log("Update Date Timezone: " +timezone#id# +" Date: " +dateText);
+        dateText#id#.innerText = dateText;
       }
           /* dateText#id#.innerText = "Dimanche 29 septembre"; // Largeur maxi de la date */
       if(seconds2lines#id# == 1)
@@ -339,7 +337,7 @@
           if('#displayWeather#' != '0' &&  _options.display_value != '') {
             let json = _options.display_value.replaceAll('&quot;','"');
             let obj = JSON.parse(json);
-            if(obj != null) {
+            if(obj != null && typeof(obj.weather) != 'undefined') {
               if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
               dayTxt = cd.toLocaleDateString([], {timeZone: timezone#id#, month: 'long', day: 'numeric',weekday: 'long'});
 // console.log("addUpdateFunction Timezone: " +timezone#id# +" Date: " +dayTxt +" " +obj.dt);
