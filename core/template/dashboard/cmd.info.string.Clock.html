@@ -43,10 +43,10 @@
           <div class="seconds#id#">0</div>
       </div>
       <div id="weather#id#" class="wIcon#uid#">
-        <div id="weatherTopLeft">
+        <div id="weatherTopLeft#id#">
           <div class="widgetName#id#">#name#</div>
           <div style="font-size:14px;margin:0;padding:0" class="condition"></div>
-          <div id="weatherLeft" class="weatherLeft#id#">
+          <div id="weatherLeft#id#" class="weatherLeft#id#">
             <div class="wind"></div>
             <div>
               <span class="humidity"></span>&nbsp;
@@ -58,7 +58,7 @@
             </div>
           </div>
         </div>
-        <div id="weatherRight">
+        <div id="weatherRight#id#">
           <div id="date" class="dateText#id#" style="font-size:20px;line-height:18px;padding:0"></div>
           <div class="saintOfTheDay" style="font-size:14px;line-height:17px;margin:0;padding:0;text-shadow: 3px 3px 2px rgba(0, 0, 0, 1);"></div>
           <div class="sunRiseSet" style="font-size:14px;line-height:16px;margin:0;padding:0"></div>
@@ -152,14 +152,14 @@
       overflow: visible !important;
     }
 
-    #weather#id# #weatherTopLeft {
+    #weather#id# #weatherTopLeft#id# {
       float: left;
       text-align:left;
       min-width:100px;
       line-height:18px;
-      margin: 0px 0 0 10px;
+      margin: 0px 0 0 8px;
     }
-    #weather#id# #weatherLeft {
+    #weather#id# #weatherLeft#id# {
       margin: 8px 0 0 4px;
       width: 200px;
       font-size: 12px;
@@ -174,11 +174,11 @@
       text-shadow: 2px 2px 1px rgba(0, 0, 0, 1);
     }
 
-    #weather#id# #weatherRight {
+    #weather#id# #weatherRight#id# {
       text-align:right;
       float: right;
       clear: none;
-      margin: 0px 10px 0 0px;
+      margin: 0px 8px 0 0px;
     }
 
     #weather#id# #date,
@@ -269,14 +269,13 @@
         updateContainer#id#(minutesContainer#id#, nowMinutes, anim)
       }
 // console.log("Timezone:" +timezone#id# +" " +lastHours +" " +nowHours +":" +nowMinutes);
-      if((parseInt(nowMinutes)%5) == 0 && parseInt(nowSeconds) < 5) { // Update Date
-        let dayTxt = now.toLocaleDateString([], {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'});
-        let dateText = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1) // ucfirst
-        if(dateText != dateText#id#.innerText) {
-          // console.log("Update Date Timezone: " +timezone#id# +" Date: " +dateText);
-          dateText#id#.innerText = dateText;
-        }
+      let dayTxt = now.toLocaleDateString([], {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'});
+      let dateText = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1) // ucfirst
+      if(dateText != dateText#id#.innerText) {
+        // console.log("Update Date Timezone: " +timezone#id# +" Date: " +dateText);
+        dateText#id#.innerText = dateText;
       }
+          /* dateText#id#.innerText = "Dimanche 29 septembre"; // Largeur maxi de la date */
       if(seconds2lines#id# == 1)
         secondsText#id#.innerText = nowSeconds.substring(0,1) +"\n" +nowSeconds.substring(1,2);    
       else secondsText#id#.innerText = nowSeconds;    
@@ -338,7 +337,7 @@
           if('#displayWeather#' != '0' &&  _options.display_value != '') {
             let json = _options.display_value.replaceAll('&quot;','"');
             let obj = JSON.parse(json);
-            if(obj != null) {
+            if(obj != null && typeof(obj.weather) != 'undefined') {
               if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
               dayTxt = cd.toLocaleDateString([], {timeZone: timezone#id#, month: 'long', day: 'numeric',weekday: 'long'});
 // console.log("addUpdateFunction Timezone: " +timezone#id# +" Date: " +dayTxt +" " +obj.dt);

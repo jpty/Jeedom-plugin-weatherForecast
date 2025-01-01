@@ -75,7 +75,8 @@ class weatherForecast extends eqLogic {
     else return("NA");
   }
 
-  public static function cronDaily() {
+  public static function cronHourly() {
+    $eqLogics = self::byType(__CLASS__, true);
     foreach ($eqLogics as $equipt) {
       $equipt->updateWeatherData(2);
     }
@@ -161,7 +162,8 @@ class weatherForecast extends eqLogic {
       if ($_dayNight == "day") return 'meteo-soleil';
       else return 'far fa-moon';
        */
-      log::add(__CLASS__, 'error', "Unknown $datasource condition : $_condition_id");
+      if($_condition_id != '')
+        log::add(__CLASS__, 'error', "Unknown $datasource condition : $_condition_id");
     } elseif($datasource == 'weatherapi') {
       if (in_array($_condition_id, array(1087, 1273, 1276, 1279, 1282))) {
         return 'meteo-orage';
@@ -181,7 +183,8 @@ class weatherForecast extends eqLogic {
       }
       if ($_dayNight == "day") return 'meteo-soleil';
       else return 'far fa-moon';
-      log::add(__CLASS__, 'info', "Unknown $datasource condition : $_condition_id");
+      if($_condition_id != '')
+        log::add(__CLASS__, 'info', "Unknown $datasource condition : $_condition_id");
     }
     else log::add(__CLASS__, 'info', __FUNCTION__ ." Unknown datasource : $datasource");
   }
@@ -539,8 +542,8 @@ class weatherForecast extends eqLogic {
         $wfCmd->setEqLogic_id($this->getId());
         $wfCmd->setType('info');
         $wfCmd->setSubType('string');
-        $wfCmd->setTemplate('dashboard', __CLASS__ .'::Vigilance');
-        $wfCmd->setTemplate('mobile', __CLASS__ .'::Vigilance');
+        $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
+        $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
         $wfCmd->setOrder($ord++);
         $wfCmd->save();
       }
@@ -621,13 +624,14 @@ class weatherForecast extends eqLogic {
 
     if ($this->getIsEnable() == 1) {
       $this->updateWeatherData(1);
-    } else {
-      $cron = cron::byClassAndFunction(__CLASS__,
- 'pull', array('weather_id' => intval($this->getId())));
-      if (is_object($cron)) {
-        $cron->remove();
-      }
     }
+  }
+
+  public static function dateTimezone($format,$ts,$timezone) {
+    $dateTime = new DateTime();
+    $dateTime->setTimezone(new DateTimeZone($timezone));
+    $dateTime->setTimestamp($ts);
+    return $dateTime->format($format);
   }
 
   public function convertDegrees2Compass($degrees,$deg=0) {
@@ -744,6 +748,17 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
             $t = time();
             if($t < $sunrise || $t > $sunset) $dayNight = "night";
           }
+          /*
+if(1 || $this->getId() == 2271) {
+  $txt = '';
+  if($t < $sunrise) $txt .= "Now: " .self::dateTimezone('c',$t,$timezone) ." Day/Night $dayNight";
+  $txt .= " Sunrise: " .self::dateTimezone('c',$sunrise,$timezone); 
+  if($t >= $sunrise && $t < $sunset) $txt .= " Now: $t " .self::dateTimezone('c',$t,$timezone) ." Day/Night $dayNight";
+  $txt .= " Sunset: " .self::dateTimezone('c',$sunset,$timezone); 
+  if($t >= $sunset) $txt .= " Now: " .self::dateTimezone('c',$t,$timezone) ." Day/Night $dayNight";
+  message::add(__CLASS__,$txt);
+}
+           */
         }
         $replaceDay['#icone#'] = is_object($conditionID) ? self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight) : '';
         $condition = $this->getCmd(null, "condition_$i");
@@ -974,10 +989,11 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
       return;
     }
     if(isset($weather['cod']) && $weather['cod'] != 200) {
-      if($_updateConfig) { // memo dans la config de l'équipement
+      if($_updateConfig == 1) { // memo dans la config de l'équipement
         $this->setConfiguration('lat', '');
         $this->setConfiguration('lon', '');
         $this->setConfiguration('ville', '');
+        $this->setConfiguration('timezoneApi', '');
         $this->setConfiguration('country', '');
       }
       $errMsg = "Erreur: " .$weather['cod'] ." " .$weather['message'];
@@ -986,7 +1002,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
       $this->save(true);
       return;
     }
-    if($_updateConfig) { // memo dans la config de l'équipement
+    if($_updateConfig == 1) { // memo dans la config de l'équipement
       $lat = $weather['coord']['lat'];
       $lon = $weather['coord']['lon'];
       $this->setConfiguration('lat', $weather['coord']['lat']);
@@ -996,7 +1012,13 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
         $this->setConfiguration('country', $weather['sys']['country']);
       else
         $this->setConfiguration('country', '');
+      $decal = $weather['timezone'];
+      $absDecal = abs($decal);
+      if($decal != $absDecal) $sign = '-'; else $sign ='+';
+      $h = sprintf('%02d',intval($absDecal/3600));
+      $min = sprintf('%02d',($absDecal % 3600)/60);
       $this->setConfiguration('otherInfo', "CityID : " .$weather['id']);
+      $this->setConfiguration('timezoneApi', "UTC$sign$h:$min");
       $this->save(true);
     }
     log::add(__CLASS__, 'debug', $url . ' : ' . substr(json_encode($weather),0,100));
@@ -1056,7 +1078,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
     $dateTime->setTimestamp(time());
     $hour = $dateTime->format('G');
     $nbForecastDays = 5;
-    if($_updateConfig) { // memo dans la config de l'équipement
+    if($_updateConfig == 1) { // memo dans la config de l'équipement
       $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
@@ -1161,33 +1183,59 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
     return (round($distance,2)); 
   }
 
+  public function fetchWeatherApi($url) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 40);
+    $content = curl_exec($ch);
+    if ($content === false) {
+      log::add(__CLASS__,'warning', __FUNCTION__ ." $url Failed curl_error: (" .curl_errno($ch) .") " .curl_error($ch));
+      curl_close($ch); unset($ch);
+      return(null);
+    }
+    curl_close($ch); unset($ch);
+    return($content);
+  }
+
   public function updateWeatherApi($_updateConfig, $lat, $lon, $lang, &$H0array) {
     $changed = false;
     $apikeyWapi = trim(config::byKey('apikeyWapi', __CLASS__));
     if(trim($apikeyWapi) == '' )
       throw new Exception(__("La clé API Weather API n'est pas renseignée.", __FILE__));
-    $nbdays = 14;
+    $nbdays = 5;
     $url = "http://api.weatherapi.com/v1/forecast.json?key=$apikeyWapi&q=$lat,$lon&lang=$lang&days=$nbdays&aqi=yes&alerts=yes";
-    $request_http = new com_http($url);
-    $resu = $request_http->exec(10);
+    /* $request_http = new com_http($url); $resu = $request_http->exec(10); */
+
+    $content = $this->fetchWeatherApi($url);
+    if($content == null) return;
+    $hdle = fopen(__DIR__ ."/../../data/OpenWeather-current-" .$this->getId().".json", "wb");
+    if($hdle !== FALSE) { fwrite($hdle, $content); fclose($hdle); }
+    $datas = json_decode($content,true);
+    if($datas == null) {
+      log::add(__CLASS__, 'warning', __FUNCTION__ ." L:" .__LINE__ ." Json_decode error : " .json_last_error_msg() ." [" . substr($content,0,50) ."] ... [" .substr($content,-50) ."]");
+      return;
+    }
     
-    $datas = json_decode($resu, true);
     if(isset($datas['error'])) {
       log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
       $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
       $hdle = fopen($file, "wb");
       if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
-      else message::add(__CLASS__, "Unable to write $file");
+      else log::add(__CLASS__, 'info', "Unable to write $file");
         // {"error":{"code":1006,"message":"No matching location found."}}
-      if(isset($datas['error'])) {
-        $this->setConfiguration('lat', '');
-        $this->setConfiguration('lon', '');
-        $this->setConfiguration('ville', '');
-        $this->setConfiguration('country', '');
-        $errMsg = "Erreur: " .$datas['error']['code'] ." " .$datas['error']['message'];
-        $this->setConfiguration('otherInfo', $errMsg);
-        log::add(__CLASS__, 'warning', $errMsg);
-        $this->save(true);
+      if($_updateConfig == 1) { // memo dans la config de l'équipement
+        if(isset($datas['error'])) {
+          $this->setConfiguration('lat', '');
+          $this->setConfiguration('lon', '');
+          $this->setConfiguration('ville', '');
+          $this->setConfiguration('country', '');
+          $errMsg = "Erreur: " .$datas['error']['code'] ." " .$datas['error']['message'];
+          $this->setConfiguration('otherInfo', $errMsg);
+          log::add(__CLASS__, 'warning', $errMsg);
+          $this->setConfiguration('timezoneApi', '');
+          $this->save(true);
+        }
       }
       return;
     }
@@ -1205,7 +1253,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
     log::add(__CLASS__, 'debug', "  Datas updated on " .$current['last_updated'] ." Condition: " .$current['condition']['text']); // ." Icon: " .$current['condition']['icon']);
     $H0array['updated_on'] = strtotime($current['last_updated']);
 
-    if($_updateConfig) { // memo dans la config de l'équipement
+    if($_updateConfig == 1) { // memo dans la config de l'équipement
       $this->setConfiguration('lat', $datas['location']['lat']);
       $this->setConfiguration('lon', $datas['location']['lon']);
       $this->setConfiguration('ville', $datas['location']['name']);
@@ -1217,6 +1265,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
       $pos2 = $datas['location']['lat'] ."," .$datas['location']['lon'];
       $dist = $this->getDistanceBetweenGPSPoints($pos1, $pos2, 'kilometers');
       $this->setConfiguration('otherInfo', "Distance: $dist km");
+      $this->setConfiguration('timezoneApi', $datas['location']['tz_id']);
       $this->save(true);
     }
     $weatherTemp = $current['temp_c'];
@@ -1321,7 +1370,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
      */
 
     $nbForecastDays = 3; // count($datas['forecast']['forecastday']);
-    if($_updateConfig) { // memo dans la config de l'équipement
+    if($_updateConfig == 1) { // memo dans la config de l'équipement
       $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
@@ -1379,13 +1428,14 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
              }
             }
              */
-        $this->checkAndUpdateCmd("forecast_D{$i}_JSON", str_replace('"','&quot;',json_encode($forecastday[$i],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)));
+        $changed = $this->checkAndUpdateCmd("forecast_D{$i}_JSON", str_replace('"','&quot;',json_encode($forecastday[$i],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))) || $changed;
       }
     }
     return $changed;
   }
 
   public function updateWeatherData($_updateConfig = 0) {
+    $changed = false;
     $gps = trim($this->getConfiguration('positionGps', ''));
     $coord = explode(',', $gps);
     if(count($coord) > 1) {
@@ -1394,22 +1444,36 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
     } else {
       throw new Exception(__("Coordonnées incorrectes [$gps]", __FILE__));
     }
-    $H0array = array();
+    $datasource = trim($this->getConfiguration('datasource', ''));
+    $H0Cmd = $this->getCmd(null, 'H0Json4Widget');
+    if(is_object($H0Cmd)) {
+      $H0 = $H0Cmd->execCmd();
+      $H0 = str_replace('&quot;', '"', $H0);
+      $H0array = json_decode($H0,true);
+      if($H0array === null) $H0array = array();
+      else {
+        if($datasource != $H0array['datasource']) { // Changement datasource
+          unset($HOarray);
+          $H0array = array();
+        }
+      }
+    }
+    else $H0array = array();
     $sun_info = date_sun_info(time(), $lat, $lon);
     $sunrise = $sun_info['sunrise'];
-    $this->checkAndUpdateCmd('sunriseTs', $sunrise);
+    $changed = $this->checkAndUpdateCmd('sunriseTs', $sunrise) || $changed;
     $H0array['sunrise'] = $sunrise;
     if($sunrise === false) $sunrise = 0;
     elseif($sunrise === true) $sunrise = 1;
     else $sunrise = date('Gi',$sunrise);
-    $this->checkAndUpdateCmd('sunrise', $sunrise);
+    $changed = $this->checkAndUpdateCmd('sunrise', $sunrise) || $changed;
     $sunset = $sun_info['sunset'];
-    $this->checkAndUpdateCmd('sunsetTs', $sunset);
+    $changed = $this->checkAndUpdateCmd('sunsetTs', $sunset) || $changed;
     $H0array['sunset'] = $sunset;
     if($sunset === false) $sunset = 0;
     elseif($sunset === true) $sunset = 1;
     else $sunset = date('Gi',$sunset);
-    $this->checkAndUpdateCmd('sunset', $sunset);
+    $changed = $this->checkAndUpdateCmd('sunset', $sunset) || $changed;
     $timezone = $this->getConfiguration('timezone',config::byKey('timezone','core'));
     $dateTime = new DateTime();
     $dateTime->setTimezone(new DateTimeZone($timezone));
@@ -1422,32 +1486,25 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
     $H0array['saintOfTheDay'] = self::saintOfTheDay($date_n,$date_j);
     $H0array['timezone'] = $timezone;
       // update vigilances if department is informed 
-    $this->getVigilance();
+    $changed = $this->getVigilance() || $changed;
 
-    if($_updateConfig == 2) { // Called by cronDaily
-      $this->refreshWidget();
-    }
-    else {
-      $datasource = trim($this->getConfiguration('datasource', ''));
+    if($_updateConfig != 2) { // Not called by cronDaily. Request to sources
       $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
       if($datasource == "openweathermap") {
-        $H0array['datasource'] = "OpenWeatherMap";
-        $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array);
-        if ($changed) $this->refreshWidget();
-        $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-        $this->checkAndUpdateCmd("H0Json4Widget", $contents);
+        $H0array['datasource'] = "openweathermap";
+        $changed = $this->updateWeatherOwm($_updateConfig, $lat, $lon, $lang, $H0array) || $changed;
       }
       else if($datasource == "weatherapi") {
-        $H0array['datasource'] = "WeatherApi";
-        $changed = $this->updateWeatherApi($_updateConfig, $lat, $lon, $lang, $H0array);
-        if ($changed) $this->refreshWidget();
-        $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-        $this->checkAndUpdateCmd("H0Json4Widget", $contents);
+        $H0array['datasource'] = "weatherapi";
+        $changed = $this->updateWeatherApi($_updateConfig, $lat, $lon, $lang, $H0array) || $changed;
       }
       else {
         throw new Exception(__("Type de données inconnu. $datasource", __FILE__));
       }
     }
+    $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+    $changed = $this->checkAndUpdateCmd("H0Json4Widget", $contents) || $changed;
+    if($_updateConfig == 2 || $changed) $this->refreshWidget();
   }
 
   public static function downloadVigDataArchive($fileUrl,$json,$fileResu) {
@@ -1602,17 +1659,18 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
   }
 
   public function getVigilance() {
+    $changed = false;
     $numDept = $this->getConfiguration('numDeptFr');
     if($numDept == '') {
       log::add(__CLASS__, 'debug', __FUNCTION__ ." Département non défini.");
       foreach(self::$_vigilanceType as $i => $vig) {
-        $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0);
-        $this->checkAndUpdateCmd("Vigilancephases$i",'');
-        $this->checkAndUpdateCmd('Vigilancecolor_max', 0);
-        $this->checkAndUpdateCmd('Vigilancelist', '');
-        $this->checkAndUpdateCmd("VigilanceJson", '[]');
+        $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0) || $changed;
+        $changed = $this->checkAndUpdateCmd("Vigilancephases$i",'') || $changed;
+        $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', 0) || $changed;
+        $changed = $this->checkAndUpdateCmd('Vigilancelist', '') || $changed;
+        $changed = $this->checkAndUpdateCmd("VigilanceJson", '[]') || $changed;
       }
-      return;
+      return $changed;
     }
     log::add(__CLASS__, 'debug', __FUNCTION__ ." Département: $numDept");
       // Météo des forêts
@@ -1635,7 +1693,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
                 // TODO verification si j1 suivant heure OK
                 if(date('Y-m-d') == date('Y-m-d',$ts+86400)) {
                   $colForest = $dept['niveau_j1'];
-                  $this->checkAndUpdateCmd('Vigilance_color_forest', $colForest);
+                  $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', $colForest) || $changed;
                   log::add(__CLASS__, 'debug', "Meteo des forets ($numDept) J1 $colForest Date:" .date('Y-m-d'));
                 }
                 else log::add(__CLASS__, 'debug', "Meteo des forets ($numDept) color not found " .date('Y-m-d',$ts+86400) .". Value unchanged");
@@ -1645,35 +1703,35 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
             }
             if(!$found)  {
               log::add(__CLASS__, 'warning', "  Forest. Department $numDept not found");
-              $this->checkAndUpdateCmd('Vigilance_color_forest', -1);
+              $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', -1) || $changed;
             }
           }
         }
         else {
           log::add(__CLASS__, 'warning', "  Unable to json_decode data from $fileData");
           @unlink($fileData);
-          $this->checkAndUpdateCmd('Vigilance_color_forest', -1);
+          $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', -1) || $changed;
         }
       }
       else {
         log::add(__CLASS__, 'warning', "  Unable to load data from $fileData");
-        $this->checkAndUpdateCmd('Vigilance_color_forest', -1);
+        $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', -1) || $changed;
       }
     }
-    else $this->checkAndUpdateCmd('Vigilance_color_forest', 0);
+    else $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', 0) || $changed;
 
     $fileData = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
     $contents = @file_get_contents($fileData);
     if($contents === false) {
       log::add(__CLASS__, 'warning', "  Unable to load data from $fileData");
       // TODO clean des cmds ou pas ?
-      return;
+      return $changed;
     }
     $return = json_decode($contents,true);
     if($return === false) {
       @unlink($fileData);
       // TODO clean des cmds ou pas ?
-      return;
+      return $changed;
     }
     /* $txtTsAlerts = array(); */ $phenomColor = array(); $txtPhases = array();
         // init all values
@@ -1726,8 +1784,8 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
         }
       }
     }
-    $this->checkAndUpdateCmd('Vigilancecolor_max', $maxColor);
-    $this->checkAndUpdateCmd('Vigilancelist', implode(', ',$listVigilance));
+    $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', $maxColor) || $changed;
+    $changed = $this->checkAndUpdateCmd('Vigilancelist', implode(', ',$listVigilance)) || $changed;
       // save departement file
     $fileDept = __DIR__ ."/../template/images/dept_fr_$numDept-grey.svg";
     $contents = @file_get_contents($fileDept);
@@ -1742,7 +1800,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
       // Save Json command
     if(count($vigJson)) {
       $contents = str_replace('"','&quot;',json_encode($vigJson,JSON_UNESCAPED_UNICODE));
-      $this->checkAndUpdateCmd("VigilanceJson", $contents);
+      $changed = $this->checkAndUpdateCmd("VigilanceJson", $contents) || $changed;
       if(strlen($contents) > 3000)
         message::add(__CLASS__, "Cmd VigilanceJson Lg:". strlen($contents));
       /*
@@ -1754,10 +1812,11 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
       // Other commands
     foreach(self::$_vigilanceType as $i => $vig) {
       // if($phenomColor[$i] > 1) message::add(__CLASS__, "Vigilance $i " .$phenomColor[$i] .$txtTsAlerts[$i]);
-      $this->checkAndUpdateCmd("Vigilancephases$i",
-        self::$_vigilanceColors[$phenomColor[$i]]['desc'] .$txtPhases[$i]);
-      $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i", $phenomColor[$i]);
+      $changed = $this->checkAndUpdateCmd("Vigilancephases$i",
+        self::$_vigilanceColors[$phenomColor[$i]]['desc'] .$txtPhases[$i]) || $changed;
+      $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i", $phenomColor[$i]) || $changed;
     }
+    return $changed;
   }
 
 }

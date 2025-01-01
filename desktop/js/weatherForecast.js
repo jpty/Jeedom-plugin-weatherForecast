@@ -33,7 +33,7 @@ function addCmdToTable(_cmd) {
   tr += '<td>';
   tr += '<input class="cmdAttr form-control input-sm" data-l1key="type" style="display : none;">';
   tr += '<input class="cmdAttr form-control input-sm" data-l1key="subType" style="display : none;">';
-  tr += '<input class="cmdAttr form-control input-sm" data-l1key="name" style="width : 140px;" placeholder="{{Nom de la commande}}"></td>';
+  tr += '<input class="cmdAttr form-control input-sm" data-l1key="name" placeholder="{{Nom de la commande}}"></td>';
   tr += '<td>';
   tr += '<span><label class="checkbox-inline"><input type="checkbox" class="cmdAttr checkbox-inline" data-l1key="isVisible" checked/>{{Afficher}}</label></span>';
   if(!isset(_cmd.type) || _cmd.type == 'info' ) {
