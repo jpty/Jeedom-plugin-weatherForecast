@@ -1123,9 +1123,9 @@ if(1 || $this->getId() == 2271) {
 
         if($i == 0 && $hour > 8 && $tsDt_txt > $tsNow) { // plage de l'heure suivante recherchée
           $dateTime->setTimestamp($tsDt_txt);
-          $title = $dateTime->format('G:i') ."h - ";
+          $title = $dateTime->format('G') ."h - ";
           $dateTime->setTimestamp($tsDt_txt +10800);
-          $title .= $dateTime->format('G:i') ."h";
+          $title .= $dateTime->format('G') ."h";
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
           $condition = ucfirst($weather['weather'][0]['description']);
@@ -1138,8 +1138,8 @@ if(1 || $this->getId() == 2271) {
         }
         else if($weather['dt_txt'] == $midday) { // condition à 12h uniquement
           $dateTime->setTimestamp($tsDt_txt);
-          $middayDate = $dateTime->format('D. j H:i');
-          // $middayDate = $dateTime->format('D. j');
+          // $middayDate = $dateTime->format('D. j H:i');
+          $middayDate = $dateTime->format('D. j');
           $title = date_fr($middayDate);
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
