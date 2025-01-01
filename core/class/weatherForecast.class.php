@@ -989,7 +989,7 @@ if(1 || $this->getId() == 2271) {
       return;
     }
     if(isset($weather['cod']) && $weather['cod'] != 200) {
-      if($_updateConfig) { // memo dans la config de l'équipement
+      if($_updateConfig == 1) { // memo dans la config de l'équipement
         $this->setConfiguration('lat', '');
         $this->setConfiguration('lon', '');
         $this->setConfiguration('ville', '');
@@ -1002,7 +1002,7 @@ if(1 || $this->getId() == 2271) {
       $this->save(true);
       return;
     }
-    if($_updateConfig) { // memo dans la config de l'équipement
+    if($_updateConfig == 1) { // memo dans la config de l'équipement
       $lat = $weather['coord']['lat'];
       $lon = $weather['coord']['lon'];
       $this->setConfiguration('lat', $weather['coord']['lat']);
@@ -1078,7 +1078,7 @@ if(1 || $this->getId() == 2271) {
     $dateTime->setTimestamp(time());
     $hour = $dateTime->format('G');
     $nbForecastDays = 5;
-    if($_updateConfig) { // memo dans la config de l'équipement
+    if($_updateConfig == 1) { // memo dans la config de l'équipement
       $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
@@ -1194,25 +1194,31 @@ if(1 || $this->getId() == 2271) {
     $resu = $request_http->exec(10);
     
     $datas = json_decode($resu, true);
-    if($datas === null || isset($datas['error'])) {
-      log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
-      $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
-      $hdle = fopen($file, "wb");
-      if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
-      else log::add(__CLASS__, 'info', "Unable to write $file");
-        // {"error":{"code":1006,"message":"No matching location found."}}
-      if($_updateConfig) { // memo dans la config de l'équipement
-        if(isset($datas['error'])) {
-          $this->setConfiguration('lat', '');
-          $this->setConfiguration('lon', '');
-          $this->setConfiguration('ville', '');
-          $this->setConfiguration('country', '');
-          $errMsg = "Erreur: " .$datas['error']['code'] ." " .$datas['error']['message'];
-          $this->setConfiguration('otherInfo', $errMsg);
-          log::add(__CLASS__, 'warning', $errMsg);
-          $this->save(true);
+    if($datas !== null) {
+      if(isset($datas['error'])) {
+        log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
+        $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
+        $hdle = fopen($file, "wb");
+        if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
+        else log::add(__CLASS__, 'info', "Unable to write $file");
+          // {"error":{"code":1006,"message":"No matching location found."}}
+        if($_updateConfig == 1) { // memo dans la config de l'équipement
+          if(isset($datas['error'])) {
+            $this->setConfiguration('lat', '');
+            $this->setConfiguration('lon', '');
+            $this->setConfiguration('ville', '');
+            $this->setConfiguration('country', '');
+            $errMsg = "Erreur: " .$datas['error']['code'] ." " .$datas['error']['message'];
+            $this->setConfiguration('otherInfo', $errMsg);
+            log::add(__CLASS__, 'warning', $errMsg);
+            $this->setConfiguration('timezoneApi', '');
+            $this->save(true);
+          }
         }
+        return;
       }
+    }
+    else {
       return;
     }
     
@@ -1229,7 +1235,7 @@ if(1 || $this->getId() == 2271) {
     log::add(__CLASS__, 'debug', "  Datas updated on " .$current['last_updated'] ." Condition: " .$current['condition']['text']); // ." Icon: " .$current['condition']['icon']);
     $H0array['updated_on'] = strtotime($current['last_updated']);
 
-    if($_updateConfig) { // memo dans la config de l'équipement
+    if($_updateConfig == 1) { // memo dans la config de l'équipement
       $this->setConfiguration('lat', $datas['location']['lat']);
       $this->setConfiguration('lon', $datas['location']['lon']);
       $this->setConfiguration('ville', $datas['location']['name']);
@@ -1346,7 +1352,7 @@ if(1 || $this->getId() == 2271) {
      */
 
     $nbForecastDays = 3; // count($datas['forecast']['forecastday']);
-    if($_updateConfig) { // memo dans la config de l'équipement
+    if($_updateConfig == 1) { // memo dans la config de l'équipement
       $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
