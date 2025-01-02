@@ -200,6 +200,7 @@
     <div>clockAnimation: {{Animation: Blur, ScrollV, Random Défaut: Random}}</div>
     <div>clockBackgroundColor: {{Couleur de fond des textes de l'heure.}} transparent</div>
     <div>clockBorder: {{Couleur des bordures autour de l'heure et des minutes. Ex: 8px ridge green}}</div>
+    <div>clockDateFontSize: {{Taille du texte de la date. Défaut: 20px}}</div>
     <div>clockFontColor: {{Couleur des textes Heures, minutes, secondes.}} white</div>
     <div>clockFontFamily: {{Police de l'horloge. Défaut: sans-serif}}</div>
     <div>clockFontSize: {{Taille des textes Heures et minutes. Défaut: 150px}}</div>
@@ -216,13 +217,14 @@
     <div>clockTimezone: {{Fuseau horaire. Défaut: Le fuseau horaire du navigateur}}</div>
     <div>displayBackgroundImage: {{Affichage de l'image de fond. 0/1 Défaut: 1}}</div>
     <div>displayClouds: {{Affichage du pourcentage de nuages. 0/1 Défaut: 1}}</div>
-    <div>displayDayOfTheYear: {{Affichage du jour de l'année. 0/1 Défaut: 0 }}</div>
+    <div>displayDate: {{Affichage de la date. 0/1 Défaut: 1}}</div>
+    <div>displayDayOfTheYear: {{Affichage du jour de l'année. 0/1 Défaut: 1 }}</div>
     <div>displayCollectDate: {{Affichage de la date de collecte. 0/1 Défaut: 1}}</div>
     <div>displayError: {{Affichage des erreurs JS et Copyright. 0/1 Défaut: 1}}</div>
     <div>displayHumidity: {{Affichage du pourcentage d'humidité. 0/1 Défaut: 1}}</div>
     <div>displayPressure: {{Affichage de la pression atmosphèrique. 0/1 Défaut: 1}}</div>
     <div>displayRain: {{Affichage de la quantité de pluie dans l'heure. 0/1 Défaut: 1}}</div>
-    <div>displaySaintOfTheDay: {{Affichage du saint du jour. 0/1 Défaut: 0 }}</div>
+    <div>displaySaintOfTheDay: {{Affichage du saint du jour. 0/1 Défaut: 1 }}</div>
     <div>displaySeconds: {{Affichage des secondes sur l'horloge. 0/1 Défaut: 1}}</div>
     <div>displayWeather: {{Affichage de la météo. 0/1 Défaut: 1}}</div>
     <div>displayWidgetName: {{Affichage du nom du widget. 0/1 Défaut: 1}}</div>
@@ -269,11 +271,13 @@
         updateContainer#id#(minutesContainer#id#, nowMinutes, anim)
       }
 // console.log("Timezone:" +timezone#id# +" " +lastHours +" " +nowHours +":" +nowMinutes);
-      let dayTxt = now.toLocaleDateString([], {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'});
-      let dateText = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1) // ucfirst
-      if(dateText != dateText#id#.innerText) {
-        // console.log("Update Date Timezone: " +timezone#id# +" Date: " +dateText);
-        dateText#id#.innerText = dateText;
+      if('#displayDate#' != '0') {
+        let dayTxt = now.toLocaleDateString([], {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'});
+        let dateText = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1) // ucfirst
+        if(dateText != dateText#id#.innerText) {
+          // console.log("Update Date Timezone: " +timezone#id# +" Date: " +dateText);
+          dateText#id#.innerText = dateText;
+        }
       }
           /* dateText#id#.innerText = "Dimanche 29 septembre"; // Largeur maxi de la date */
       if(seconds2lines#id# == 1)
@@ -332,15 +336,12 @@
       if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
         cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
         let cd = new Date();
-        let dayTxt = cd.toLocaleDateString([], { month: 'long', day: 'numeric',weekday: 'long'});
         try {
           if('#displayWeather#' != '0' &&  _options.display_value != '') {
             let json = _options.display_value.replaceAll('&quot;','"');
             let obj = JSON.parse(json);
             if(obj != null && typeof(obj.weather) != 'undefined') {
               if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
-              dayTxt = cd.toLocaleDateString([], {timeZone: timezone#id#, month: 'long', day: 'numeric',weekday: 'long'});
-// console.log("addUpdateFunction Timezone: " +timezone#id# +" Date: " +dayTxt +" " +obj.dt);
               let icon = "url('plugins/weatherForecast/core/template/images/" +obj.weather.icon +".png')"
               cmd.querySelector('.wIcon#uid#').style.setProperty('background-image', icon)
               cmd.querySelector('.condition').innerHTML = obj.weather.desc;
@@ -374,11 +375,11 @@
                 cmd.querySelector('.pressure').innerHTML = '<i class="wi wi-barometer" title="Pression atmosphérique"></i> ' +obj.sea_level +"hPa";
                 // Saint du jour
               saintOfTheDay = '';
-              if('#displaySaintOfTheDay#' == '1') {
+              if('#displaySaintOfTheDay#' != '0') {
                 if(typeof obj.saintOfTheDay != 'undefined') 
                   saintOfTheDay = obj.saintOfTheDay;
               }
-              if('#displayDayOfTheYear#' == '1') {
+              if('#displayDayOfTheYear#' != '0') {
                 if(typeof obj.dayOfTheYear != 'undefined') 
                   saintOfTheDay += ' ' + obj.dayOfTheYear;
               }
@@ -484,6 +485,9 @@
             }
           }
 
+          if ('#clockDateFontSize#' != '#clockDateFontSize'+'#') {
+            cmd.querySelector('.dateText#id#').style.fontSize = '#clockDateFontSize#';
+          }
           if ('#clockFontSize#' != '#clockFontSize'+'#') {
             cmd.querySelector('.clock#id#').style.fontSize = '#clockFontSize#';
           }
@@ -539,7 +543,6 @@
           if ('#displayBackgroundImage#' != '0') {
             cmd.querySelector('#digital_container#id#').style.background = 'url(plugins/weatherForecast/core/template/images/clockBackground.png) no-repeat';
           }
-          cmd.querySelector('.dateText#id#').innerHTML = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1); // ucfirst
         }
         catch(err) {
           if('#displayError#' != '0') {
