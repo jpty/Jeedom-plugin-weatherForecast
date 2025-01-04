@@ -1221,7 +1221,7 @@ if(1 || $this->getId() == 2271) {
       log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
       $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
       $hdle = fopen($file, "wb");
-      if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
+      if($hdle !== FALSE) { fwrite($hdle, $content); fclose($hdle); }
       else log::add(__CLASS__, 'info', "Unable to write $file");
         // {"error":{"code":1006,"message":"No matching location found."}}
       if($_updateConfig == 1) { // memo dans la config de l'équipement
