@@ -125,66 +125,74 @@ class weatherForecast extends eqLogic {
     }
   }
 
-  public static function getIconFromCondition($_condition_id, $datasource, $_dayNight) {
+  public static function getIconFromCondition($_condition_id, $datasource, $_dayNight, $_templateImg) {
     if($datasource == 'openweathermap') {
-      if ($_condition_id >= 200 && $_condition_id <= 299) {
-        return 'meteo-orage';
-      }
-      if (($_condition_id >= 300 && $_condition_id <= 399)) {
-        return 'meteo-brouillard';
-      }
-      if ($_condition_id >= 500 && $_condition_id <= 510) {
-        if ($_dayNight == "day") return 'meteo-nuage-soleil-pluie';
-        else return 'meteo-pluie'; // TODO icone avec lune
-      }
-      if ($_condition_id >= 520 && $_condition_id <= 599) {
-        return 'meteo-pluie';
-      }
-      if (($_condition_id >= 600 && $_condition_id <= 699) || ($_condition_id == 511)) {
-        return 'meteo-neige';
-      }
-      if ($_condition_id >= 700 && $_condition_id < 770){
-        return 'meteo-brouillard';
-      }
-      if ($_condition_id >= 770 && $_condition_id < 799){
-        return 'meteo-vent';
-      }
-      if ($_condition_id > 800 && $_condition_id <= 899) {
-        if ($_dayNight == "day") return 'meteo-nuageux'; // Pas assez de nuages
-        // if ($_dayNight == "day") return 'fortement-nuageux';
-        else return 'meteo-nuit-nuage';
-      }
-      if ($_condition_id == 800) {
+      if($_templateImg == 0) {
+        return "wi wi-owm-$_dayNight-$_condition_id";
+      } else {
+        if ($_condition_id >= 200 && $_condition_id <= 299) {
+          return 'meteo-orage';
+        }
+        if (($_condition_id >= 300 && $_condition_id <= 399)) {
+          return 'meteo-brouillard';
+        }
+        if ($_condition_id >= 500 && $_condition_id <= 510) {
+          if ($_dayNight == "day") return 'meteo-nuage-soleil-pluie';
+          else return 'meteo-pluie'; // TODO icone avec lune
+        }
+        if ($_condition_id >= 520 && $_condition_id <= 599) {
+          return 'meteo-pluie';
+        }
+        if (($_condition_id >= 600 && $_condition_id <= 699) || ($_condition_id == 511)) {
+          return 'meteo-neige';
+        }
+        if ($_condition_id >= 700 && $_condition_id < 770){
+          return 'meteo-brouillard';
+        }
+        if ($_condition_id >= 770 && $_condition_id < 799){
+          return 'meteo-vent';
+        }
+        if ($_condition_id > 800 && $_condition_id <= 899) {
+          if ($_dayNight == "day") return 'meteo-nuageux'; // Pas assez de nuages
+          // if ($_dayNight == "day") return 'fortement-nuageux';
+          else return 'meteo-nuit-nuage';
+        }
+        if ($_condition_id == 800) {
+          if ($_dayNight == "day") return 'meteo-soleil';
+          else return 'far fa-moon';
+        }
+        /*
         if ($_dayNight == "day") return 'meteo-soleil';
         else return 'far fa-moon';
+         */
+        if($_condition_id != '')
+          log::add(__CLASS__, 'error', "Unknown $datasource condition : $_condition_id");
       }
-      /*
-      if ($_dayNight == "day") return 'meteo-soleil';
-      else return 'far fa-moon';
-       */
-      if($_condition_id != '')
-        log::add(__CLASS__, 'error', "Unknown $datasource condition : $_condition_id");
     } elseif($datasource == 'weatherapi') {
-      if (in_array($_condition_id, array(1087, 1273, 1276, 1279, 1282))) {
-        return 'meteo-orage';
+      if($_templateImg == 0) {
+        return "Wapi-$_condition_id-$_dayNight";
+      } else {
+        if (in_array($_condition_id, array(1087, 1273, 1276, 1279, 1282))) {
+          return 'meteo-orage';
+        }
+        if (in_array($_condition_id, array(1135, 1030, 1072, 1147, 1150, 1153, 1168, 1171))) {
+          return 'meteo-brouillard';
+        }
+        if (in_array($_condition_id, array(1189, 1195, 1063, 1180, 1186, 1201, 1240, 1243, 1246, 1183, 1207, 1198, 1192))) {
+          return 'meteo-pluie';
+        }
+        if (in_array($_condition_id, array(1066, 1069, 1114, 1117, 1204, 1210, 1213, 1216, 1219, 1222, 1225, 1237, 1249, 1252, 1255, 1258, 1261, 1264))) {
+          return 'meteo-neige';
+        }
+        if (in_array($_condition_id, array(1006, 1003, 1009))) {
+          if ($_dayNight == "day") return 'meteo-nuageux';
+          else return 'meteo-nuit-nuage';
+        }
+        if ($_dayNight == "day") return 'meteo-soleil';
+        else return 'far fa-moon';
+        if($_condition_id != '')
+          log::add(__CLASS__, 'info', "Unknown $datasource condition : $_condition_id");
       }
-      if (in_array($_condition_id, array(1135, 1030, 1072, 1147, 1150, 1153, 1168, 1171))) {
-        return 'meteo-brouillard';
-      }
-      if (in_array($_condition_id, array(1189, 1195, 1063, 1180, 1186, 1201, 1240, 1243, 1246, 1183, 1207, 1198, 1192))) {
-        return 'meteo-pluie';
-      }
-      if (in_array($_condition_id, array(1066, 1069, 1114, 1117, 1204, 1210, 1213, 1216, 1219, 1222, 1225, 1237, 1249, 1252, 1255, 1258, 1261, 1264))) {
-        return 'meteo-neige';
-      }
-      if (in_array($_condition_id, array(1006, 1003, 1009))) {
-        if ($_dayNight == "day") return 'meteo-nuageux';
-        else return 'meteo-nuit-nuage';
-      }
-      if ($_dayNight == "day") return 'meteo-soleil';
-      else return 'far fa-moon';
-      if($_condition_id != '')
-        log::add(__CLASS__, 'info', "Unknown $datasource condition : $_condition_id");
     }
     else log::add(__CLASS__, 'info', __FUNCTION__ ." Unknown datasource : $datasource");
   }
@@ -254,6 +262,20 @@ class weatherForecast extends eqLogic {
     $wfCmd->setType('info');
     $wfCmd->setSubType('numeric');
     $wfCmd->setDisplay('generic_type', 'WEATHER_HUMIDITY');
+    $wfCmd->save();
+
+    $wfCmd = $this->getCmd(null, 'clouds');
+    if (!is_object($wfCmd)) {
+      $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
+    }
+    $wfCmd->setName(__('Nuages', __FILE__));
+    $wfCmd->setLogicalId('clouds');
+    $wfCmd->setEqLogic_id($this->getId());
+    $wfCmd->setUnite('%');
+    $wfCmd->setType('info');
+    $wfCmd->setSubType('numeric');
+    $wfCmd->setDisplay('generic_type', 'WEATHER_CLOUDINESS');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'pressure');
@@ -654,12 +676,25 @@ class weatherForecast extends eqLogic {
     elseif($templateF == 'pluginImg') $templateFile = 'weatherForecastIMG';
     elseif($templateF == 'custom') $templateFile = 'custom.weatherForecast';
     else $templateFile = substr($templateF,0,-5);
-log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template: $templateFile");
-
+log::add(__CLASS__, 'debug', __FUNCTION__ ." " .$this->getId() ." \"" .$this->getName() ."\" Template: $templateFile");
+    $datasource = trim($this->getConfiguration('datasource', ''));
+    $replaceDay = array();
+    if(substr($templateFile,-3) == "IMG" ) {
+      $templateIMG = 1; 
+      $replace['#displayIcon#'] = 'none'; $replace['#displayImage#'] = 'block';
+    } else {
+      $templateIMG = 0;
+      if($datasource == 'weatherapi') {
+        $replace['#displayIcon#'] = 'none'; $replace['#displayImage#'] = 'block';
+        $replaceDay['#displayIcon#'] = 'none'; $replaceDay['#displayImage#'] = 'block';
+      } else {
+        $replace['#displayIcon#'] = 'block'; $replace['#displayImage#'] = 'none';
+        $replaceDay['#displayIcon#'] = 'block'; $replaceDay['#displayImage#'] = 'none';
+      }
+    }
 
     $version = jeedom::versionAlias($_version);
     $replace['#forecast#'] = '';
-    $datasource = trim($this->getConfiguration('datasource', ''));
     $timezone = $this->getConfiguration('timezone',config::byKey('timezone','core'));
     if ($version != 'mobile' || $this->getConfiguration('fullMobileDisplay', 0) == 1) {
       if (strpos($templateFile, 'weatherForecastIMG') !== false) {
@@ -688,7 +723,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
           }
           elseif($sunrise === true) {
             $replace['#sunrise#'] = 'always';
-            $replace['#sunrise_sunset#'] = '<i title="Jour polaire" class="icon far fa-sun"></i>';
+            $replace['#sunrise_sunset#'] = '<i title="Jour polaire" class="icon far fa-sun icon_yellow"></i>';
           }
           else {
             $replace['#sunrise_sunset#'] = '<i title="Lever - Coucher du soleil" class="fas fa-sun icon_yellow"></i> ';
@@ -703,7 +738,7 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
           }
           elseif($sunset === true) {
             $replace['#sunset#'] = 'always';
-            $replace['#sunrise_sunset#'] = '<i title="Jour polaire" class="icon far fa-sun"></i>';
+            $replace['#sunrise_sunset#'] = '<i title="Jour polaire" class="icon far fa-sun icon_yellow"></i>';
           }
           else {
             $dateTime->setTimestamp($sunset);
@@ -730,7 +765,6 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." \"" .$this->getName() ."\" Template
           }
           // if($hour == 23) continue; // Pas d'affichage si dernière heure du jour
         }
-        $replaceDay = array();
         $titleCmd = $this->getCmd(null, "title_day$i");
         $replaceDay['#day#'] = is_object($titleCmd) ? $titleCmd->execCmd() : '';
 
@@ -760,7 +794,7 @@ if(1 || $this->getId() == 2271) {
 }
            */
         }
-        $replaceDay['#icone#'] = is_object($conditionID) ? self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight) : '';
+        $replaceDay['#icone#'] = is_object($conditionID) ? self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight,$templateIMG) : '';
         $condition = $this->getCmd(null, "condition_$i");
         $replaceDay['#condition#'] = is_object($condition) ? $condition->execCmd() : '';
         $rainCmd = $this->getCmd(null, "rain_$i");
@@ -784,6 +818,9 @@ if(1 || $this->getId() == 2271) {
 
     $rain = $this->getCmd(null, 'rain');
     $replace['#rain#'] = is_object($rain) ? $rain->execCmd() : '0';
+
+    $clouds = $this->getCmd(null, 'clouds');
+    $replace['#clouds#'] = is_object($clouds) ? $clouds->execCmd() : '0';
 
     $pressure = $this->getCmd(null, 'pressure');
     $replace['#pressure#'] = is_object($pressure) ? $pressure->execCmd() : '';
@@ -830,7 +867,7 @@ if(1 || $this->getId() == 2271) {
         $t = time();
         if($t < $sunrise || $t > $sunset) $dayNight = "night";
       }
-      $replace['#icone#'] = self::getIconFromCondition($condition_id->execCmd(), $datasource, $dayNight);
+      $replace['#icone#'] = self::getIconFromCondition($condition_id->execCmd(), $datasource, $dayNight,$templateIMG);
       $replace['#condition_id#'] = $condition_id->execCmd();
     } else {
       $replace['#icone#'] = '';
@@ -988,6 +1025,7 @@ if(1 || $this->getId() == 2271) {
       log::add(__CLASS__, 'warning', __FUNCTION__ ." L:" .__LINE__ ." Json_decode error : " .json_last_error_msg() ." [" . substr($content,0,50) ."] ... [" .substr($content,-50) ."]");
       return;
     }
+    $nbForecastDays = 5;
     if(isset($weather['cod']) && $weather['cod'] != 200) {
       if($_updateConfig == 1) { // memo dans la config de l'équipement
         $this->setConfiguration('lat', '');
@@ -995,6 +1033,7 @@ if(1 || $this->getId() == 2271) {
         $this->setConfiguration('ville', '');
         $this->setConfiguration('timezoneApi', '');
         $this->setConfiguration('country', '');
+        $this->setConfiguration('forecastDaysNumber', 0);
       }
       $errMsg = "Erreur: " .$weather['cod'] ." " .$weather['message'];
       $this->setConfiguration('otherInfo', $errMsg);
@@ -1019,6 +1058,7 @@ if(1 || $this->getId() == 2271) {
       $min = sprintf('%02d',($absDecal % 3600)/60);
       $this->setConfiguration('otherInfo', "CityID : " .$weather['id']);
       $this->setConfiguration('timezoneApi', "UTC$sign$h:$min");
+      $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
     log::add(__CLASS__, 'debug', $url . ' : ' . substr(json_encode($weather),0,100));
@@ -1035,7 +1075,7 @@ if(1 || $this->getId() == 2271) {
     $changed = $this->checkAndUpdateCmd('wind_direction', $weather['wind']['deg']) || $changed;
     $windGust =  (isset($weather['wind']['gust'])) ? round($weather['wind']['gust'] * 3.6) : 0;
     $changed = $this->checkAndUpdateCmd('wind_gust', $windGust) || $changed;
-    $changed = $this->checkAndUpdateCmd('cloudiness', $weather['clouds']['all']) || $changed;
+    $changed = $this->checkAndUpdateCmd('clouds', $weather['clouds']['all']) || $changed;
     $rain1h =  (isset($weather['rain']['1h'])) ? $weather['rain']['1h'] : 0;
     $changed = $this->checkAndUpdateCmd('rain', $rain1h) || $changed;
     $snow1h =  (isset($weather['snow']['1h'])) ? $weather['snow']['1h'] : 0;
@@ -1045,7 +1085,7 @@ if(1 || $this->getId() == 2271) {
       $t = time();
       if($t < $H0array['sunrise'] || $t > $H0array['sunset']) $dayNight = "night";
     }
-    $icon = self::getIconFromCondition($weather['weather'][0]['id'], 'openweathermap', $dayNight);
+    $icon = self::getIconFromCondition($weather['weather'][0]['id'], 'openweathermap', $dayNight,1);
 
     $H0array['weather'] = ['icon' => $icon, 'desc' => $weatherDesc];
     $H0array['T'] = ['value' => $weatherTemp, 'windchill' => $weather['main']['feels_like']];
@@ -1074,21 +1114,17 @@ if(1 || $this->getId() == 2271) {
     // log::add(__CLASS__, 'debug', "Nb forecast: " .count($forecast['forecast']['time']));
     $timezone = $this->getConfiguration('timezone',config::byKey('timezone','core'));
     $dateTime = new DateTime();
-    $dateTime->setTimezone(new DateTimeZone($timezone));
+    $dateTimeZone = new DateTimeZone($timezone);
+    $dateTime->setTimezone($dateTimeZone);
     $dateTime->setTimestamp(time());
     $hour = $dateTime->format('G');
-    $nbForecastDays = 5;
-    if($_updateConfig == 1) { // memo dans la config de l'équipement
-      $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
-      $this->save(true);
-    }
 // log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st forecast " .$forecast['list'][0]['dt_txt'] ." Dt : " .date('Y-m-d H:i:s', $forecast['list'][0]['dt']) ." Timezone : ".$forecast['city']['timezone']);
     $tsNow = time();
     for ($i = 0; $i < $nbForecastDays; $i++) {
       $ts = strtotime("+{$i} day");
-      $dateTime->setTimestamp($ts);
-      $date = $dateTime->format('Y-m-d');
-      $midday = $dateTime->format('Y-m-d 12:00:00');
+      $dateRech = new DateTime("+{$i} day 12:00:00", $dateTimeZone);
+      $date = $dateRech->format('Y-m-d');
+      $midday = $dateRech->format('Y-m-d 12:00:00');
       $maxTemp = -666;
       $minTemp = 666;
       $condition_id = 0;
@@ -1096,22 +1132,18 @@ if(1 || $this->getId() == 2271) {
       $rain = 0;
 
       foreach ($forecast['list'] as $weather) {
-        if(!isset($weather['dt_txt'])) {
-          log::add(__CLASS__, 'warning'," From value not set: " .json_encode($weather));
-          continue;
-        }
-        // $tsDt_txt = strtotime($weather['dt_txt']);
-        $tsDt_txt = $weather['dt'];
-        $dateTime->setTimestamp($tsDt_txt);
-        $sDate = $dateTime->format('Y-m-d');
-        $Tmin = round($weather['main']['temp_min'], 1);
-        $Tmax = round($weather['main']['temp_max'], 1);
-        // log::add(__CLASS__, 'debug', $weather['dt_txt'] ." [$sDate] Weather temp: " .$weather['main']['temp']));
-        // log::add(__CLASS__, 'debug', "Weather date: $sDate");
+        $sDate = substr($weather['dt_txt'],0,10);
         if ($date != $sDate) { // autre jour
           // log::add(__CLASS__, 'debug', "Another day");
           continue;
         }
+        $dateTime = new DateTime($weather['dt_txt'], $dateTimeZone);
+        $tsDt_txt = $dateTime->getTimestamp();
+
+        $Tmin = round($weather['main']['temp_min'], 1);
+        $Tmax = round($weather['main']['temp_max'], 1);
+        // log::add(__CLASS__, 'debug', $weather['dt_txt'] ." [$sDate] Weather temp: " .$weather['main']['temp']));
+        // log::add(__CLASS__, 'debug', "Weather date: $sDate");
         if ($minTemp > $Tmin) $minTemp = $Tmin;
         if ($maxTemp < $Tmax) $maxTemp = $Tmax;
 
@@ -1137,9 +1169,7 @@ if(1 || $this->getId() == 2271) {
           break;
         }
         else if($weather['dt_txt'] == $midday) { // condition à 12h uniquement
-          $dateTime->setTimestamp($tsDt_txt);
-          // $middayDate = $dateTime->format('D. j H:i');
-          $middayDate = $dateTime->format('D. j');
+          $middayDate = $dateRech->format('D. j');
           $title = date_fr($middayDate);
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
@@ -1209,16 +1239,15 @@ if(1 || $this->getId() == 2271) {
 
     $content = $this->fetchWeatherApi($url);
     if($content == null) return;
-    $hdle = fopen(__DIR__ ."/../../data/OpenWeather-current-" .$this->getId().".json", "wb");
-    if($hdle !== FALSE) { fwrite($hdle, $content); fclose($hdle); }
     $datas = json_decode($content,true);
     if($datas == null) {
       log::add(__CLASS__, 'warning', __FUNCTION__ ." L:" .__LINE__ ." Json_decode error : " .json_last_error_msg() ." [" . substr($content,0,50) ."] ... [" .substr($content,-50) ."]");
       return;
     }
+    $nbForecastDays = 3; // count($datas['forecast']['forecastday']);
     
     if(isset($datas['error'])) {
-      log::add(__CLASS__, 'info', $url . ' : ' . json_encode($datas));
+      log::add(__CLASS__, 'info', "ID:" .$this->getId() ." " .$url . ' : ' . json_encode($datas));
       $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
       $hdle = fopen($file, "wb");
       if($hdle !== FALSE) { fwrite($hdle, $content); fclose($hdle); }
@@ -1234,6 +1263,7 @@ if(1 || $this->getId() == 2271) {
           $this->setConfiguration('otherInfo', $errMsg);
           log::add(__CLASS__, 'warning', $errMsg);
           $this->setConfiguration('timezoneApi', '');
+          $this->setConfiguration('forecastDaysNumber', 0);
           $this->save(true);
         }
       }
@@ -1266,6 +1296,7 @@ if(1 || $this->getId() == 2271) {
       $dist = $this->getDistanceBetweenGPSPoints($pos1, $pos2, 'kilometers');
       $this->setConfiguration('otherInfo', "Distance: $dist km");
       $this->setConfiguration('timezoneApi', $datas['location']['tz_id']);
+      $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
       $this->save(true);
     }
     $weatherTemp = $current['temp_c'];
@@ -1287,7 +1318,7 @@ if(1 || $this->getId() == 2271) {
       $t = time();
       if($t < $H0array['sunrise'] || $t > $H0array['sunset']) $dayNight = "night";
     }
-    $icon = self::getIconFromCondition($current['condition']['code'], 'weatherapi', $dayNight);
+    $icon = self::getIconFromCondition($current['condition']['code'], 'weatherapi', $dayNight,1);
     $H0array['weather'] = ['icon' => $icon, 'desc' => $weatherDesc];
     $H0array['T'] = ['value' => $weatherTemp, 'windchill' => $current['feelslike_c']];
     $H0array['wind'] = ['speed' => $windSpeed, 'gust' => $windGust,
@@ -1369,11 +1400,6 @@ if(1 || $this->getId() == 2271) {
     }
      */
 
-    $nbForecastDays = 3; // count($datas['forecast']['forecastday']);
-    if($_updateConfig == 1) { // memo dans la config de l'équipement
-      $this->setConfiguration('forecastDaysNumber', $nbForecastDays);
-      $this->save(true);
-    }
     for ($i = 0; $i < $nbForecastDays; $i++) {
       if(!isset($datas['forecast']['forecastday'][$i]['day'])) { 
         break;
@@ -1662,7 +1688,7 @@ if(1 || $this->getId() == 2271) {
     $changed = false;
     $numDept = $this->getConfiguration('numDeptFr');
     if($numDept == '') {
-      log::add(__CLASS__, 'debug', __FUNCTION__ ." Département non défini.");
+      log::add(__CLASS__, 'debug', __FUNCTION__ ." ID:" .$this->getId() ." Département non défini.");
       foreach(self::$_vigilanceType as $i => $vig) {
         $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0) || $changed;
         $changed = $this->checkAndUpdateCmd("Vigilancephases$i",'') || $changed;
