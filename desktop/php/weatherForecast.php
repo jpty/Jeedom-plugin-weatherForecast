@@ -192,14 +192,13 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label">{{Département vigilances FR}}</label>
+                <label class="col-sm-3 control-label">{{Vigilances département FR}}</label>
                 <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="numDeptFr"/>
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label">{{Template}}
-                </label>
+                <label class="col-sm-3 control-label">{{Template}} </label>
                 <div class="col-sm-4">
                   <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="templateWeatherForecast">
                     <option value="plugin">{{Template du plugin Icônes}}</option>
@@ -235,7 +234,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label" ></label>
+                <label class="col-sm-3 control-label"></label>
                 <div class="col-sm-4">
                   <label class="checkbox-inline">
                     <input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="fullMobileDisplay" />{{Affichage complet en mobile}}
