@@ -1,8 +1,7 @@
 {
     "plugins\/weatherForecast\/core\/ajax\/weatherForecast.ajax.php": {
         "401 - Accès non autorisé": "401 - Acceso no autorizado",
-        "Aucune méthode correspondante à : ": "",
-        "WeatherOwmApi inconnu vérifiez l\\'id": ""
+        "Aucune méthode correspondante à : ": ""
     },
     "plugins\/weatherForecast\/core\/class\/weatherForecast.class.php": {
         "Condition J+$i": "",
@@ -20,6 +19,7 @@
         "La source des données doit être renseignée": "",
         "Les coordonnées doivent être renseignées": "",
         "Lever du soleil": "",
+        "Nuages": "",
         "Numéro condition J+$i": "",
         "Numéro condition actuelle": "",
         "Pluie": "",
@@ -39,7 +39,7 @@
         "Vigilance - Niveau actuel maximum": "",
         "Vitesse du vent": ""
     },
-    "plugins\/weatherForecast\/core\/template\/dashboard\/cmd.info.string.Clock.html": {
+    "plugins\/weatherForecast\/core\/template\/dashboard\/cmd.info.string.ClockWF.html": {
         "Affichage de l'image de fond. 0\/1 Défaut: 1": "",
         "Affichage de la date de collecte. 0\/1 Défaut: 1": "",
         "Affichage de la date. 0\/1 Défaut: 1": "",
@@ -55,12 +55,13 @@
         "Affichage du pourcentage d'humidité. 0\/1 Défaut: 1": "",
         "Affichage du pourcentage de nuages. 0\/1 Défaut: 1": "",
         "Affichage du saint du jour. 0\/1 Défaut: 1 ": "",
-        "Animation: Blur, ScrollV, Random Défaut: Random": "",
+        "Animation: Blur, ScrollV, Random, None Défaut: Random": "",
         "Couleur de fond des textes de l'heure.": "",
         "Couleur de fond du widget si pas d'image.": "",
         "Couleur des bordures autour de l'heure et des minutes. Ex: 8px ridge green": "",
         "Couleur des textes Heures, minutes, secondes.": "",
         "Couleur des textes de la météo.": "",
+        "Format du texte de la date. short, shortWithTZ, full. Défaut: full": "",
         "Fuseau horaire. Défaut: Le fuseau horaire du navigateur": "",
         "Hauteur des lignes du texte de l'horloge. Défaut: 1": "",
         "Hauteur des lignes du texte des secondes sur l'horloge. Défaut: 0.85": "",
@@ -91,7 +92,7 @@
         "Date de collecte": "Fecha de recogida",
         "Date de valeur": "Fecha valor"
     },
-    "plugins\/weatherForecast\/core\/template\/mobile\/cmd.info.string.Clock.html": {
+    "plugins\/weatherForecast\/core\/template\/mobile\/cmd.info.string.ClockWF.html": {
         "Affichage de l'image de fond. 0\/1 Défaut: 1": "",
         "Affichage de la date de collecte. 0\/1 Défaut: 1": "",
         "Affichage de la date. 0\/1 Défaut: 1": "",
@@ -107,12 +108,13 @@
         "Affichage du pourcentage d'humidité. 0\/1 Défaut: 1": "",
         "Affichage du pourcentage de nuages. 0\/1 Défaut: 1": "",
         "Affichage du saint du jour. 0\/1 Défaut: 1 ": "",
-        "Animation: Blur, ScrollV, Random Défaut: Random": "",
+        "Animation: Blur, ScrollV, Random, None Défaut: Random": "",
         "Couleur de fond des textes de l'heure.": "",
         "Couleur de fond du widget si pas d'image.": "",
         "Couleur des bordures autour de l'heure et des minutes. Ex: 8px ridge green": "",
         "Couleur des textes Heures, minutes, secondes.": "",
         "Couleur des textes de la météo.": "",
+        "Format du texte de la date. short, shortWithTZ, full. Défaut: full": "",
         "Fuseau horaire. Défaut: Le fuseau horaire du navigateur": "",
         "Hauteur des lignes du texte de l'horloge. Défaut: 1": "",
         "Hauteur des lignes du texte des secondes sur l'horloge. Défaut: 0.85": "",
@@ -165,7 +167,6 @@
         "Configuration avancée": "Configuración avanzada",
         "Coordonnées": "Contacto",
         "Données de la localisation": "",
-        "Département vigilances FR": "",
         "Equipement": "Dispositivos",
         "Equipement non visible": "",
         "Equipement visible": "",
@@ -200,6 +201,7 @@
         "Template": "Plantilla",
         "Template du plugin Icônes": "",
         "Template du plugin Images": "",
+        "Vigilances département FR": "",
         "Ville": "Ciudad",
         "Visible": "Visible",
         "Weather API": ""
