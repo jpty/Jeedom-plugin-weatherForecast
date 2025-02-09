@@ -1,5 +1,5 @@
 <div class="cmd cmd-widget widget-weatherForecast #history#" data-type="info" data-subtype="string" data-template="weatherForecast" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
-  <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.min.css" />
+  <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.css" />
   <style>
     @font-face {
       font-family: "Digital-7 Mono";
@@ -23,7 +23,11 @@
   <div class="content#id#">
     <div id="digital_container#id#" class="wIcon#uid#">
       <table id="table#id#" style="width:100%;min-width:439px;"><tr style="background-color:transparent!important"><td id="tdClock#id#" colspan="2" style="overflow:hidden">
-        <div class="clock#id#">
+        <span class="clockAnimNone#id#" style="display:none"></span>
+        <!--
+        -->
+        <span id="date" class="dateTextAnimNone#id#" style="font-size:20px;line-height:normal;padding:0;display:none"></span>
+        <span class="clock#id#">
           <div class="hours#id#">
             <div class="first">
               <div class="number">0</div>
@@ -42,7 +46,7 @@
             </div>
           </div>
             <div class="seconds#id#">0</div>
-        </div>
+        </span>
       </td></tr><tr style="background-color:transparent!important"><td id="tdCmdName#id#" style="text-align:right;vertical-align:top;padding: 0px 2px 6px 6px;">
         <div id="weather#id#">
           <div id="weatherTopLeft#id#">
@@ -78,6 +82,15 @@
       z-index: 98;
       overflow: hidden;
       background-color: transparent;
+    }
+    .clockAnimNone#id# {
+      margin-top: -16px;
+      margin-bottom: 0px;
+      font-size: 96px;
+      font-weight: 400;
+      font-family: sans-serif;
+      line-height: normal;
+      color: #fff;
     }
     .clock#id# {
       text-align: center;
@@ -198,9 +211,10 @@
   </style>    
   <template>
     <div>backgroundColor: {{Couleur de fond du widget si pas d'image.}}</div>
-    <div>clockAnimation: {{Animation: Blur, ScrollV, Random Défaut: Random}}</div>
+    <div>clockAnimation: {{Animation: Blur, ScrollV, Random, None Défaut: Random}}</div>
     <div>clockBackgroundColor: {{Couleur de fond des textes de l'heure.}} transparent</div>
     <div>clockBorder: {{Couleur des bordures autour de l'heure et des minutes. Ex: 8px ridge green}}</div>
+    <div>clockDateFormat: {{Format du texte de la date. short, shortWithTZ, full. Défaut: full}}</div>
     <div>clockDateFontSize: {{Taille du texte de la date. Défaut: 20px}}</div>
     <div>clockFontColor: {{Couleur des textes Heures, minutes, secondes.}} white</div>
     <div>clockFontFamily: {{Police de l'horloge. Défaut: sans-serif}}</div>
@@ -215,7 +229,7 @@
     <div>clockSecondsMarginLeft: {{Marge gauche du texte des secondes sur l'horloge. Défaut: 8px}}</div>
     <div>clockSecondsMarginTop: {{Marge haute du texte des secondes sur l'horloge. Défaut: 26px}}</div>
     <div>clockSecondsOn2Lines: {{Texte des secondes sur 2 lignes. 0/1 Défaut: 1}}</div>
-    <div>clockTheme: {{Thème de l'horloge.}} Digital, KrisKringle, EasterEgg</div>
+    <div>clockTheme: {{Thème de l'horloge.}} Digital, DigitalSmall, KrisKringle, EasterEgg</div>
     <div>clockTimezone: {{Fuseau horaire. Défaut: Le fuseau horaire du navigateur}}</div>
     <div>debugTableBorder: {{Affichage de la table avec une bordure pour debug. 0/1 Défaut: 0}}</div>
     <div>displayBackgroundImage: {{Affichage de l'image de fond. 0/1 Défaut: 1}}</div>
@@ -236,11 +250,13 @@
     <div>widgetMinWidth: {{Largeur minimum du widget. Défaut: 439px}}</div>
   </template>
   <script type="text/javascript">
-    var hoursContainer#id# = document.querySelector('.hours#id#')
-    var minutesContainer#id# = document.querySelector('.minutes#id#')
-    var secondsText#id# = document.querySelector('.seconds#id#')
-    var dateText#id# = document.querySelector('.dateText#id#')
-    var clockAnimation#id# = '';
+    var hoursContainer#id# = document.querySelector('.hours#id#');
+    var minutesContainer#id# = document.querySelector('.minutes#id#');
+    var secondsText#id# = document.querySelector('.seconds#id#');
+    var dateText#id# = document.querySelector('.dateText#id#');
+    var dateTextAnimNone#id# = document.querySelector('.dateTextAnimNone#id#');
+    var clockAnimNone#id# = document.querySelector('.clockAnimNone#id#');
+    var clockAnimation#id#;
     if ('#clockAnimation#' != '#clockAnimation'+'#')  clockAnimation#id# = '#clockAnimation#';
     else clockAnimation#id# = 'Random';
     var timezone#id# = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -251,6 +267,12 @@
       seconds2lines#id# = '#clockSecondsOn2Lines#';
 
     var last#id# = '00:00';
+/* // Liste des timezones du navigateur
+const timeZones#id# = Intl.supportedValuesOf('timeZone');
+timeZones#id#.forEach(timeZone => {
+  console.log(timeZone);
+});
+*/
 
     function updateTimeDate#id#() {
       let anim = 'animBlur#id#';
@@ -258,36 +280,45 @@
         if(Math.random() > .5) anim = 'animScrollV#id#';
       }
       else if(clockAnimation#id#.toUpperCase() == 'SCROLLV') anim = 'animScrollV#id#';
-      let lastHours = last#id#.substring(0,2);
-      let lastMinutes = last#id#.substring(3,5);
+      else if(clockAnimation#id#.toUpperCase() == 'NONE') anim = 'none';
       if ('#clockTimezone#' != '#clockTimezone'+'#')  timezone#id# = '#clockTimezone#';
       let now = new Date();
-      let nowTime = now.toLocaleTimeString('fr-FR', {timeZone:timezone#id#});
-      let nowHours = nowTime.substring(0,2);
-      let nowMinutes = nowTime.substring(3,5);
-      let nowSeconds = nowTime.substring(6,8);
+      if( anim == 'none') {
+        let nowTime = now.toLocaleTimeString([], timeFormatOptions#id#);
+        clockAnimNone#id#.innerText = nowTime;
+      }
+      else {
+        let lastHours = last#id#.substring(0,2);
+        let lastMinutes = last#id#.substring(3,5);
+        let nowTime = now.toLocaleTimeString('fr-FR', {timeZone:timezone#id#});
+        let nowHours = nowTime.substring(0,2);
+        let nowMinutes = nowTime.substring(3,5);
+        let nowSeconds = nowTime.substring(6,8);
 // console.log("UpdateTimeDate Timezone:" +timezone#id# +" " +nowTime);
 // console.log("Timezone:" +timezone#id# +" " +nowHours +"/" +nowMinutes +"/" +nowSeconds);
-      if (lastHours != nowHours) {
-          updateContainer#id#(hoursContainer#id#, nowHours, anim)
-      }
-      if(lastMinutes != nowMinutes) {
-        updateContainer#id#(minutesContainer#id#, nowMinutes, anim)
-      }
+        if (lastHours != nowHours) {
+            updateContainer#id#(hoursContainer#id#, nowHours, anim)
+        }
+        if(lastMinutes != nowMinutes) {
+          updateContainer#id#(minutesContainer#id#, nowMinutes, anim)
+        }
 // console.log("Timezone:" +timezone#id# +" " +lastHours +" " +nowHours +":" +nowMinutes);
+        if(seconds2lines#id# == 1)
+          secondsText#id#.innerText = nowSeconds.substring(0,1) +"\n" +nowSeconds.substring(1,2);
+        else secondsText#id#.innerText = nowSeconds;
+        last#id# = nowTime;
+      }
       if('#displayDate#' != '0') {
-        let dayTxt = now.toLocaleDateString([], {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'});
-        let dateText = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1) // ucfirst
-        if(dateText != dateText#id#.innerText) {
-          // console.log("Update Date Timezone: " +timezone#id# +" Date: " +dateText);
-          dateText#id#.innerText = dateText;
+// console.log(dateFormatOptions#id#)
+        let dayTxt = now.toLocaleDateString([], dateFormatOptions#id#);
+        let dateTxt = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1) // ucfirst
+        if(dateTxt != dateText#id#.innerText) {
+          // console.log("Update Date Timezone: " +timezone#id# +" Date: " +dateTxt);
+          dateText#id#.innerText = dateTxt;
+          dateTextAnimNone#id#.innerText = dateTxt;
         }
       }
-          /* dateText#id#.innerText = "Dimanche 29 septembre"; // Largeur maxi de la date */
-      if(seconds2lines#id# == 1)
-        secondsText#id#.innerText = nowSeconds.substring(0,1) +"\n" +nowSeconds.substring(1,2);    
-      else secondsText#id#.innerText = nowSeconds;    
-      last#id# = nowTime;
+            /* dateText#id#.innerText = "Dimanche 29 septembre"; // Largeur maxi de la date */
     }
 
     function updateContainer#id#(container, newTime, anim) {
@@ -423,7 +454,7 @@
               if('#displayCollectDate#' != '0') {
                 if(obj.updated_on != undefined) {
                   let date = new Date(obj.updated_on * 1000);
-                  let forecastDate = new Intl.DateTimeFormat([], { dateStyle: 'short',
+                  let forecastDate = new Intl.DateTimeFormat([], { dateStyle: 'long',
                       timeStyle: 'long', timeZone: timezone#id#, }).format(date);
                   cmd.querySelector('.collectDate#id#').innerHTML = "Prévisions du: " +forecastDate +'.';
                 }
@@ -443,6 +474,11 @@
           }
           // else cmd.querySelector('#weather#id#').style.height = '40px';
 
+          if(clockAnimation#id#.toUpperCase() == 'NONE') {
+            cmd.querySelector('.clock#id#').style.display = 'none';
+            clockAnimNone#id#.style.display = 'block';
+            dateTextAnimNone#id#.style.display = 'block';
+          }
             // Clock only
           if(_options.display_value == '') {
             cmd.querySelector('#tdCollect#id#').style.display = 'none';
@@ -451,12 +487,20 @@
               cmd.querySelector('#tdCmdName#id#').style.display = 'none';
             if('#displayDate#' == '0')
               cmd.querySelector('#tdDate#id#').style.display = 'none';
+            cmd.querySelector('#tdDate#id#').style.display = 'padding:0;text-align:center';
           }
+          if ('#clockDateFormat#' == 'shortWithTZ')
+            dateFormatOptions#id# = {timeZone:timezone#id#,month:'numeric',day:'numeric',weekday:'short',year:'numeric',timeZoneName:'short'};
+          else if ('#clockDateFormat#' == 'short')
+            dateFormatOptions#id# = {timeZone:timezone#id#,month:'numeric',day:'numeric',weekday:'short',year:'numeric'};
+          else
+            dateFormatOptions#id# = {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'};
 
           if ('#backgroundColor#' != '#backgroundColor' +'#') {
             cmd.querySelector('.content#id#').style.backgroundColor = '#backgroundColor#';
           }
           if ('#clockBackgroundColor#' != '#clockBackgroundColor'+'#') {
+            clockAnimNone#id#.style.backgroundColor = '#clockBackgroundColor#';
             cmd.querySelector('.hours#id#').style.backgroundColor = '#clockBackgroundColor#';
             cmd.querySelector('.minutes#id#').style.backgroundColor = '#clockBackgroundColor#';
           }
@@ -466,16 +510,42 @@
               cmd.querySelector('.clock#id#').style.marginTop = '-25px';
               cmd.querySelector('.clock#id#').style.marginBottom = '15px';
               cmd.querySelector('.clock#id#').style.fontSize = '160px';
+              clockAnimNone#id#.style.fontFamily = 'Digital-7 Mono, sans-serif';
+              clockAnimNone#id#.style.marginTop = '-20px';
+              clockAnimNone#id#.style.marginBottom = '0px';
+              clockAnimNone#id#.style.fontSize = '96px';
               cmd.querySelector('.hours#id#').style.marginLeft = '16px';
               cmd.querySelector('.tick#id#').style.marginTop = '0px';
               cmd.querySelector('.seconds#id#').style.marginTop = '40px';
               cmd.querySelector('.seconds#id#').style.lineHeight = 0.8;
+            }
+            else if ('#clockTheme#' == 'DigitalSmall') {
+              cmd.querySelector('.clock#id#').style.fontFamily = 'Digital-7 Mono, sans-serif';
+              cmd.querySelector('.clock#id#').style.marginTop = '-8px';
+              cmd.querySelector('.clock#id#').style.marginBottom = '-105px';
+              cmd.querySelector('.clock#id#').style.marginLeft = '2px';
+              cmd.querySelector('.clock#id#').style.fontSize = '48px';
+              clockAnimNone#id#.style.fontFamily = 'Digital-7 Mono, sans-serif';
+              clockAnimNone#id#.style.marginTop = '-6px';
+              clockAnimNone#id#.style.marginBottom = '-12px';
+              clockAnimNone#id#.style.fontSize = '48px';
+              cmd.querySelector('.hours#id#').style.marginLeft = '8px';
+              cmd.querySelector('.tick#id#').style.marginTop = '0px';
+              cmd.querySelector('.seconds#id#').style.fontSize = '20px';
+              cmd.querySelector('.seconds#id#').style.lineHeight = 0.8;
+              cmd.querySelector('.seconds#id#').style.marginTop = '14px';
+              cmd.querySelector('#table#id#').style.minWidth= '150px';
+              cmd.querySelector('.clock#id#').style.width= '150px';
             }
             else if ('#clockTheme#' == 'KrisKringle') {
               cmd.querySelector('.clock#id#').style.fontFamily = '"KRIS KINGLE", sans-serif';
               cmd.querySelector('.clock#id#').style.fontSize = '92px';
               cmd.querySelector('.clock#id#').style.marginTop = '-14px';
               cmd.querySelector('.clock#id#').style.marginBottom = '0px';
+              clockAnimNone#id#.style.fontFamily = '"KRIS KINGLE", sans-serif';
+              clockAnimNone#id#.style.marginTop = '-20px';
+              clockAnimNone#id#.style.marginBottom = '-12px';
+              clockAnimNone#id#.style.fontSize = '64px';
               cmd.querySelector('.hours#id#').style.marginLeft = '8px';
               cmd.querySelector('.tick#id#').style.marginTop = '0px';
               cmd.querySelector('.seconds#id#').style.fontSize = '42px';
@@ -489,6 +559,10 @@
               cmd.querySelector('.clock#id#').style.fontSize = '110px';
               cmd.querySelector('.clock#id#').style.marginTop = '-22px';
               cmd.querySelector('.clock#id#').style.marginBottom = '0px';
+              clockAnimNone#id#.style.fontFamily = '"Easter Egg", sans-serif';
+              clockAnimNone#id#.style.marginTop = '-16px';
+              clockAnimNone#id#.style.marginBottom = '-4px';
+              clockAnimNone#id#.style.fontSize = '64px';
               cmd.querySelector('.hours#id#').style.marginLeft = '8px';
               cmd.querySelector('.tick#id#').style.marginTop = '0px';
               cmd.querySelector('.seconds#id#').style.fontSize = '48px';
@@ -505,11 +579,14 @@
           }
           if ('#clockDateFontSize#' != '#clockDateFontSize'+'#') {
             cmd.querySelector('.dateText#id#').style.fontSize = '#clockDateFontSize#';
+            dateTextAnimNone#id#.style.fontSize = '#clockDateFontSize#';
           }
           if ('#clockFontSize#' != '#clockFontSize'+'#') {
+            clockAnimNone#id#.style.fontSize = '#clockFontSize#';
             cmd.querySelector('.clock#id#').style.fontSize = '#clockFontSize#';
           }
           if ('#clockFontColor#' != '#clockFontColor'+'#') {
+            clockAnimNone#id#.style.color = '#clockFontColor#';
             cmd.querySelector('.hours#id#').style.color = '#clockFontColor#';
             cmd.querySelector('.minutes#id#').style.color = '#clockFontColor#';
             cmd.querySelector('.seconds#id#').style.color = '#clockFontColor#';
@@ -530,14 +607,22 @@
           if ('#clockSecondsFontSize#' != '#clockSecondsFontSize'+'#') {
             cmd.querySelector('.seconds#id#').style.fontSize = '#clockSecondsFontSize#';
           }
-          if ('#clockLineHeight#' != '#clockLineHeight'+'#')
+          if ('#clockLineHeight#' != '#clockLineHeight'+'#') {
+            clockAnimNone#id#.style.lineHeight = '#clockLineHeight#';
             cmd.querySelector('.clock#id#').style.lineHeight = '#clockLineHeight#';
-          if ('#clockFontFamily#' != '#clockFontFamily'+'#')
+          }
+          if ('#clockFontFamily#' != '#clockFontFamily'+'#') {
+            clockAnimNone#id#.style.fontFamily = '#clockFontFamily#, sans-serif';
             cmd.querySelector('.clock#id#').style.fontFamily = '#clockFontFamily#, sans-serif';
-          if ('#clockMarginTop#' != '#clockMarginTop'+'#')
+          }
+          if ('#clockMarginTop#' != '#clockMarginTop'+'#') {
+            clockAnimNone#id#.style.marginTop = '#clockMarginTop#';
             cmd.querySelector('.clock#id#').style.marginTop = '#clockMarginTop#';
-          if ('#clockMarginBottom#' != '#clockMarginBottom'+'#')
+          }
+          if ('#clockMarginBottom#' != '#clockMarginBottom'+'#') {
+            clockAnimNone#id#.style.marginBottom = '#clockMarginBottom#';
             cmd.querySelector('.clock#id#').style.marginBottom = '#clockMarginBottom#';
+          }
           if ('#clockSecondsMarginTop#' != '#clockSecondsMarginTop'+'#')
             cmd.querySelector('.seconds#id#').style.marginTop = '#clockSecondsMarginTop#';
           if ('#clockSecondsMarginLeft#' != '#clockSecondsMarginLeft'+'#')
@@ -551,10 +636,10 @@
           if ('#widgetMinWidth#' != '#widgetMinWidth'+'#') {
             cmd.querySelector('#table#id#').style.minWidth= '#widgetMinWidth#';
             cmd.querySelector('.clock#id#').style.width= '#widgetMinWidth#';
-
           }
           
           if ('#clockBorder#' != '#clockBorder'+'#') {
+            clockAnimNone#id#.style.border= '#clockBorder#';
             cmd.querySelector('.hours#id#').style.border= '#clockBorder#';
             cmd.querySelector('.minutes#id#').style.border= '#clockBorder#';
           }
@@ -562,10 +647,14 @@
             cmd.querySelector('.widgetName#id#').style.display = 'inline';
           else
             cmd.querySelector('.widgetName#id#').style.display = 'none';
-          if('#displaySeconds#' != '0')
+          
+          if('#displaySeconds#' != '0') {
+            timeFormatOptions#id# = {timeZone:timezone#id#};
             cmd.querySelector('.seconds#id#').style.display = 'inline';
-          else
+          } else {
+            timeFormatOptions#id# = {timeZone:timezone#id#,hour: '2-digit', minute:'2-digit'};
             cmd.querySelector('.seconds#id#').style.display = 'none';
+          }
           if ('#displayBackgroundImage#' != '0') {
             cmd.querySelector('.content#id#').style.background = 'url(plugins/weatherForecast/core/template/images/clockBackground.png) no-repeat';
             cmd.querySelector('.content#id#').style.backgroundSize = '100% 96%';
@@ -580,6 +669,6 @@
         }
       }
     });
-    jeedom.cmd.refreshValue([{cmd_id:'#id#',display_value: '#state#', valueDate: '#valueDate#', collectDate: '#collectDate#', alertLevel: '#alertLevel#', unit: '#unite#'}])
+    jeedom.cmd.refreshValue([{cmd_id:'#id#',display_value: '#state#', valueDate: '#valueDate#', collectDate: '#collectDate#', alertLevel: '#alertLevel#', unit: '#unite#'}]);
   </script>
 </div>

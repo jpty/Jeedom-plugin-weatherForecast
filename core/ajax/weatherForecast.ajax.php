@@ -26,21 +26,6 @@ try {
 
 	ajax::init();
 
-	if (init('action') == 'getWeather') {
-		$weather = weatherForecast::byId(init('id'));
-		if (!is_object($weather)) {
-			throw new Exception(__('WeatherOwmApi inconnu vérifiez l\'id', __FILE__));
-		}
-		$return = utils::o2a($weather);
-		$return['cmd'] = array();
-		foreach ($weather->getCmd() as $cmd) {
-			$cmd_info = utils::o2a($cmd);
-			$cmd_info['value'] = $cmd->execCmd();
-			$return['cmd'][] = $cmd_info;
-		}
-
-		ajax::success($return);
-	}
 
 	throw new Exception(__('Aucune méthode correspondante à : ', __FILE__) . init('action'));
 	/*     * *********Catch exeption*************** */
