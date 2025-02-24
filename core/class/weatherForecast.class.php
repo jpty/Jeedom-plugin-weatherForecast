@@ -33,6 +33,7 @@ class weatherForecast extends eqLogic {
     8 => array("txt" => "Avalanches","icon" => "wi-na"),
     9 => array("txt" => "Vagues-submersion","icon" => "wi-tsunami"),
     10 => array("txt" => "Météo des forêts","icon" => "wi-fire"),
+    100 => array("txt" => "Pas d'alerte"),
     101 => array("txt" => "Vent"),
     102 => array("txt" => "Neige-verglas"),
     103 => array("txt" => "Orages"),
@@ -1429,7 +1430,7 @@ if(1 || $this->getId() == 2271) {
             if($dec !== null && isset($dec['areaList']) && count($dec['areaList']))
               $replace['#vigilanceMeteoalarm#'] .= "Des alertes existent pour: " .implode(', ',$dec['areaList']);
             else 
-              $replace['#vigilanceMeteoalarm#'] .= "Pas d'alertes actuellement pour: $country";
+              $replace['#vigilanceMeteoalarm#'] .= "Pas d'alerte actuellement pour: $country";
         }
         else {
           if($dec === null) {
@@ -1438,7 +1439,7 @@ if(1 || $this->getId() == 2271) {
             $nbArea = count($dec['capArea']);
             $txtAlarm = '';
             foreach($dec['capArea'] as $capArea) {
-              if($txtAlarm != '') $txtAlarm .= '<td style="border:1px #3C73A5 solid"></td>';
+              if($txtAlarm != '') $txtAlarm .= '<td style="border-right:1px #3C73A5 solid"></td>';
               $nbInfo = count($capArea['info']);
               if($nbInfo) {
                 for($j=101;$j<116;$j++) {
@@ -1474,18 +1475,20 @@ if(1 || $this->getId() == 2271) {
                 }
               }
               else {
-                $color = '<a target="_blank" href="https://meteoalarm.org/en/live"><i class="fa fa-circle" style="font-size:1.5em;color:' .self::$_vigilanceColors[1]['color'] .'"></i></a>';
-                $txtAlarm .= '<td style="text-align:center;padding-left:4px;padding-right:4px;">' .$color ." Pas d'alerte météo pour " .$capArea['name'] ."</td>";
+                $svg = "<img src=\"plugins/weatherForecast/core/template/images/AlertCAP0.svg\" alt=\"No alert\"/>";
+                $title = $country .' / ' .$capArea['name'] .'<br>' .self::$_vigilanceType[100]['txt'];
+                $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[1]['color'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
+                $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
               }
             }
             if($txtAlarm != '') {
-              $replace['#vigilanceMeteoalarm#'] = "<table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm\"><tr style=\"display:flex;background-color:transparent !important\">$txtAlarm</tr>";
-              $replace['#vigilanceMeteoalarm#'] .= "<tr style=\"background-color:transparent !important\"><td colspan=12>";
               if($dec['status'] == "OK")
-                $replace['#vigilanceMeteoalarm#'] .= "<span style=\"font-size:10px;font-style:italic;line-height:normal;\">Alertes créées à partir de données de <a target=\"_blank\" href=\"https://meteoalarm.org/en/live\">Meteoalarm.org</a></span>";
+                $message = "Alertes créées à partir de données de <a target=\"_blank\" href=\"https://meteoalarm.org/en/live\">Meteoalarm.org</a>";
               else
-                $replace['#vigilanceMeteoalarm#'] .= "<i class=\"icon fas fa-exclamation-triangle icon_red\"></i> <span style=\"font-size:10px;font-style:italic;line-height:normal;color:red\">" .trim(substr($dec['status'],3)) ."</span>";
-              $replace['#vigilanceMeteoalarm#'] .= "</td></tr></table>";
+                $message = "<i  style=\"font-size:14px;\" class=\"icon fas fa-exclamation-triangle icon_red\"></i> TITI" .trim(substr($dec['status'],3));
+              $txtAlarm .= "<td style=\"flex:auto;padding-left:4px;padding-right:4px;font-size:10px !important;font-style:italic;line-height:normal;text-align:left;\">$message</td>";
+
+              $replace['#vigilanceMeteoalarm#'] = "<table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm\"><tr style=\"display:flex;align-content:center;background-color:transparent !important\">$txtAlarm</tr></table>";
             }
             else $replace['#vigilanceMeteoalarm#'] = '';
           }
