@@ -56,6 +56,7 @@
           // console.log("TyOf cmd: " +typeof(cmd));
           cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
           let json = _options.display_value.replaceAll('&quot;','"');
+          json = json.replaceAll('&#34;','"');
           let jsonData = JSON.parse(json);
           if(jsonData != null && typeof(jsonData.image) != "undefined" && typeof(jsonData.dept) != "undefined") {
             if('#displayMapFr#' != '0') {
@@ -196,19 +197,3 @@
     jeedom.cmd.refreshValue([{cmd_id :'#id#',display_value: '#state#', valueDate: '#valueDate#', collectDate: '#collectDate#', alertLevel: '#alertLevel#', unit: '#unite#'}])
   </script>
 </div>
-<!--
-{
-"begin_validity_time":"2024-03-28T15:00:00Z",
-"end_validity_time":"2024-03-28T23:00:00Z",
-"domain_id_picture":"none","image":"VIGNETTE_NATIONAL_J_500X500.png?ts=1711638387",
-"dept":{"domain_id":"62","max_color_id":2,
-"phenomenon_items":[
-{"phenomenon_id":"1","phenomenon_max_color_id":2,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T19:00:00Z","color_id":2},{"begin_time":"2024-03-28T19:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]},
-{"phenomenon_id":"4","phenomenon_max_color_id":2,"timelaps_items":[]},
-{"phenomenon_id":"3","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]},
-{"phenomenon_id":"2","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]},
-{"phenomenon_id":"5","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]},
-{"phenomenon_id":"7","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]}]
-},
-"littoral":{"domain_id":"6210","max_color_id":1,"phenomenon_items":[{"phenomenon_id":"9","phenomenon_max_color_id":1,"timelaps_items":[{"begin_time":"2024-03-28T15:00:00Z","end_time":"2024-03-28T23:00:00Z","color_id":1}]}]}}
--->
