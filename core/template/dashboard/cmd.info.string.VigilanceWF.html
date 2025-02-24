@@ -56,6 +56,7 @@
           // console.log("TyOf cmd: " +typeof(cmd));
           cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
           let json = _options.display_value.replaceAll('&quot;','"');
+          json = json.replaceAll('&#34;','"');
           let jsonData = JSON.parse(json);
           if(jsonData != null && typeof(jsonData.image) != "undefined" && typeof(jsonData.dept) != "undefined") {
             if('#displayMapFr#' != '0') {

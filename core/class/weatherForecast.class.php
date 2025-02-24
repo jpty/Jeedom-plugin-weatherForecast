@@ -32,17 +32,125 @@ class weatherForecast extends eqLogic {
     7 => array("txt" => "Grand-froid","icon" => "wi-thermometer-exterior"),
     8 => array("txt" => "Avalanches","icon" => "wi-na"),
     9 => array("txt" => "Vagues-submersion","icon" => "wi-tsunami"),
-    10 => array("txt" => "Météo des forêts","icon" => "wi-fire")
+    10 => array("txt" => "Météo des forêts","icon" => "wi-fire"),
+    101 => array("txt" => "Vent"),
+    102 => array("txt" => "Neige-verglas"),
+    103 => array("txt" => "Orages"),
+    104 => array("txt" => "Brouillard"),
+    105 => array("txt" => "Canicule"),
+    106 => array("txt" => "Grand-froid"),
+    107 => array("txt" => "Evénement côtier"),
+    108 => array("txt" => "Feu de forêts"),
+    109 => array("txt" => "Avalanches"),
+    110 => array("txt" => "Pluie"),
+    112 => array("txt" => "Inondation"),
+    113 => array("txt" => "Pluie-inondation"),
+    114 => array("txt" => "Marine hazard"),
+    115 => array("txt" => "Sécheresse")
   );
   public static $_vigilanceColors = array (
-    0 => array("desc" => "Non défini","color" => "#888888"),
-    1 => array("desc" => "Vert","color" => "#31AA35"),
-    2 => array("desc" => "Jaune","color" => "#FFF600"),
-    3 => array("desc" => "Orange","color" => "#FFB82B"),
-    4 => array("desc" => "Rouge","color" => "#CC0000"),
+    0 => array("desc" => "Non défini","color" => "#888888","hiColor" => "#FFFFFF"),
+    1 => array("desc" => "Vert","color" => "#31AA35","hiColor" => "#FFFFFF"),
+    2 => array("desc" => "Jaune","color" => "#FFF600","hiColor" => "#000000"),
+    3 => array("desc" => "Orange","color" => "#FFB82B","hiColor" => "#000000"),
+    4 => array("desc" => "Rouge","color" => "#CC0000","hiColor" => "#FFFFFF"),
   );
 
-  /*     * ***********************Methode static*************************** */
+  public static function cronHourly() {
+    $eqLogics = self::byType(__CLASS__, true);
+    foreach ($eqLogics as $equipt) {
+      $equipt->updateWeatherData(2,0);
+    }
+  }
+
+  public static function cron() {
+    $minute = date('i');
+    $hour = date('G');
+    $eqLogics = self::byType(__CLASS__, true);
+    $recupVigMF = 1;
+    $minuteVigilance = config::byKey('minuteVigilance', __CLASS__, -1);
+    $fileAlert = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
+    if ($minuteVigilance == -1) {
+      $minuteVigilance = rand(11,59);
+      config::save('minuteVigilance', $minuteVigilance, __CLASS__);
+    }
+    foreach ($eqLogics as $equipt) {
+      if($recupVigMF == 1 && trim($equipt->getConfiguration('numDeptFr')) != '') {
+        if($minute == $minuteVigilance || !file_exists($fileAlert)) {
+          self::getVigilanceDataArchiveMF();
+          $recupVigMF = 0;
+        }
+      }
+      $country = strtolower(trim($equipt->getConfiguration('meteoAlarmCountry','')));
+      if($country != '') {
+        $file = __DIR__ ."/../../data/meteoalarm-$country.xml";
+        // if($minute == $minuteVigilance) { // every hour
+        if($minute == $minuteVigilance && date('G') % 3 == 0) { // every 3 hours
+          $province = trim($equipt->getConfiguration('meteoAlarmArea',''));
+          $language = substr(config::byKey('language','core', 'fr_FR'),0,2);
+          $equipt->getMeteoalarmData($country, $province, $language);
+        }
+      }
+      $refreshMinute = $equipt->getConfiguration('refreshMinute', -1);
+      // log::add(__CLASS__, 'info', $equipt->getName() ." Refresh minute : $refreshMinute");
+      if ($refreshMinute == -1) {
+        $equipt->setConfiguration('refreshMinute', rand(0,4));
+        $equipt->save(true);
+        try {
+          $equipt->updateWeatherData(0,1); // get weather data immediately
+        } catch (Exception $e) {
+          log::add(__CLASS__, 'info', $e->getMessage());
+        }
+      }
+      else {
+        $datasource = $equipt->getConfiguration('datasource', '');
+        if($datasource == 'openweathermap') $mod = 30; // refresh 30min;
+        elseif ($datasource == 'weatherapi') $mod = 15;// refresh 15min;
+        else continue;
+        if(($minute - $refreshMinute) % $mod == 0) {
+          try {
+            $equipt->updateWeatherData(0,0);
+          } catch (Exception $e) {
+            log::add(__CLASS__, 'info', $e->getMessage());
+          }
+        }
+      }
+    }
+  }
+
+    public static function extractValueFromJsonTxt($cmdValue, $request) {
+    $txtJson = str_replace(array('&quot;','&#34;'),'"',$cmdValue);
+    $json =json_decode($txtJson,true);
+    if($json !== null) {
+      $tags = explode('>', $request);
+      foreach ($tags as $tag) {
+        $tag = trim($tag);
+        if (isset($json[$tag])) {
+          $json = $json[$tag];
+        } elseif (is_numeric(intval($tag)) && isset($json[intval($tag)])) {
+          $json = $json[intval($tag)];
+        } elseif (is_numeric(intval($tag)) && intval($tag) < 0 && isset($json[count($json) + intval($tag)])) {
+          $json = $json[count($json) + intval($tag)];
+        } else {
+          $json = "Request error: tag[$tag] not found in " .json_encode($json);
+          break;
+        }
+      }
+      return (is_array($json)) ? json_encode($json) : $json;
+    }
+    return ("*** Unable to decode JSON: " .substr($txtJson,0,20));
+  }
+
+  public static function getJsonInfo($cmd_id, $request) {
+    $id = cmd::humanReadableToCmd('#' .$cmd_id .'#');
+    $cmd = cmd::byId(trim(str_replace('#', '', $id)));
+    if(is_object($cmd)) {
+      return self::extractValueFromJsonTxt($cmd->execCmd(), $request);
+    }
+    else log::add(__CLASS__, 'debug', "Command not found: $cmd");
+    return(null);
+  }
+
   public static function saintOfTheDay($month,$day) {
     switch($month) {
       case 1: $saints = array( 1 => "Jour de l'an", 2 => "St Basile", 3 => "Ste Geneviève", 4 => "St Odilon", 5 => "St Edouard", 6 => "Ste Mélanie", 7 => "St Raymond", 8 => "St Lucien", 9 => "Ste Alix", 10 => "St Guillaume", 11 => "St Paulin", 12 => "Ste Tatiana", 13 => "Ste Yvette", 14 => "Ste Nina", 15 => "St Rémi", 16 => "St Marcel", 17 => "Ste Roseline", 18 => "Ste Prisca", 19 => "St Marius", 20 => "St Sébastien", 21 => "Ste Agnès", 22 => "St Vincent", 23 => "St Barnard", 24 => "St François", 25 => "Conv de St Paul", 26 => "St Timothée", 27 => "Ste Angèle", 28 => "St Thomas d'Aquin", 29 => "St Gildas", 30 => "Ste Martine", 31 => "Ste Marcelle");
@@ -75,54 +183,264 @@ class weatherForecast extends eqLogic {
     else return("NA");
   }
 
-  public static function cronHourly() {
-    $eqLogics = self::byType(__CLASS__, true);
-    foreach ($eqLogics as $equipt) {
-      $equipt->updateWeatherData(2);
+  public function dlMeteoalarmDataFeed($country,$file) {
+    if($country == '') return false;
+    $country = strtolower($country);
+    log::add(__CLASS__, 'info', " Downloading meteoAlarm feeds for $country");
+    $url = "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-$country";
+    $xml = @file_get_contents($url);
+    if($xml !== false) {
+      $hdle = fopen($file, "wb");
+      if($hdle !== FALSE) { fwrite($hdle, $xml); fclose($hdle); }
     }
+    return $xml;
   }
 
-  public static function cron() {
-    $minute = date('i');
-    $eqLogics = self::byType(__CLASS__, true);
-    $recupVig = 1;
-    $minuteVigilance = config::byKey('minuteVigilance', __CLASS__, -1);
-    $fileAlert = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
-    if ($minuteVigilance == -1) {
-      config::save('minuteVigilance', rand(1,59), __CLASS__);
+  public function mergeTimeSlots($slots) {
+    // Sort the slots based on type, level, and onset time
+    usort($slots, function($a, $b) {
+        return $a['type'] <=> $b['type']
+            ?: $a['level'] <=> $b['level']
+            ?: $a['onset'] <=> $b['onset'];
+    });
+
+    $result = [];
+    $currentSlot = $slots[0]; // Start with the first slot
+
+    foreach ($slots as $slot) {
+        if ($slot['onset'] <= $currentSlot['expires'] && $slot['type'] === $currentSlot['type'] && $slot['level'] === $currentSlot['level']) {
+            // Merge: Extend the expiration time
+            $currentSlot['expires'] = max($currentSlot['expires'], $slot['expires']);
+        } else {
+            // Save the previous slot and start a new merge
+            $result[] = $currentSlot;
+            $currentSlot = $slot;
+        }
     }
-    foreach ($eqLogics as $equipt) {
-      if($recupVig == 1 && trim($equipt->getConfiguration('numDeptFr')) != '') {
-        if($minute == $minuteVigilance || !file_exists($fileAlert)) {
-          self::getVigilanceDataArchiveMF();
-          $recupVig = 0;
+
+    // Add the last merged slot
+    $result[] = $currentSlot;
+
+    return $result;
+}
+
+  public function processXmlAlertInfo($xmlAlert, $language, &$alerts) {
+    $nbAlert = 0;
+    $t = time();
+    $infoAlerts = [];
+    // log::add(__CLASS__, 'info', "    Sent: [" .(string)$xmlAlert->sent ."]");
+    foreach ($xmlAlert->info as $info) {
+      $lang = substr((string)$info->language, 0, 2);
+      if($language == $lang) {
+        // log::add(__CLASS__, 'info', "Rech $language [" .$info->language ."]");
+        $expires = strtotime($info->expires);
+        // log::add(__CLASS__, 'info', " Event: [" .$info->event ."] Effective: " .$info->effective ." Expires: " .$info->expires ." " .(($expires < $t)?"Expiré":""));
+        if($expires === false || $expires < $t) continue;
+        // foreach ($info->area as $area) { echo "Area: " .$area->areaDesc ." ".$area->geocode->valueName ." " .$area->geocode->value .PHP_EOL;
+        $awareness_level = 0; $awareness_type = 0;
+        foreach ($info->parameter as $parameter) {
+          if($parameter->valueName == 'awareness_level')
+            $awareness_level = intval((string)$parameter->value);
+          elseif($parameter->valueName == 'awareness_type')
+            $awareness_type = intval((string)$parameter->value);
+          // else log::add(__CLASS__, 'debug', "    Unprocessed parameter: [" .$parameter->valueName ."] [" .$parameter->value ."]");
         }
+        if($awareness_level < 2) continue; // ignore niveau vert ?
+        $description = str_replace(array("\n","\r",'"'),array('<br>','',''),(string)$info->description);
+        $description = html_entity_decode($description);
+        if(strlen($description) > 450)
+          $description = substr($description,0,450) .' ...';
+        
+        // echo "Expires: " .gmdate('c', $expires) .PHP_EOL;
+        $onset = strtotime($info->onset);
+        $infoAlerts = [ "language" => (string)$info->language,
+          "onset" => $onset,
+          "expires" => $expires,
+          "level" => $awareness_level,
+          "type" => $awareness_type,
+          "event" => (string)$info->event,
+          // "instruction" => (string)$info->instruction,
+          "description" => $description,
+          "severity" => (string)$info->severity ];
+        $nbAlert++;
       }
-      $refreshMinute = $equipt->getConfiguration('refreshMinute', -1);
-      // log::add(__CLASS__, 'info', $equipt->getName() ." Refresh minute : $refreshMinute");
-      if ($refreshMinute == -1) {
-        $equipt->setConfiguration('refreshMinute', rand(0,4));
-        $equipt->save(true);
-        try {
-          $equipt->updateWeatherData(0); // get weather data immediately
-        } catch (Exception $e) {
-          log::add(__CLASS__, 'info', $e->getMessage());
-        }
-      }
-      else {
-        $datasource = $equipt->getConfiguration('datasource', '');
-        if($datasource == 'openweathermap') $mod = 30; // refresh 30min;
-        elseif ($datasource == 'weatherapi') $mod = 15;// refresh 15min;
-        else continue;
-        if(($minute - $refreshMinute) % $mod == 0) {
-          try {
-            $equipt->updateWeatherData(0);
-          } catch (Exception $e) {
-            log::add(__CLASS__, 'info', $e->getMessage());
+    }
+    if($nbAlert) {
+      $alerts['info'][] = $infoAlerts;
+      $alerts['info'] = $this->mergeTimeSlots($alerts['info']);
+    }
+    return($nbAlert);
+  }
+
+  public function getMeteoalarmData($country, $province, $language) {
+log::add(__CLASS__, 'info', "getMeteoAlarmData for $country / $province / $language");
+    $changed = false;
+    $file = __DIR__ ."/../../data/meteoalarm-$country.xml";
+    if (file_exists($file) && (time() - filemtime($file)) < 600) { // TTL 10 minutes
+      $xml = simplexml_load_file($file);
+    } else {
+      $xmlTxt = $this->dlMeteoalarmDataFeed($country,$file);
+      if($xmlTxt === false) $xml = false;
+      else $xml = simplexml_load_string($xmlTxt);
+    }
+    if($xml === false) {
+      log::add(__CLASS__, 'debug', "  Unable to get MeteoAlarmdata for $country URL: $url");
+      return $changed;
+    }
+      // Définir l'espace de noms utilisé dans le fichier XML
+    $namespaces = $xml->getNamespaces(true);
+      // Parcourir chaque entrée pour récupérer les cap:
+    $alerts = [];
+    $alerts['status'] = "OK";
+    $alerts['updated'] = (string)$xml->updated;
+    $alerts['country'] = $country;
+    $nbErr = 0;
+    if($province == '') {
+      $areas = [];
+      foreach ($xml->entry as $entry) {
+          // Access CAP namespace ( Common Alerting Protocol )
+        $cap = $entry->children($namespaces['cap']);
+        $t = time();
+        foreach ($entry->link as $link) {
+          $area = html_entity_decode((string)$cap->areaDesc);
+          $expires = strtotime($cap->expires);
+          if($expires === false || $expires < $t) {
+            log::add(__CLASS__, 'debug', "  Expired alert for: $area. " .date('c', $expires));
+            continue;
+          }
+          if(strpos($area, ';') !== false)
+            log::add(__CLASS__, 'error', "  Semicolon in areaName. $area will be ignored"); 
+          else {
+            $newArea = explode(',', $area);
+            $newArea = array_unique($newArea);
+            for($i=0;$i<count($newArea);$i++) {
+              $newVal = trim($newArea[$i]);
+              if(!in_array($newVal, $areas)) $areas[] = $newVal;
+            }
           }
         }
       }
+      sort($areas);
+      $alerts['areaList'] = $areas;
+      log::add(__CLASS__, 'debug', "  Areas list: " .implode(', ',$areas));
+      $contents = json_encode($alerts,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+      $this->setConfiguration('otherCountryAlerts', implode(",\n",$areas));
+      $this->save(true);
     }
+    else {
+      $this->setConfiguration('otherCountryAlerts', '');
+      $this->save(true);
+      $provinces = explode(',', $province);
+      $provinces = array_unique($provinces);
+      foreach($provinces as $region) {
+        $region = trim($region);
+        if($region == '') continue;
+        $currCapArea = ['name' => $region,'info' => [] ];
+        $urls = [];
+        foreach ($xml->entry as $entry) {
+          $cap = $entry->children($namespaces['cap']); // Access cap namespace Common Alerting Protocol
+          $t = time();
+          $areas = explode(',',strtolower($cap->areaDesc));
+          for($i=0;$i<count($areas);$i++) $areas[$i] = trim($areas[$i]);
+          if(in_array(strtolower($region), $areas)) {
+            if(strtotime($cap->expires) > $t) {
+              if($currCapArea === null) $currCapArea = ['name' => (string)$cap->areaDesc,'info' => [] ];
+              foreach ($entry->link as $link) {
+                if(strpos($link['href'],'?geocode=') !== false) {
+                  $area = (string)$link['title'];
+                }
+                else $area = $region;
+                if($link['type'] == 'application/cap+xml') {
+                  $url = (string)$link['href'];
+                  if(!in_array($url,$urls)) {
+                    $id = substr($url,strrpos($url, '/')+1);
+                    $alertTxt = @file_get_contents($url);
+log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $region $id");
+                    // echo "File_get_contents : $url [$id]" .PHP_EOL;
+                    if($alertTxt === false) {
+                      log::add(__CLASS__, 'debug', "    Unable to get MeteoAlarm feed : $url");
+                      $nbErr++;
+                    }
+                    else {
+                      $urls[] = $url;
+                      if($country == 'franc e') {
+                        $file = __DIR__ ."/../../data/meteoalarm-alert-$country-$region-$id.xml";
+                        $hdle = fopen($file, "wb");
+                        if($hdle !== FALSE) { fwrite($hdle, $alertTxt); fclose($hdle); }
+                      }
+                      $xmlAlert = simplexml_load_string($alertTxt);
+                      $alert = $this->processXmlAlertInfo($xmlAlert, $language, $currCapArea);
+                      if(!$alert && $language != 'en') {
+                        $alert = $this->processXmlAlertInfo($xmlAlert, 'en', $currCapArea);
+                        if(!$alert) {
+                          $lg = ($language == 'en')?"en":"$language/en";
+                          log::add(__CLASS__, 'info', "Languages $lg not found for weather alerts of $country");
+                        }
+                      }
+                    }
+                    break;
+                  }
+                  else log::add(__CLASS__, 'info', "    URL $url already processed");
+                }
+              }
+            }
+          }
+        }
+        log::add(__CLASS__, 'debug', "  $region nbInfo: " .count($currCapArea['info']));
+        if($currCapArea !== null) $alerts['capArea'][] = $currCapArea;
+        unset ($currCapArea);
+      }
+      if(!$nbErr) {
+        $contents = json_encode($alerts,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+      }
+      else {
+        message::add(__CLASS__, "$country $nbErr erreurs de recuperation des alertes"); 
+        $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
+        if(is_object($cmd)) {
+          $json = $cmd->execCmd(); // Recup old command value for changing status
+          $json = str_replace(array('&quot;','&#34;'), '"', $json);
+          $alerts = json_decode($json,true);
+          $alerts['status'] = "NOK $nbErr errors fetching data for $country / $province";
+          $contents = json_encode($alerts,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+        }
+      }
+      $loglevel = log::convertLogLevel(log::getLogLevel(__CLASS__));
+      if($loglevel == 'debug') {
+        $file = __DIR__ ."/../../data/meteoalarm-$country-" .str_replace(array("/",":"),'',$province) .".json";
+        $hdle = fopen($file, "wb");
+        if($hdle !== FALSE) { fwrite($hdle, $contents); fclose($hdle); }
+      }
+    }
+    $contents = str_replace('"','&#34;',$contents);
+    $len = strlen($contents);
+    if($len > 3000) log::add(__CLASS__, 'error', "  Commande MeteoalarmAlertsJson lg: $len");
+    $changed = $this->checkAndUpdateCmd('MeteoalarmAlertsJson', $contents) ||$changed;
+    log::add(__CLASS__, 'debug', "  " .json_encode($alerts));
+      // Update other commands
+    $t = time();
+    $MeteoalarmColorMax = 1; $MeteoalarmColorMaxNow = 1;
+    $MeteoalarmList = array();
+    $nbCapArea = count($alerts['capArea']);
+    foreach($alerts['capArea'] as $capArea) {
+      foreach($capArea['info'] as $info) {
+        $level = $info['level']; $type = $info['type'];
+        $onset = $info['onset']; $expires = $info['expires'];
+        if($level > 1) {
+          $list = self::$_vigilanceType[$type+100]['txt'] ." : " .self::$_vigilanceColors[$level]['desc'];
+          if($nbCapArea > 1)  $list .= " : " .$capArea['name'];
+          $MeteoalarmList[] = $list;
+        }
+        if($level > $MeteoalarmColorMax) $MeteoalarmColorMax = $level;
+        if($level > $MeteoalarmColorMaxNow && $t >= $onset && $t < $expires) {
+          $MeteoalarmColorMaxNow = $level;
+        }
+      }
+    }
+    $MeteoalarmList = implode(', ', array_unique($MeteoalarmList));
+    $changed = $this->checkAndUpdateCmd('MeteoalarmColorMax', $MeteoalarmColorMax) ||$changed;
+    $changed = $this->checkAndUpdateCmd('MeteoalarmColorMaxNow', $MeteoalarmColorMaxNow) ||$changed;
+    $changed = $this->checkAndUpdateCmd('MeteoalarmList', $MeteoalarmList) ||$changed;
+    return($changed);
   }
 
   public static function getIconFromCondition($_condition_id, $datasource, $_dayNight, $_templateImg) {
@@ -236,6 +554,7 @@ class weatherForecast extends eqLogic {
   }
 
   public function postUpdate() {
+    $datasource = trim($this->getConfiguration('datasource', ''));
     $wfCmd = $this->getCmd(null, 'temperature');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
@@ -376,6 +695,23 @@ class weatherForecast extends eqLogic {
     $wfCmd->setDisplay('generic_type', 'WEATHER_RAIN');
     $wfCmd->save();
 
+    if($datasource == 'weatherapi') { // only weather_api
+      $wfCmd = $this->getCmd(null, 'uv_Hcur');
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
+      }
+      $wfCmd->setName(__('Indice UV heure', __FILE__));
+      $wfCmd->setLogicalId('uv_Hcur');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_UV');
+      $wfCmd->save();
+    }
+
+
     $wfCmd = $this->getCmd(null, 'sunrise');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
@@ -437,7 +773,9 @@ class weatherForecast extends eqLogic {
     $wfCmd->save();
 
     $ord = 200;
-    for($i = 0;$i < 5; $i++) {
+    if($datasource == 'weatherapi') $nbDays = 3;
+    else $nbDays = 5;;
+    for($i = 0;$i < $nbDays; $i++) {
       $id = "title_day$i";
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
@@ -532,6 +870,24 @@ class weatherForecast extends eqLogic {
       $wfCmd->setOrder($ord++);
       $wfCmd->setDisplay('generic_type', "WEATHER_RAIN_$i");
       $wfCmd->save();
+
+      if($datasource == 'weatherapi' && $i < 3) { // 3 cmds only weather_api
+        $id = "uvMax_$i";
+        $wfCmd = $this->getCmd(null, $id);
+        if (!is_object($wfCmd)) {
+          $wfCmd = new weatherForecastCmd();
+          $wfCmd->setIsVisible(0);
+        }
+        $wfCmd->setName(__("Indice UV max J+$i", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setUnite('');
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->setDisplay('generic_type', "WEATHER_UV_$i");
+        $wfCmd->save();
+      }
     }
 
     $id = "H0Json4Widget";
@@ -549,6 +905,67 @@ class weatherForecast extends eqLogic {
       $wfCmd->setTemplate('mobile', __CLASS__ .'::Clock');
       $wfCmd->setOrder(300);
       $wfCmd->save();
+    }
+
+    $country = trim($this->getConfiguration('meteoAlarmCountry',''));
+    $province = trim($this->getConfiguration('meteoAlarmArea',''));
+    if($country != '') {
+      $id = "MeteoalarmAlertsJson";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Meteoalarm alertes Json", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
+      $id = "MeteoalarmColorMax";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Meteoalarm couleur alerte maximum", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
+      $id = "MeteoalarmColorMaxNow";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Meteoalarm couleur alerte maximum actuelle", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
+      $id = "MeteoalarmList";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Meteoalarm liste des alertes", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
     }
 
     if(trim($this->getConfiguration('numDeptFr')) != '') {
@@ -600,6 +1017,7 @@ class weatherForecast extends eqLogic {
       $wfCmd->save();
 
       foreach(self::$_vigilanceType as $i => $vig) {
+        if($i > 100) break; // Valeurs de meteoalarm
         if($i == 10) continue; // Pas de météo des forêts pour le moment.
         $id = "Vigilancephenomenon_max_color_id$i";
         $wfCmd = $this->getCmd(null, $id);
@@ -645,7 +1063,7 @@ class weatherForecast extends eqLogic {
     $refresh->save();
 
     if ($this->getIsEnable() == 1) {
-      $this->updateWeatherData(1);
+      $this->updateWeatherData(1,1);
     }
   }
 
@@ -671,24 +1089,28 @@ class weatherForecast extends eqLogic {
       return $replace;
     }
     $templateF = $this->getConfiguration('templateWeatherForecast','plugin');
+    $templateIMG = 0;
     if($templateF == 'none') return parent::toHtml($_version);
     elseif($templateF == 'plugin') $templateFile = 'weatherForecast';
-    elseif($templateF == 'pluginImg') $templateFile = 'weatherForecastIMG';
+    elseif($templateF == 'pluginImg') { $templateFile = 'weatherForecast'; $templateIMG = 1; }
     elseif($templateF == 'custom') $templateFile = 'custom.weatherForecast';
     else $templateFile = substr($templateF,0,-5);
-log::add(__CLASS__, 'debug', __FUNCTION__ ." " .$this->getId() ." \"" .$this->getName() ."\" Template: $templateFile");
+    if(substr($templateFile,-3) == "IMG" )  $templateIMG = 1; 
     $datasource = trim($this->getConfiguration('datasource', ''));
-    $replaceDay = array();
-    if(substr($templateFile,-3) == "IMG" ) {
-      $templateIMG = 1; 
+// log::add(__CLASS__, 'debug', __FUNCTION__ ." [" .$this->getName() ."](" .$this->getId() .") Template: $templateFile IMG: $templateIMG Datasource: $datasource");
+    $replaceDay = [];
+    if($templateIMG == 1) { 
       $replace['#displayIcon#'] = 'none'; $replace['#displayImage#'] = 'block';
+      $replace['#wImg#'] = '104px'; $replace['#hImg#'] = '65px';
+      $replaceDay['#displayIcon#'] = 'none'; $replaceDay['#displayImage#'] = 'block';
     } else {
-      $templateIMG = 0;
       if($datasource == 'weatherapi') {
         $replace['#displayIcon#'] = 'none'; $replace['#displayImage#'] = 'block';
+        $replace['#wImg#'] = '100px'; $replace['#hImg#'] = '100px';
         $replaceDay['#displayIcon#'] = 'none'; $replaceDay['#displayImage#'] = 'block';
       } else {
         $replace['#displayIcon#'] = 'block'; $replace['#displayImage#'] = 'none';
+        $replace['#wImg#'] = '100px'; $replace['#hImg#'] = '100px';
         $replaceDay['#displayIcon#'] = 'block'; $replaceDay['#displayImage#'] = 'none';
       }
     }
@@ -697,23 +1119,20 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." " .$this->getId() ." \"" .$this->ge
     $replace['#forecast#'] = '';
     $timezone = $this->getConfiguration('timezone',config::byKey('timezone','core'));
     if ($version != 'mobile' || $this->getConfiguration('fullMobileDisplay', 0) == 1) {
-      if (strpos($templateFile, 'weatherForecastIMG') !== false) {
-        $forcast_template = getTemplate('core', $version, 'forecastIMG', __CLASS__);
-      } else {
-        $forcast_template = getTemplate('core', $version, 'forecast', __CLASS__);
-      }
+      if (file_exists( __DIR__ ."/../template/$_version/custom.forecast.html"))
+        $forcast_template = getTemplate('core', $version, 'custom.forecast', __CLASS__);
+      else $forcast_template = getTemplate('core', $version, 'forecast', __CLASS__);
       $dateTime = new DateTime();
       $dateTime->setTimezone(new DateTimeZone($timezone));
       $dateTime->setTimestamp(time());
       $replace['#localDateTime#'] = "Date et heure locale: " .date_fr($dateTime->format('l d-m-Y H:i (\U\T\CP)'));
-      if($timezone == config::byKey('timezone','core')) $replace['#timezone#'] = '';
-      else $replace['#timezone#'] = $dateTime->format('e (\U\T\CP)');
+      $replace['#timezone#'] = $dateTime->format('e (\U\T\CP)');
       $replace['#sunrise_sunset#'] = '';
       $sunrise = null; $sunset = null;
       $H0Cmd = $this->getCmd(null, 'H0Json4Widget');
       if(is_object($H0Cmd)) {
         $H0 = $H0Cmd->execCmd();
-        $H0 = str_replace('&quot;', '"', $H0);
+        $H0 = str_replace('&#34;', '"', $H0);
         $json = json_decode($H0,true);
         if($json != null) {
           $sunrise = $json['sunrise'];
@@ -748,11 +1167,6 @@ log::add(__CLASS__, 'debug', __FUNCTION__ ." " .$this->getId() ." \"" .$this->ge
         }
       }
       
-      $sunriseCmd = $this->getCmd(null, 'sunrise');
-      $replace['#sunid#'] = is_object($sunriseCmd) ? $sunriseCmd->getId() : '';
-      $sunsetCmd = $this->getCmd(null, 'sunset');
-      $replace['#sunsetid#'] = is_object($sunsetCmd) ? $sunsetCmd->getId() : '';
-
       $dateTime->setTimestamp(time());
       $hour = $dateTime->format('G');
       $nbForecastDays = $this->getConfiguration('forecastDaysNumber', 5);
@@ -800,11 +1214,18 @@ if(1 || $this->getId() == 2271) {
         $rainCmd = $this->getCmd(null, "rain_$i");
         if(is_object($rainCmd)) {
           $val = $rainCmd->execCmd();
-          if($val > 0) $rain = $val .'mm';
-          else $rain = '';
+          $rain = ($val>0)?$val .'mm':'';
         }
         else $rain = '';
         $replaceDay['#rain#'] = $rain;
+        $uvMaxCmd = $this->getCmd(null, "uvMax_$i");
+        if(is_object($uvMaxCmd)) {
+          $val = $uvMaxCmd->execCmd();
+          if($val != -1) $uvMax = "UV: $val";
+          else $uvMax = '';
+        }
+        else $uvMax = '';
+        $replaceDay['#uvMax#'] = $uvMax;
 
         $replace['#forecast#'] .= template_replace($replaceDay, $forcast_template);
       }
@@ -818,6 +1239,10 @@ if(1 || $this->getId() == 2271) {
 
     $rain = $this->getCmd(null, 'rain');
     $replace['#rain#'] = is_object($rain) ? $rain->execCmd() : '0';
+
+    $uvCmd = $this->getCmd(null, 'uv_Hcur');
+    $uv_Hcur = is_object($uvCmd) ? $uvCmd->execCmd() : -1;
+    $replace['#uv_Hcur#'] = (($uv_Hcur == -1)? '' : "UV: $uv_Hcur"); 
 
     $clouds = $this->getCmd(null, 'clouds');
     $replace['#clouds#'] = is_object($clouds) ? $clouds->execCmd() : '0';
@@ -890,10 +1315,11 @@ if(1 || $this->getId() == 2271) {
       $replace['#collectDate#'] = '';
     }
 
-      // Vigilances météo
+      // Vigilances météo france
     $numDept = trim($this->getConfiguration('numDeptFr'));
+    $country = trim($this->getConfiguration('meteoAlarmCountry',''));
     $replace['#vigilance#'] = '';
-    if($numDept != '') {
+    if($numDept != '' && $country == '') {
       $maxColorCmd = $this->getCmd(null,'Vigilancecolor_max');
       if(is_object($maxColorCmd)) {
         $maxColor = $maxColorCmd->execCmd();
@@ -922,6 +1348,7 @@ if(1 || $this->getId() == 2271) {
           $replace['#vigilance#'] = '<table border=0 style="border-spacing: 0px; width: 100%;">
         <tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts1)) .'<br>Collecte: ' .date('d-m-Y H:i:s',$ts1) .'"><a href="https://vigilance.meteofrance.fr/fr" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img .'"/></a></td>';
           foreach(self::$_vigilanceType as $i => $vig) {
+            if($i > 100) break; // Valeurs de Météoalarm 
             if($i == 10) continue; // Météo des forêts
             $vigilance = $this->getCmd(null, "Vigilancephenomenon_max_color_id$i");
             if(is_object($vigilance))  {
@@ -976,7 +1403,6 @@ if(1 || $this->getId() == 2271) {
               }
             }
           }
-
           // Carte demain
           if($img2 != '' && $_version != 'mobile')
             $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts2)) .'"><a href="https://vigilance.meteofrance.fr/fr/demain" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img2 .'"/></a></td>';
@@ -988,6 +1414,88 @@ if(1 || $this->getId() == 2271) {
       }
     }
 
+      // vigilanceMeteoalarm
+    $replace['#vigilanceMeteoalarm#'] = '';
+    $country = trim($this->getConfiguration('meteoAlarmCountry',''));
+    $province = trim($this->getConfiguration('meteoAlarmArea',''));
+    $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
+    if(is_object($cmd)) {
+      $json = $cmd->execCmd();
+      $json = str_replace('&#34;', '"', $json);
+      $dec = json_decode($json,true);
+      if($country != '' ) {
+        if($province == '') {
+          $replace['#vigilanceMeteoalarm#'] = '<i class="icon fas fa-exclamation-triangle icon_red"></i> Province non définie. ';
+            if($dec !== null && isset($dec['areaList']) && count($dec['areaList']))
+              $replace['#vigilanceMeteoalarm#'] .= "Des alertes existent pour: " .implode(', ',$dec['areaList']);
+            else 
+              $replace['#vigilanceMeteoalarm#'] .= "Pas d'alertes actuellement pour: $country";
+        }
+        else {
+          if($dec === null) {
+            $replace['#vigilanceMeteoalarm#'] = 'Unable to decode Json cmd';
+          } else {
+            $nbArea = count($dec['capArea']);
+            $txtAlarm = '';
+            foreach($dec['capArea'] as $capArea) {
+              if($txtAlarm != '') $txtAlarm .= '<td style="border:1px #3C73A5 solid"></td>';
+              $nbInfo = count($capArea['info']);
+              if($nbInfo) {
+                for($j=101;$j<116;$j++) {
+                  if($j == 111) continue;
+                  $idx = $j - 100;
+                  $imgFile = __DIR__ ."/../template/images/AlertCAP$idx.svg";
+                  for($i=0;$i<$nbInfo;$i++) {
+                    if($idx == $capArea['info'][$i]['type']) {
+                      $level = $capArea['info'][$i]['level'];
+                      $desc = '';
+                      if(isset($capArea['info'][$i]['event'])) $desc .= $capArea['info'][$i]['event'];
+                      if(isset($capArea['info'][$i]['description'])) {
+                        $desc .= (($desc == '')? '' : '<br>') .$capArea['info'][$i]['description'];
+                      }
+                      $title = $country .' / ' .$capArea['name'] .' ' .self::$_vigilanceType[$j]['txt'];
+                      if(time() < $capArea['info'][$i]['onset'])
+                        $title .= ' de ' .self::dateTimezone('d-m-Y H:i',$capArea['info'][$i]['onset'],$timezone) .' à ' .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
+                      else
+                        $title .= " jusqu'à " .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
+                      $title .= '<br>' .$desc;
+                      $svg = @file_get_contents($imgFile);
+                      if($svg === false) {
+                        log::add(__CLASS__, 'warning', "$imgFile not found");
+                        $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['color'] .';color:' .self::$_vigilanceColors[$level]['hiColor'].';border-radius:999px;" title="' .$title .'">' .self::$_vigilanceType[$j]['txt'] .'</span>';
+                      }
+                      else {
+                        $svg = str_replace('#888888', self::$_vigilanceColors[$level]['hiColor'], $svg);
+                        $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['color'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
+                      }
+                      $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
+                    }
+                  }
+                }
+              }
+              else {
+                $color = '<a target="_blank" href="https://meteoalarm.org/en/live"><i class="fa fa-circle" style="font-size:1.5em;color:' .self::$_vigilanceColors[1]['color'] .'"></i></a>';
+                $txtAlarm .= '<td style="text-align:center;padding-left:4px;padding-right:4px;">' .$color ." Pas d'alerte météo pour " .$capArea['name'] ."</td>";
+              }
+            }
+            if($txtAlarm != '') {
+              $replace['#vigilanceMeteoalarm#'] = "<table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm\"><tr style=\"display:flex;background-color:transparent !important\">$txtAlarm</tr>";
+              $replace['#vigilanceMeteoalarm#'] .= "<tr style=\"background-color:transparent !important\"><td colspan=12>";
+              if($dec['status'] == "OK")
+                $replace['#vigilanceMeteoalarm#'] .= "<span style=\"font-size:10px;font-style:italic;line-height:normal;\">Alertes créées à partir de données de <a target=\"_blank\" href=\"https://meteoalarm.org/en/live\">Meteoalarm.org</a></span>";
+              else
+                $replace['#vigilanceMeteoalarm#'] .= "<i class=\"icon fas fa-exclamation-triangle icon_red\"></i> <span style=\"font-size:10px;font-style:italic;line-height:normal;color:red\">" .trim(substr($dec['status'],3)) ."</span>";
+              $replace['#vigilanceMeteoalarm#'] .= "</td></tr></table>";
+            }
+            else $replace['#vigilanceMeteoalarm#'] = '';
+          }
+        }
+      }
+    }
+    if($datasource == 'weatherapi')
+      $replace['#poweredBy#'] = 'Powered by <a target="_blank" href="https://www.weatherapi.com/" title="Free Weather API">WeatherAPI.com</a>';
+    else
+      $replace['#poweredBy#'] = 'Powered by <a target="_blank" href="https://openweathermap.org/">OpenWeather</a> &nbsp; <a target="_blank" href="https://dashboard.openweather.co.uk/dashboard">Weather Dashboard</a>';
     if (file_exists( __DIR__ ."/../template/$_version/$templateFile.html"))
       return $this->postToHtml($_version, template_replace($replace, getTemplate('core', $version, $templateFile, __CLASS__)));
     else
@@ -1073,6 +1581,7 @@ if(1 || $this->getId() == 2271) {
     $changed = $this->checkAndUpdateCmd('condition_id', $weather['weather'][0]['id']) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_speed', round($weather['wind']['speed'] * 3.6)) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_direction', $weather['wind']['deg']) || $changed;
+    $changed = $this->checkAndUpdateCmd("uv_Hcur", -1) || $changed; // not available with OWM
     $windGust =  (isset($weather['wind']['gust'])) ? round($weather['wind']['gust'] * 3.6) : 0;
     $changed = $this->checkAndUpdateCmd('wind_gust', $windGust) || $changed;
     $changed = $this->checkAndUpdateCmd('clouds', $weather['clouds']['all']) || $changed;
@@ -1121,6 +1630,7 @@ if(1 || $this->getId() == 2271) {
 // log::add(__CLASS__, 'info', date('Y-m-d H:i:s') ." " .$this->getName() ." : 1st forecast " .$forecast['list'][0]['dt_txt'] ." Dt : " .date('Y-m-d H:i:s', $forecast['list'][0]['dt']) ." Timezone : ".$forecast['city']['timezone']);
     $tsNow = time();
     for ($i = 0; $i < $nbForecastDays; $i++) {
+      $changed = $this->checkAndUpdateCmd("uvMax_$i", -1) || $changed; // not available with OWM
       $ts = strtotime("+{$i} day");
       $dateRech = new DateTime("+{$i} day 12:00:00", $dateTimeZone);
       $date = $dateRech->format('Y-m-d');
@@ -1235,7 +1745,7 @@ if(1 || $this->getId() == 2271) {
       throw new Exception(__("La clé API Weather API n'est pas renseignée.", __FILE__));
     $nbdays = 5;
     $url = "http://api.weatherapi.com/v1/forecast.json?key=$apikeyWapi&q=$lat,$lon&lang=$lang&days=$nbdays&aqi=yes&alerts=yes";
-    /* $request_http = new com_http($url); $resu = $request_http->exec(10); */
+    $urlAnon = "http://api.weatherapi.com/v1/forecast.json?key=myKey&q=" .sprintf("%.1f",$lat) ."," .sprintf("%.1f",$lon) ."&lang=$lang&days=$nbdays&aqi=yes&alerts=yes";
 
     $content = $this->fetchWeatherApi($url);
     if($content == null) return;
@@ -1270,7 +1780,7 @@ if(1 || $this->getId() == 2271) {
       return;
     }
     
-    $datas =  array_merge(array('state' => 'ok', 'datetime' => date('c')),$datas);
+    $datas =  array_merge( ['state' => 'ok', 'datetime' => date('c') ],$datas);
     $file = __DIR__ ."/../../data/weatherForecastAPI-" .$this->getId() .".json";
     $hdle = fopen($file, "wb");
     if($hdle !== FALSE) {
@@ -1278,9 +1788,9 @@ if(1 || $this->getId() == 2271) {
       fclose($hdle);
     }
     else message::add(__CLASS__, "Unable to write $file");
-    log::add(__CLASS__, 'debug', $url . ' : ' . substr(json_encode($datas),0, 100) .'...');
+    log::add(__CLASS__, 'debug', $urlAnon . ' : ' . substr(json_encode($datas),0, 100) .'...');
     $current = $datas['current'];
-    log::add(__CLASS__, 'debug', "  Datas updated on " .$current['last_updated'] ." Condition: " .$current['condition']['text']); // ." Icon: " .$current['condition']['icon']);
+    log::add(__CLASS__, 'debug', "  Data updated on " .$current['last_updated'] ." Condition: " .$current['condition']['text']); // ." Icon: " .$current['condition']['icon']);
     $H0array['updated_on'] = strtotime($current['last_updated']);
 
     if($_updateConfig == 1) { // memo dans la config de l'équipement
@@ -1310,7 +1820,9 @@ if(1 || $this->getId() == 2271) {
     $changed = $this->checkAndUpdateCmd('wind_speed', $windSpeed) || $changed;
     $changed = $this->checkAndUpdateCmd('wind_direction', $current['wind_degree']) || $changed;
     $changed = $this->checkAndUpdateCmd('rain', round($current['precip_mm'],1)) || $changed;
+    $changed = $this->checkAndUpdateCmd('clouds', $current['cloud']) || $changed;
     $windGust =  (isset($current['gust_kph'])) ? round($current['gust_kph']) : 0;
+    if($windGust < 30) $windGust = 0;
     $changed = $this->checkAndUpdateCmd('wind_gust', $windGust) || $changed;
     $dayNight = "day"; // day icon
     if($H0array['sunrise'] === false) $dayNight = "night";
@@ -1331,8 +1843,8 @@ if(1 || $this->getId() == 2271) {
     $H0array['clouds'] = $current['cloud'];
     /*
     $this->checkAndUpdateCmd('visibility_Hcur', $current['vis_km']);
-    $this->checkAndUpdateCmd('uv_Hcur', $current['uv']);
      */
+    $this->checkAndUpdateCmd('uv_Hcur', $current['uv']);
     /*
     if(0) { // commande JSON par heures sur 7 heures
       $found = 0; $now = time(); $searchStart = date("Y-m-d H:00",strtotime("now")); // $searchStartHour = date("H:00",strtotime("now")); 
@@ -1392,7 +1904,7 @@ if(1 || $this->getId() == 2271) {
                  }
                }
              ';
-            $this->checkAndUpdateCmd("forecast_H{$numCmd}_JSON", str_replace('"','&quot;',json_encode($forecasthour[$i],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)));
+            $this->checkAndUpdateCmd("forecast_H{$numCmd}_JSON", str_replace('"','&#34;',json_encode($forecasthour[$i],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)));
             $numCmd++;
           }
         }
@@ -1413,7 +1925,9 @@ if(1 || $this->getId() == 2271) {
       $changed = $this->checkAndUpdateCmd("condition_id_$i", $forecastday[$i]['day']['condition']['code']) || $changed;
       $changed = $this->checkAndUpdateCmd("rain_$i", round($forecastday[$i]['day']['totalprecip_mm'],1)) || $changed;
       $this->checkAndUpdateCmd("temperature_$i", $forecastday[$i]['day']['avgtemp_c']);
-      $this->checkAndUpdateCmd("uv_$i", $forecastday[$i]['day']['uv']);
+      $maxUV = 0;
+      for($k=0; $k<24; $k++) $maxUV = max( $forecastday[$i]['hour'][$k]['uv'], $maxUV);
+      $this->checkAndUpdateCmd("uvMax_$i", $maxUV);
       $this->checkAndUpdateCmd("wind_speed_$i", $forecastday[$i]['day']['maxwind_kph']);
       if(0) { // commande JSON
         unset($forecastday[$i]['hour']);
@@ -1454,13 +1968,14 @@ if(1 || $this->getId() == 2271) {
              }
             }
              */
-        $changed = $this->checkAndUpdateCmd("forecast_D{$i}_JSON", str_replace('"','&quot;',json_encode($forecastday[$i],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))) || $changed;
+        $changed = $this->checkAndUpdateCmd("forecast_D{$i}_JSON", str_replace('"','&#34;',json_encode($forecastday[$i],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))) || $changed;
       }
     }
     return $changed;
   }
 
-  public function updateWeatherData($_updateConfig = 0) {
+  // updateConfig 0 : immediatly / 1 : just after creating commands / 2 : cronDayly
+  public function updateWeatherData($_updateConfig = 0, $_updateVig = 0) {
     $changed = false;
     $gps = trim($this->getConfiguration('positionGps', ''));
     $coord = explode(',', $gps);
@@ -1474,17 +1989,17 @@ if(1 || $this->getId() == 2271) {
     $H0Cmd = $this->getCmd(null, 'H0Json4Widget');
     if(is_object($H0Cmd)) {
       $H0 = $H0Cmd->execCmd();
-      $H0 = str_replace('&quot;', '"', $H0);
+      $H0 = str_replace('&#34;', '"', $H0);
       $H0array = json_decode($H0,true);
-      if($H0array === null) $H0array = array();
+      if($H0array === null) $H0array = [];
       else {
-        if($datasource != $H0array['datasource']) { // Changement datasource
+        if(!isset($H0array['datasource']) || $datasource != $H0array['datasource']) { // Changement datasource
           unset($HOarray);
-          $H0array = array();
+          $H0array = [];
         }
       }
     }
-    else $H0array = array();
+    else $H0array = [];
     $sun_info = date_sun_info(time(), $lat, $lon);
     $sunrise = $sun_info['sunrise'];
     $changed = $this->checkAndUpdateCmd('sunriseTs', $sunrise) || $changed;
@@ -1512,7 +2027,16 @@ if(1 || $this->getId() == 2271) {
     $H0array['saintOfTheDay'] = self::saintOfTheDay($date_n,$date_j);
     $H0array['timezone'] = $timezone;
       // update vigilances if department is informed 
-    $changed = $this->getVigilance() || $changed;
+    $changed = $this->updateVigilanceMeteoFrance() || $changed;
+      // update Meteoalarm vigilances if country and province are informed 
+    $country = strtolower(trim($this->getConfiguration('meteoAlarmCountry','')));
+    $province = trim($this->getConfiguration('meteoAlarmArea',''));
+    $language = substr(config::byKey('language','core', 'fr_FR'),0,2);
+    if($country != '') {
+      if($_updateVig == 1)
+        $changed = $this->getMeteoalarmData($country, $province, $language) || $changed;
+    }
+    else $changed = $this->checkAndUpdateCmd('MeteoalarmAlertsJson', '[]') || $changed;
 
     if($_updateConfig != 2) { // Not called by cronDaily. Request to sources
       $lang = substr(config::byKey('language','core', 'fr_FR'),0,2);
@@ -1528,7 +2052,7 @@ if(1 || $this->getId() == 2271) {
         throw new Exception(__("Type de données inconnu. $datasource", __FILE__));
       }
     }
-    $contents = str_replace('"','&quot;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+    $contents = str_replace('"','&#34;',json_encode($H0array,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
     $changed = $this->checkAndUpdateCmd("H0Json4Widget", $contents) || $changed;
     if($_updateConfig == 2 || $changed) $this->refreshWidget();
   }
@@ -1599,7 +2123,7 @@ if(1 || $this->getId() == 2271) {
     $url = "http://storage.gra.cloud.ovh.net/v1/AUTH_555bdc85997f4552914346d4550c421e/gra-vigi6-archive_public/$dateRecup/";
     // log::add(__CLASS__, 'debug', "  Fetching MF archives $url");
     $doc = new DOMDocument();
-    libxml_use_internal_errors(true); // disable warning
+    libxml_use_internal_errors(true); // disable xmlWarning
     $doc->preserveWhiteSpace = false;
     if(@$doc->loadHTMLFile($url) !== false ) {
       $xpath = new DOMXpath($doc);
@@ -1629,7 +2153,7 @@ if(1 || $this->getId() == 2271) {
 // echo "New Data Recup: $dateRecup/$val2<br>";
         log::add(__CLASS__, 'debug', "  Fetching MF archives $url2");
         $doc2 = new DOMDocument();
-        libxml_use_internal_errors(true); // disable warning
+        libxml_use_internal_errors(true); // disable xmlWarning
         $doc2->preserveWhiteSpace = false;
         if(@$doc2->loadHTMLFile($url2) !== false ) {
           $xpath2 = new DOMXpath($doc2);
@@ -1684,12 +2208,13 @@ if(1 || $this->getId() == 2271) {
     return 0; // OK
   }
 
-  public function getVigilance() {
+  public function updateVigilanceMeteoFrance() {
     $changed = false;
     $numDept = $this->getConfiguration('numDeptFr');
     if($numDept == '') {
-      log::add(__CLASS__, 'debug', __FUNCTION__ ." ID:" .$this->getId() ." Département non défini.");
+      // log::add(__CLASS__, 'debug', __FUNCTION__ ." ID:" .$this->getId() ." Département non défini.");
       foreach(self::$_vigilanceType as $i => $vig) {
+        if($i > 100) break; // Valeurs de Météoalarm 
         $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0) || $changed;
         $changed = $this->checkAndUpdateCmd("Vigilancephases$i",'') || $changed;
         $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', 0) || $changed;
@@ -1698,7 +2223,7 @@ if(1 || $this->getId() == 2271) {
       }
       return $changed;
     }
-    log::add(__CLASS__, 'debug', __FUNCTION__ ." Département: $numDept");
+    log::add(__CLASS__, 'debug', __FUNCTION__ .". Département: $numDept");
       // Météo des forêts
     if(config::byKey('useForestAPI', __CLASS__, 0)) {
       $fileData = __DIR__ ."/../../data/DataMeteoForetsJ1.json";
@@ -1822,10 +2347,10 @@ if(1 || $this->getId() == 2271) {
       if($res === false) log::add(__CLASS__,'debug',"Unable to save file: $fileNewDept");
       else $vigJson['domain_id_picture'] = "dept_fr_$numDept.svg?ts=".time();
     }
-    else log::add(__CLASS__, 'debug', "  File $fileDept not found");
+    // else log::add(__CLASS__, 'debug', "  File $fileDept not found");
       // Save Json command
     if(count($vigJson)) {
-      $contents = str_replace('"','&quot;',json_encode($vigJson,JSON_UNESCAPED_UNICODE));
+      $contents = str_replace('"','&#34;',json_encode($vigJson,JSON_UNESCAPED_UNICODE));
       $changed = $this->checkAndUpdateCmd("VigilanceJson", $contents) || $changed;
       if(strlen($contents) > 3000)
         message::add(__CLASS__, "Cmd VigilanceJson Lg:". strlen($contents));
@@ -1848,9 +2373,9 @@ if(1 || $this->getId() == 2271) {
 }
 
 class weatherForecastCmd extends cmd {
-  public function execute($_options = array()) {
+  public function execute($_options = [] ) {
     if ($this->getLogicalId() == 'refresh') {
-      $this->getEqLogic()->updateWeatherData(0);
+      $this->getEqLogic()->updateWeatherData(0,1);
     }
     return false;
   }

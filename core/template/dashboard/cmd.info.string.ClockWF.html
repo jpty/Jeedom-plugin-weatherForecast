@@ -24,8 +24,6 @@
     <div id="digital_container#id#" class="wIcon#uid#">
       <table id="table#id#" style="width:100%;min-width:439px;"><tr style="background-color:transparent!important"><td id="tdClock#id#" colspan="2" style="overflow:hidden">
         <span class="clockAnimNone#id#" style="display:none"></span>
-        <!--
-        -->
         <span id="date" class="dateTextAnimNone#id#" style="font-size:20px;line-height:normal;padding:0;display:none"></span>
         <span class="clock#id#">
           <div class="hours#id#">
@@ -265,6 +263,7 @@
     var seconds2lines#id# = 1;
     if ('#clockSecondsOn2Lines#' != '#clockSecondsOn2Lines'+'#')
       seconds2lines#id# = '#clockSecondsOn2Lines#';
+    var dateFormatOptions#id# = {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'};
 
     var last#id# = '00:00';
 /* // Liste des timezones du navigateur
@@ -374,6 +373,7 @@ timeZones#id#.forEach(timeZone => {
         try {
           if('#displayWeather#' != '0' &&  _options.display_value != '') {
             let json = _options.display_value.replaceAll('&quot;','"');
+            json = json.replaceAll('&#34;','"');
             let obj = JSON.parse(json);
             if(obj != null && typeof(obj.weather) != 'undefined') {
               if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
@@ -493,8 +493,6 @@ timeZones#id#.forEach(timeZone => {
             dateFormatOptions#id# = {timeZone:timezone#id#,month:'numeric',day:'numeric',weekday:'short',year:'numeric',timeZoneName:'short'};
           else if ('#clockDateFormat#' == 'short')
             dateFormatOptions#id# = {timeZone:timezone#id#,month:'numeric',day:'numeric',weekday:'short',year:'numeric'};
-          else
-            dateFormatOptions#id# = {timeZone:timezone#id#,month:'long',day:'numeric',weekday:'long'};
 
           if ('#backgroundColor#' != '#backgroundColor' +'#') {
             cmd.querySelector('.content#id#').style.backgroundColor = '#backgroundColor#';
