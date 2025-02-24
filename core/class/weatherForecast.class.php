@@ -412,17 +412,35 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
         if($hdle !== FALSE) { fwrite($hdle, $contents); fclose($hdle); }
       }
     }
-
     $contents = str_replace('"','&#34;',$contents);
     $len = strlen($contents);
     if($len > 3000) log::add(__CLASS__, 'error', "  Commande MeteoalarmAlertsJson lg: $len");
     $changed = $this->checkAndUpdateCmd('MeteoalarmAlertsJson', $contents) ||$changed;
     log::add(__CLASS__, 'debug', "  " .json_encode($alerts));
-    /*
-    $nbAlerts = count($alerts['info']);
-    if($nbAlerts == 0) log::add(__CLASS__, 'debug', "$country, $province No vigilances");
-    else log::add(__CLASS__, 'debug', "$country,$province $nbAlerts alertes");
-     */
+      // Update other commands
+    $t = time();
+    $MeteoalarmColorMax = 1; $MeteoalarmColorMaxNow = 1;
+    $MeteoalarmList = array();
+    $nbCapArea = count($alerts['capArea']);
+    foreach($alerts['capArea'] as $capArea) {
+      foreach($capArea['info'] as $info) {
+        $level = $info['level']; $type = $info['type'];
+        $onset = $info['onset']; $expires = $info['expires'];
+        if($level > 1) {
+          $list = self::$_vigilanceType[$type+100]['txt'] ." : " .self::$_vigilanceColors[$level]['desc'];
+          if($nbCapArea > 1)  $list .= " : " .$capArea['name'];
+          $MeteoalarmList[] = $list;
+        }
+        if($level > $MeteoalarmColorMax) $MeteoalarmColorMax = $level;
+        if($level > $MeteoalarmColorMaxNow && $t >= $onset && $t < $expires) {
+          $MeteoalarmColorMaxNow = $level;
+        }
+      }
+    }
+    $MeteoalarmList = implode(', ', array_unique($MeteoalarmList));
+    $changed = $this->checkAndUpdateCmd('MeteoalarmColorMax', $MeteoalarmColorMax) ||$changed;
+    $changed = $this->checkAndUpdateCmd('MeteoalarmColorMaxNow', $MeteoalarmColorMaxNow) ||$changed;
+    $changed = $this->checkAndUpdateCmd('MeteoalarmList', $MeteoalarmList) ||$changed;
     return($changed);
   }
 
@@ -900,6 +918,48 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
         $wfCmd->setIsVisible(0);
         $wfCmd->setIsHistorized(0);
         $wfCmd->setName(__("Meteoalarm alertes Json", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
+      $id = "MeteoalarmColorMax";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Meteoalarm couleur alerte maximum", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
+      $id = "MeteoalarmColorMaxNow";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Meteoalarm couleur alerte maximum actuelle", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->save();
+      }
+      $id = "MeteoalarmList";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Meteoalarm liste des alertes", __FILE__));
         $wfCmd->setLogicalId($id);
         $wfCmd->setEqLogic_id($this->getId());
         $wfCmd->setType('info');
