@@ -83,10 +83,9 @@ class weatherForecast extends eqLogic {
       }
       $country = strtolower(trim($equipt->getConfiguration('meteoAlarmCountry','')));
       if($country != '') {
-        $file = __DIR__ ."/../../data/meteoalarm/$country.xml";
-      // $xmlTxt = $equipt->dlMeteoalarmDataFeed($country,$file);
-        if($minute == $minuteVigilance) { // every hour
-        // if($minute == $minuteVigilance && date('G') % 3 == 0) { // every 3 hours
+        $file = __DIR__ ."/../../data/meteoalarm-$country.xml";
+        // if($minute == $minuteVigilance) { // every hour
+        if($minute == $minuteVigilance && date('G') % 3 == 0) { // every 3 hours
           $province = trim($equipt->getConfiguration('meteoAlarmArea',''));
           $language = substr(config::byKey('language','core', 'fr_FR'),0,2);
           $equipt->getMeteoalarmData($country, $province, $language);
@@ -276,7 +275,7 @@ class weatherForecast extends eqLogic {
   public function getMeteoalarmData($country, $province, $language) {
 log::add(__CLASS__, 'info', "getMeteoAlarmData for $country / $province / $language");
     $changed = false;
-    $file = __DIR__ ."/../../data/meteoalarm/$country.xml";
+    $file = __DIR__ ."/../../data/meteoalarm-$country.xml";
     if (file_exists($file) && (time() - filemtime($file)) < 600) { // TTL 10 minutes
       $xml = simplexml_load_file($file);
     } else {
@@ -365,7 +364,7 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
                     else {
                       $urls[] = $url;
                       if($country == 'franc e') {
-                        $file = __DIR__ ."/../../data/meteoalarm/alert-$country-$region-$id.xml";
+                        $file = __DIR__ ."/../../data/meteoalarm-alert-$country-$region-$id.xml";
                         $hdle = fopen($file, "wb");
                         if($hdle !== FALSE) { fwrite($hdle, $alertTxt); fclose($hdle); }
                       }
@@ -398,8 +397,8 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
         message::add(__CLASS__, "$country $nbErr erreurs de recuperation des alertes"); 
         $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
         if(is_object($cmd)) {
-          $json = $cmd->execCmd();
-          $json = str_replace('&#34;', '"', $json);
+          $json = $cmd->execCmd(); // Recup old command value for changing status
+          $json = str_replace(array('&quot;','&#34;'), '"', $json);
           $alerts = json_decode($json,true);
           $alerts['status'] = "NOK $nbErr errors fetching data for $country / $province";
           $contents = json_encode($alerts,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
@@ -407,7 +406,7 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
       }
       $loglevel = log::convertLogLevel(log::getLogLevel(__CLASS__));
       if($loglevel == 'debug') {
-        $file = __DIR__ ."/../../data/meteoalarm/$country-" .str_replace(array("/",":"),'',$province) .".json";
+        $file = __DIR__ ."/../../data/meteoalarm-$country-" .str_replace(array("/",":"),'',$province) .".json";
         $hdle = fopen($file, "wb");
         if($hdle !== FALSE) { fwrite($hdle, $contents); fclose($hdle); }
       }
