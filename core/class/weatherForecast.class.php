@@ -381,7 +381,7 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
                     }
                     break;
                   }
-                  else log::add(__CLASS__, 'info', "    URL $url already processed");
+                  // else log::add(__CLASS__, 'info', "    URL $url already processed");
                 }
               }
             }
@@ -1319,7 +1319,7 @@ if(1 || $this->getId() == 2271) {
       // Vigilances météo france
     $numDept = trim($this->getConfiguration('numDeptFr'));
     $country = trim($this->getConfiguration('meteoAlarmCountry',''));
-    $replace['#vigilance#'] = '';
+    $replace['#vigilance#'] = ''; $replace['#vigilanceMeteoalarm#'] = '';
     if($numDept != '' && $country == '') {
       $maxColorCmd = $this->getCmd(null,'Vigilancecolor_max');
       if(is_object($maxColorCmd)) {
@@ -1347,9 +1347,9 @@ if(1 || $this->getId() == 2271) {
           }
           // if($_version != 'mobile')
           $replace['#vigilance#'] = '<table border=0 style="border-spacing: 0px; width: 100%;">
-        <tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts1)) .'<br>Collecte: ' .date('d-m-Y H:i:s',$ts1) .'"><a href="https://vigilance.meteofrance.fr/fr" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img .'"/></a></td>';
+        <tr style="background-color:transparent !important;"><td rowspan="2" class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts1)) .'<br>Collecte: ' .date('d-m-Y H:i:s',$ts1) .'"><a href="https://vigilance.meteofrance.fr/fr" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img .'"/></a></td>';
           foreach(self::$_vigilanceType as $i => $vig) {
-            if($i > 100) break; // Valeurs de Météoalarm 
+            if($i >= 100) break; // Valeurs de Météoalarm 
             if($i == 10) continue; // Météo des forêts
             $vigilance = $this->getCmd(null, "Vigilancephenomenon_max_color_id$i");
             if(is_object($vigilance))  {
@@ -1379,126 +1379,133 @@ if(1 || $this->getId() == 2271) {
                 if($svg === false) log::add(__CLASS__, 'debug', "  Unable to read SVG : $file");
                 else {
                   $svg = str_replace('#888888', self::$_vigilanceColors[$col]['color'], $svg);
-                  $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:20px;text-align: center" title="' .$vig['txt'] .$desc .'">' .$svg .'</td>';
+                  $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:45px;text-align: center" title="' .$vig['txt'] .$desc .'">' .$svg .'</td>';
                 }
               }
               else
-                $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:20px;text-align: center" title="' .$vig['txt'] .$desc .'"><i class="wi ' .$vig['icon'] .'" style="font-size: 24px;color: '.self::$_vigilanceColors[$col]['color'] .'"></i></td>';
+                $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:45px;text-align: center" title="' .$vig['txt'] .$desc .'"><i class="wi ' .$vig['icon'] .'" style="font-size:24px;color: '.self::$_vigilanceColors[$col]['color'] .'"></i></td>';
             }
           }
-          // Météo des forêts TODO
-          $forest = $this->getCmd(null, "Vigilance_color_forest");
-          if(is_object($forest))  {
-            $col = $forest->execCmd();
-            if($col > 0) {
-              $desc = ': ' .self::$_vigilanceColors[$col]['desc'];
-              $file = __DIR__ ."/../template/images/VigilanceFire.svg";
-              $svg = @file_get_contents($file);
-              if($svg === false) {
-                log::add(__CLASS__, 'debug', "  Unable to read SVG : $file");
-                $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:20px;text-align: center" title="' .$vig['txt'] .$desc .'"><a href="https://meteofrance.com/meteo-des-forets" target="_blank"><i class="wi ' .$vig['icon'] .'" style="font-size: 24px;color: '.self::$_vigilanceColors[$col]['color'] .'"></i></a></td>';
-              }
-              else {
-                $svg = str_replace('#888888', self::$_vigilanceColors[$col]['color'], $svg);
-                $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:20px;text-align: center" title="' .$vig['txt'] .$desc .'"><a href="https://meteofrance.com/meteo-des-forets" target="_blank">' .$svg .'</a></td>';
+          /*
+            // Météo des forêts TODO ou pas
+            $forest = $this->getCmd(null, "Vigilance_color_forest");
+            if(is_object($forest))  {
+              $col = $forest->execCmd();
+              if($col > 0) {
+                $desc = ': ' .self::$_vigilanceColors[$col]['desc'];
+                $file = __DIR__ ."/../template/images/VigilanceFire.svg";
+                $svg = @file_get_contents($file);
+                if($svg === false) {
+                  log::add(__CLASS__, 'debug', "  Unable to read SVG : $file");
+                  $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:45px;text-align: center" title="' .$vig['txt'] .$desc .'"><a href="https://meteofrance.com/meteo-des-forets" target="_blank"><i class="wi ' .$vig['icon'] .'" style="font-size: 24px;color: '.self::$_vigilanceColors[$col]['color'] .'"></i></a></td>';
+                }
+                else {
+                  $svg = str_replace('#888888', self::$_vigilanceColors[$col]['color'], $svg);
+                  $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:45px;text-align: center" title="' .$vig['txt'] .$desc .'"><a href="https://meteofrance.com/meteo-des-forets" target="_blank">' .$svg .'</a></td>';
+                }
               }
             }
-          }
-          // Carte demain
+          */
+              // Carte demain
           if($img2 != '' && $_version != 'mobile')
-            $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts2)) .'"><a href="https://vigilance.meteofrance.fr/fr/demain" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img2 .'"/></a></td>';
+            $replace['#vigilance#'] .= '<td rowspan="2" class="tableCmdcss" style="width:10%;text-align:center" title="Vigilance: ' .date_fr(date('l  d  F',$ts2)) .'"><a href="https://vigilance.meteofrance.fr/fr/demain" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img2 .'"/></a></td>';
+          $replace['#vigilance#'] .= '</tr><tr style="background-color:transparent !important;"><td colspan="5" style="margin-left:8px;font-size:10px !important;font-style:italic;text-align:center">Vigilances du département ' .$numDept .'</td></tr></table>';
         }
         else {
-          $replace['#vigilance#'] = '<table border=0 style="border-spacing: 0px; width: 100%;"><tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align: center" title="Vigilances">Pas de données de vigilance pour le département: ' .$numDept .'</td>';
+          $replace['#vigilance#'] = '<table border=0 style="border-spacing:0px;width:100%;"><tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align:left;font-size:12px;" title="Vigilances">Pas de données de vigilance pour le département: ' .$numDept .'</td></tr></table>';
         }
-        $replace['#vigilance#'] .= '</tr> </table> <span style="margin-left: 4px;font-size: 10px;font-style: italic;">Vigilances du département ' .$numDept .' créées à partir de données de Météo-France</span>';
       }
     }
-
-      // vigilanceMeteoalarm
-    $replace['#vigilanceMeteoalarm#'] = '';
-    $country = trim($this->getConfiguration('meteoAlarmCountry',''));
-    $province = trim($this->getConfiguration('meteoAlarmArea',''));
-    $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
-    if(is_object($cmd)) {
-      $json = $cmd->execCmd();
-      $json = str_replace('&#34;', '"', $json);
-      $dec = json_decode($json,true);
-      if($country != '' ) {
-        if($province == '') {
-          $replace['#vigilanceMeteoalarm#'] = '<i class="icon fas fa-exclamation-triangle icon_red"></i> Province non définie. ';
+    else { // vigilanceMeteoalarm
+      $province = trim($this->getConfiguration('meteoAlarmArea',''));
+      $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
+      if(is_object($cmd)) {
+        $json = $cmd->execCmd();
+        $json = str_replace('&#34;', '"', $json);
+        $dec = json_decode($json,true);
+        $collectDate = $cmd->getCollectDate();
+        if($country != '' ) {
+          if($province == '') {
+            $replace['#vigilanceMeteoalarm#'] =  "<span title=\"Collecte Jeedom: $collectDate\"><i class=\"icon fas fa-exclamation-triangle icon_red\"></i> Province non définie. <span style=\"font-size:10px;\">";
             if($dec !== null && isset($dec['areaList']) && count($dec['areaList']))
-              $replace['#vigilanceMeteoalarm#'] .= "Des alertes existent pour: " .implode(', ',$dec['areaList']);
+              $replace['#vigilanceMeteoalarm#'] .= "Des alertes existent pour $country";
             else 
-              $replace['#vigilanceMeteoalarm#'] .= "Pas d'alerte actuellement pour: $country";
-        }
-        else {
-          if($dec === null) {
-            $replace['#vigilanceMeteoalarm#'] = 'Unable to decode Json cmd';
-          } else {
-            $nbArea = count($dec['capArea']);
-            $txtAlarm = '';
-            foreach($dec['capArea'] as $capArea) {
-              if($txtAlarm != '') $txtAlarm .= '<td style="border-right:1px #3C73A5 solid"></td>';
-              $nbInfo = count($capArea['info']);
-              if($nbInfo) {
-                for($j=101;$j<116;$j++) {
-                  if($j == 111) continue;
-                  $idx = $j - 100;
-                  $imgFile = __DIR__ ."/../template/images/AlertCAP$idx.svg";
-                  for($i=0;$i<$nbInfo;$i++) {
-                    if($idx == $capArea['info'][$i]['type']) {
-                      $level = $capArea['info'][$i]['level'];
-                      $desc = '';
-                      if(isset($capArea['info'][$i]['event'])) $desc .= $capArea['info'][$i]['event'];
-                      if(isset($capArea['info'][$i]['description'])) {
-                        $desc .= (($desc == '')? '' : '<br>') .$capArea['info'][$i]['description'];
+              $replace['#vigilanceMeteoalarm#'] .= "Pas d'alerte actuellement pour $country";
+            $replace['#vigilanceMeteoalarm#'] .= "</span></span>";
+          }
+          else {
+            if($dec === null) {
+              $replace['#vigilanceMeteoalarm#'] = 'Unable to decode Json cmd';
+            } else {
+              $txtAlarm = '';
+              if(isset($dec['capArea'])) {
+                $nbArea = count($dec['capArea']);
+                foreach($dec['capArea'] as $capArea) {
+                  if($txtAlarm != '') $txtAlarm .= '<td style="border-right:1px #3C73A5 solid"></td>';
+                  $nbInfo = count($capArea['info']);
+                  if($nbInfo) {
+                    for($j=101;$j<116;$j++) {
+                      if($j == 111) continue;
+                      $idx = $j - 100;
+                      $imgFile = __DIR__ ."/../template/images/AlertCAP$idx.svg";
+                      for($i=0;$i<$nbInfo;$i++) {
+                        if($idx == $capArea['info'][$i]['type']) {
+                          $level = $capArea['info'][$i]['level'];
+                          $desc = '';
+                          if(isset($capArea['info'][$i]['event'])) $desc .= $capArea['info'][$i]['event'];
+                          if(isset($capArea['info'][$i]['description'])) {
+                            $desc .= (($desc == '')? '' : '<br>') .$capArea['info'][$i]['description'];
+                          }
+                          $title = $country .' / ' .$capArea['name'] ."<br>" .self::$_vigilanceType[$j]['txt'];
+                          if(time() < $capArea['info'][$i]['onset'])
+                            $title .= ' de ' .self::dateTimezone('d-m-Y H:i',$capArea['info'][$i]['onset'],$timezone) .' à ' .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
+                          else
+                            $title .= " jusqu'à " .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
+                          $title .= '<br>' .$desc;
+                          $svg = @file_get_contents($imgFile);
+                          if($svg === false) {
+                            log::add(__CLASS__, 'warning', "$imgFile not found");
+                            $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['color'] .';color:' .self::$_vigilanceColors[$level]['hiColor'].';border-radius:999px;" title="' .$title .'">' .self::$_vigilanceType[$j]['txt'] .'</span>';
+                          }
+                          else {
+                            $svg = str_replace('#888888', self::$_vigilanceColors[$level]['hiColor'], $svg);
+                            $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['color'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
+                          }
+                          $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
+                        }
                       }
-                      $title = $country .' / ' .$capArea['name'] .' ' .self::$_vigilanceType[$j]['txt'];
-                      if(time() < $capArea['info'][$i]['onset'])
-                        $title .= ' de ' .self::dateTimezone('d-m-Y H:i',$capArea['info'][$i]['onset'],$timezone) .' à ' .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
-                      else
-                        $title .= " jusqu'à " .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
-                      $title .= '<br>' .$desc;
-                      $svg = @file_get_contents($imgFile);
-                      if($svg === false) {
-                        log::add(__CLASS__, 'warning', "$imgFile not found");
-                        $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['color'] .';color:' .self::$_vigilanceColors[$level]['hiColor'].';border-radius:999px;" title="' .$title .'">' .self::$_vigilanceType[$j]['txt'] .'</span>';
-                      }
-                      else {
-                        $svg = str_replace('#888888', self::$_vigilanceColors[$level]['hiColor'], $svg);
-                        $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['color'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
-                      }
-                      $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
                     }
+                  }
+                  else {
+                    $svg = "<img src=\"plugins/weatherForecast/core/template/images/AlertCAP0.svg\" alt=\"No alert\"/>";
+                    $title = $country .' / ' .$capArea['name'] .'<br>' .self::$_vigilanceType[100]['txt'];
+                    $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[1]['color'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
+                    $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
                   }
                 }
               }
-              else {
-                $svg = "<img src=\"plugins/weatherForecast/core/template/images/AlertCAP0.svg\" alt=\"No alert\"/>";
-                $title = $country .' / ' .$capArea['name'] .'<br>' .self::$_vigilanceType[100]['txt'];
-                $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[1]['color'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
-                $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
-              }
-            }
-            if($txtAlarm != '') {
-              if($dec['status'] == "OK")
-                $message = "Alertes créées à partir de données de <a target=\"_blank\" href=\"https://meteoalarm.org/en/live\">Meteoalarm.org</a>";
-              else
-                $message = "<i  style=\"font-size:14px;\" class=\"icon fas fa-exclamation-triangle icon_red\"></i> TITI" .trim(substr($dec['status'],3));
-              $txtAlarm .= "<td style=\"flex:auto;padding-left:4px;padding-right:4px;font-size:10px !important;font-style:italic;line-height:normal;text-align:left;\">$message</td>";
+              if($txtAlarm != '') {
+                if($dec['status'] != "OK")
+                  $txtAlarm .= "<td style=\"flex:auto;padding-left:4px;padding-right:4px;font-size:10px !important;font-style:italic;line-height:normal;text-align:left;\"><i  style=\"font-size:14px;\" class=\"icon fas fa-exclamation-triangle icon_red\"></i> " .trim(substr($dec['status'],3)) ."</td>";
 
-              $replace['#vigilanceMeteoalarm#'] = "<table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm\"><tr style=\"display:flex;align-content:center;background-color:transparent !important\">$txtAlarm</tr></table>";
+                $replace['#vigilanceMeteoalarm#'] = "<table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm Collecte Jeedom: $collectDate\"><tr style=\"display:flex;align-content:center;background-color:transparent !important\">$txtAlarm</tr></table>";
+              }
+              else $replace['#vigilanceMeteoalarm#'] = '';
             }
-            else $replace['#vigilanceMeteoalarm#'] = '';
           }
         }
       }
     }
+    $poweredBy = 'Powered by ';
     if($datasource == 'weatherapi')
-      $replace['#poweredBy#'] = 'Powered by <a target="_blank" href="https://www.weatherapi.com/" title="Free Weather API">WeatherAPI.com</a>';
+      $poweredBy .= '<a target="_blank" href="https://www.weatherapi.com/" title="Free Weather API">WeatherAPI.com</a>';
     else
-      $replace['#poweredBy#'] = 'Powered by <a target="_blank" href="https://openweathermap.org/">OpenWeather</a> &nbsp; <a target="_blank" href="https://dashboard.openweather.co.uk/dashboard">Weather Dashboard</a>';
+      $poweredBy .= '<a target="_blank" href="https://openweathermap.org/">OpenWeather</a> &nbsp; <a target="_blank" href="https://dashboard.openweather.co.uk/dashboard">Weather Dashboard</a>';
+    if($numDept != '' && $country == '')
+      $poweredBy .= ' - <a href="https://vigilance.meteofrance.fr/fr" target="_blank">Météo France</a>';
+    elseif($country != '' )
+      $poweredBy .= ' - <a target="_blank" href="https://meteoalarm.org/fr/live">Meteoalarm.org</a>';
+    $replace['#poweredBy#'] = $poweredBy;
     if (file_exists( __DIR__ ."/../template/$_version/$templateFile.html"))
       return $this->postToHtml($_version, template_replace($replace, getTemplate('core', $version, $templateFile, __CLASS__)));
     else
