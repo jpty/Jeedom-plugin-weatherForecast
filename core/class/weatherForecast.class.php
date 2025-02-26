@@ -902,8 +902,8 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
       $wfCmd->setEqLogic_id($this->getId());
       $wfCmd->setType('info');
       $wfCmd->setSubType('string');
-      $wfCmd->setTemplate('dashboard', __CLASS__ .'::Clock');
-      $wfCmd->setTemplate('mobile', __CLASS__ .'::Clock');
+      $wfCmd->setTemplate('dashboard', __CLASS__ .'::ClockWF');
+      $wfCmd->setTemplate('mobile', __CLASS__ .'::ClockWF');
       $wfCmd->setOrder(300);
       $wfCmd->save();
     }
