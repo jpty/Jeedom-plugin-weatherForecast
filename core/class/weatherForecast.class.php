@@ -421,19 +421,21 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
     $t = time();
     $MeteoalarmColorMax = 1; $MeteoalarmColorMaxNow = 1;
     $MeteoalarmList = array();
-    $nbCapArea = count($alerts['capArea']);
-    foreach($alerts['capArea'] as $capArea) {
-      foreach($capArea['info'] as $info) {
-        $level = $info['level']; $type = $info['type'];
-        $onset = $info['onset']; $expires = $info['expires'];
-        if($level > 1) {
-          $list = self::$_vigilanceType[$type+100]['txt'] ." : " .self::$_vigilanceColors[$level]['desc'];
-          if($nbCapArea > 1)  $list .= " : " .$capArea['name'];
-          $MeteoalarmList[] = $list;
-        }
-        if($level > $MeteoalarmColorMax) $MeteoalarmColorMax = $level;
-        if($level > $MeteoalarmColorMaxNow && $t >= $onset && $t < $expires) {
-          $MeteoalarmColorMaxNow = $level;
+    if(isset($alerts['capArea'])) {
+      $nbCapArea = count($alerts['capArea']);
+      foreach($alerts['capArea'] as $capArea) {
+        foreach($capArea['info'] as $info) {
+          $level = $info['level']; $type = $info['type'];
+          $onset = $info['onset']; $expires = $info['expires'];
+          if($level > 1) {
+            $list = self::$_vigilanceType[$type+100]['txt'] ." : " .self::$_vigilanceColors[$level]['desc'];
+            if($nbCapArea > 1)  $list .= " : " .$capArea['name'];
+            $MeteoalarmList[] = $list;
+          }
+          if($level > $MeteoalarmColorMax) $MeteoalarmColorMax = $level;
+          if($level > $MeteoalarmColorMaxNow && $t >= $onset && $t < $expires) {
+            $MeteoalarmColorMaxNow = $level;
+          }
         }
       }
     }
