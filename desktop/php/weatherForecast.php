@@ -356,7 +356,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
               <legend><i class="fas fa-info"></i> {{Meteoalarm}}</legend>
               <div class="form-group">
                 <label class="col-sm-3 control-label">{{Alertes actuelles du pays}}
-                  <sup><i class="fas fa-question-circle" tooltip="{{Quand la région n'est pas définie, les régions en alerte sont listées ici. Actuellement, il y a des alertes météo pour ces régions:}}"></i></sup>
+                  <sup><i class="fas fa-question-circle" tooltip="{{Textes à copier / coller dans le champ à gauche}}"></i></sup>
                 </label>
                 <div class="col-sm-5">
                   <textarea class="form-control eqLogicAttr autogrow" data-l1key="configuration" data-l2key="otherCountryAlerts"></textarea>
