@@ -184,19 +184,6 @@ class weatherForecast extends eqLogic {
     else return("NA");
   }
 
-  public function dlMeteoalarmDataFeed($country,$file) {
-    if($country == '') return false;
-    $country = strtolower($country);
-    log::add(__CLASS__, 'info', " Downloading meteoAlarm feeds for $country");
-    $url = "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-$country";
-    $xml = @file_get_contents($url);
-    if($xml !== false) {
-      $hdle = fopen($file, "wb");
-      if($hdle !== FALSE) { fwrite($hdle, $xml); fclose($hdle); }
-    }
-    return $xml;
-  }
-
   public function mergeTimeSlots($slots) {
     // Sort the slots based on type, level, and onset time
     usort($slots, function($a, $b) {
@@ -204,10 +191,8 @@ class weatherForecast extends eqLogic {
             ?: $a['level'] <=> $b['level']
             ?: $a['onset'] <=> $b['onset'];
     });
-
     $result = [];
     $currentSlot = $slots[0]; // Start with the first slot
-
     foreach ($slots as $slot) {
         if ($slot['onset'] <= $currentSlot['expires'] && $slot['type'] === $currentSlot['type'] && $slot['level'] === $currentSlot['level']) {
             // Merge: Extend the expiration time
@@ -218,12 +203,9 @@ class weatherForecast extends eqLogic {
             $currentSlot = $slot;
         }
     }
-
-    // Add the last merged slot
-    $result[] = $currentSlot;
-
+    $result[] = $currentSlot; // Add the last merged slot
     return $result;
-}
+  }
 
   public function processXmlAlertInfo($xmlAlert, $language, &$alerts) {
     $nbAlert = 0;
@@ -273,31 +255,10 @@ class weatherForecast extends eqLogic {
     return($nbAlert);
   }
 
-  public function getMeteoalarmData($country, $province, $language) {
-log::add(__CLASS__, 'info', "getMeteoAlarmData for $country / $province / $language");
-    $changed = false;
-    $file = __DIR__ ."/../../data/meteoalarm-$country.xml";
-    if (file_exists($file) && (time() - filemtime($file)) < 600) { // TTL 10 minutes
-      $xml = simplexml_load_file($file);
-    } else {
-      $xmlTxt = $this->dlMeteoalarmDataFeed($country,$file);
-      if($xmlTxt === false) $xml = false;
-      else $xml = simplexml_load_string($xmlTxt);
-    }
-    if($xml === false) {
-      log::add(__CLASS__, 'debug', "  Unable to get MeteoAlarmdata for $country URL: $url");
-      return $changed;
-    }
-      // Définir l'espace de noms utilisé dans le fichier XML
-    $namespaces = $xml->getNamespaces(true);
-      // Parcourir chaque entrée pour récupérer les cap:
-    $alerts = [];
-    $alerts['status'] = "OK";
-    $alerts['updated'] = (string)$xml->updated;
-    $alerts['country'] = $country;
-    $nbErr = 0;
-    if($province == '') {
+  public function listRegionAlert($country,$xml) {
+    if($xml != false) {
       $areas = [];
+      $namespaces = $xml->getNamespaces(true);
       foreach ($xml->entry as $entry) {
           // Access CAP namespace ( Common Alerting Protocol )
         $cap = $entry->children($namespaces['cap']);
@@ -305,12 +266,9 @@ log::add(__CLASS__, 'info', "getMeteoAlarmData for $country / $province / $langu
         foreach ($entry->link as $link) {
           $area = html_entity_decode((string)$cap->areaDesc);
           $expires = strtotime($cap->expires);
-          if($expires === false || $expires < $t) {
-            log::add(__CLASS__, 'debug', "  Expired alert for: $area. " .date('c', $expires));
-            continue;
-          }
+          if($expires === false || $expires < $t) continue;
           if(strpos($area, ';') !== false)
-            log::add(__CLASS__, 'error', "  Semicolon in areaName. $area will be ignored"); 
+            log::add(__CLASS__, 'info', "  Semicolon in areaName. $area will be ignored"); 
           else {
             $newArea = explode(',', $area);
             $newArea = array_unique($newArea);
@@ -322,14 +280,59 @@ log::add(__CLASS__, 'info', "getMeteoAlarmData for $country / $province / $langu
         }
       }
       sort($areas);
-      $alerts['areaList'] = $areas;
-      log::add(__CLASS__, 'debug', "  Areas list: " .implode(', ',$areas));
-      $contents = json_encode($alerts,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+      log::add(__CLASS__, 'debug', "    Areas with alerts: " .implode(', ',$areas));
       $this->setConfiguration('otherCountryAlerts', implode(",\n",$areas));
       $this->save(true);
+      unset($areas);
     }
-    else {
-      $this->setConfiguration('otherCountryAlerts', '');
+  }
+
+  public function dlMeteoalarmDataFeed($country,$file) {
+    if($country == '') return false;
+    $country = strtolower($country);
+    log::add(__CLASS__, 'info', "  Downloading meteoAlarm feeds for $country");
+    $url = "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-$country";
+    $xmlTxt = @file_get_contents($url);
+    if($xmlTxt !== false) {
+      $hdle = fopen($file, "wb");
+      if($hdle !== FALSE) { fwrite($hdle, $xmlTxt); fclose($hdle); }
+    }
+    elseif($xmlTxt === false)
+      log::add(__CLASS__, 'debug', "  Unable to download MeteoAlarmdata for $country URL: $url");
+    return $xmlTxt;
+  }
+
+  public function loadMeteoalarmXml($country) {
+    $simpleXml = false;
+    $file = __DIR__ ."/../../data/meteoalarm-$country.xml";
+    if (file_exists($file) && (time() - filemtime($file)) < 600) { // TTL 10 minutes
+      $simpleXml = simplexml_load_file($file);
+      log::add(__CLASS__, 'info', "   meteoAlarm feeds from local file for $country");
+    }
+    if($simpleXml === false) {
+      $xmlTxt = $this->dlMeteoalarmDataFeed($country,$file);
+      if($xmlTxt === false) $simpleXml = false;
+      else $simpleXml = simplexml_load_string($xmlTxt);
+    }
+    if($simpleXml === false)
+      log::add(__CLASS__, 'debug', "  Unable to load MeteoAlarmdata for $country");
+    return $simpleXml;
+  }
+
+  public function getMeteoalarmData($country, $province, $language) {
+    log::add(__CLASS__, 'info', "getMeteoAlarmData for $country / $province / $language");
+    $changed = false;
+    $xml = $this->loadMeteoalarmXml($country);
+    if($xml === false) return $changed;
+    $namespaces = $xml->getNamespaces(true); // get namespaces defined in the XML file
+    $this->listRegionAlert($country,$xml);
+      // Parcourir chaque entrée pour récupérer les cap:
+    if($province != '') {
+      $alerts = [];
+      $alerts['status'] = "OK";
+      $alerts['updated'] = (string)$xml->updated;
+      $alerts['country'] = $country;
+      $nbErr = 0;
       $this->save(true);
       $provinces = explode(',', $province);
       $provinces = array_unique($provinces);
@@ -356,10 +359,10 @@ log::add(__CLASS__, 'info', "getMeteoAlarmData for $country / $province / $langu
                   if(!in_array($url,$urls)) {
                     $id = substr($url,strrpos($url, '/')+1);
                     $alertTxt = @file_get_contents($url);
-log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $region $id");
+log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $region $id");
                     // echo "File_get_contents : $url [$id]" .PHP_EOL;
                     if($alertTxt === false) {
-                      log::add(__CLASS__, 'debug', "    Unable to get MeteoAlarm feed : $url");
+                      log::add(__CLASS__, 'debug', "    Unable to get MeteoAlarm info : $url");
                       $nbErr++;
                     }
                     else {
@@ -387,7 +390,7 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
             }
           }
         }
-        log::add(__CLASS__, 'debug', "  $region nbInfo: " .count($currCapArea['info']));
+        log::add(__CLASS__, 'debug', "      [$region] #Info: " .count($currCapArea['info']));
         if($currCapArea !== null) $alerts['capArea'][] = $currCapArea;
         unset ($currCapArea);
       }
@@ -411,38 +414,38 @@ log::add(__CLASS__, 'info', "  Downloading meteoAlarm info for $country / $regio
         $hdle = fopen($file, "wb");
         if($hdle !== FALSE) { fwrite($hdle, $contents); fclose($hdle); }
       }
-    }
-    $contents = str_replace('"','&#34;',$contents);
-    $len = strlen($contents);
-    if($len > 3000) log::add(__CLASS__, 'error', "  Commande MeteoalarmAlertsJson lg: $len");
-    $changed = $this->checkAndUpdateCmd('MeteoalarmAlertsJson', $contents) ||$changed;
-    log::add(__CLASS__, 'debug', "  " .json_encode($alerts));
-      // Update other commands
-    $t = time();
-    $MeteoalarmColorMax = 1; $MeteoalarmColorMaxNow = 1;
-    $MeteoalarmList = array();
-    if(isset($alerts['capArea'])) {
-      $nbCapArea = count($alerts['capArea']);
-      foreach($alerts['capArea'] as $capArea) {
-        foreach($capArea['info'] as $info) {
-          $level = $info['level']; $type = $info['type'];
-          $onset = $info['onset']; $expires = $info['expires'];
-          if($level > 1) {
-            $list = self::$_vigilanceType[$type+100]['txt'] ." : " .self::$_vigilanceColors[$level]['desc'];
-            if($nbCapArea > 1)  $list .= " : " .$capArea['name'];
-            $MeteoalarmList[] = $list;
-          }
-          if($level > $MeteoalarmColorMax) $MeteoalarmColorMax = $level;
-          if($level > $MeteoalarmColorMaxNow && $t >= $onset && $t < $expires) {
-            $MeteoalarmColorMaxNow = $level;
+      $contents = str_replace('"','&#34;',$contents);
+      $len = strlen($contents);
+      if($len > 3000) log::add(__CLASS__, 'error', "  Commande MeteoalarmAlertsJson lg: $len");
+      $changed = $this->checkAndUpdateCmd('MeteoalarmAlertsJson', $contents) ||$changed;
+      log::add(__CLASS__, 'debug', "  " .json_encode($alerts));
+        // Update other commands
+      $t = time();
+      $MeteoalarmColorMax = 1; $MeteoalarmColorMaxNow = 1;
+      $MeteoalarmList = array();
+      if(isset($alerts['capArea'])) {
+        $nbCapArea = count($alerts['capArea']);
+        foreach($alerts['capArea'] as $capArea) {
+          foreach($capArea['info'] as $info) {
+            $level = $info['level']; $type = $info['type'];
+            $onset = $info['onset']; $expires = $info['expires'];
+            if($level > 1) {
+              $list = self::$_vigilanceType[$type+100]['txt'] ." : " .self::$_vigilanceColors[$level]['desc'];
+              if($nbCapArea > 1)  $list .= " : " .$capArea['name'];
+              $MeteoalarmList[] = $list;
+            }
+            if($level > $MeteoalarmColorMax) $MeteoalarmColorMax = $level;
+            if($level > $MeteoalarmColorMaxNow && $t >= $onset && $t < $expires) {
+              $MeteoalarmColorMaxNow = $level;
+            }
           }
         }
       }
+      $MeteoalarmList = implode(', ', array_unique($MeteoalarmList));
+      $changed = $this->checkAndUpdateCmd('MeteoalarmColorMax', $MeteoalarmColorMax) ||$changed;
+      $changed = $this->checkAndUpdateCmd('MeteoalarmColorMaxNow', $MeteoalarmColorMaxNow) ||$changed;
+      $changed = $this->checkAndUpdateCmd('MeteoalarmList', $MeteoalarmList) ||$changed;
     }
-    $MeteoalarmList = implode(', ', array_unique($MeteoalarmList));
-    $changed = $this->checkAndUpdateCmd('MeteoalarmColorMax', $MeteoalarmColorMax) ||$changed;
-    $changed = $this->checkAndUpdateCmd('MeteoalarmColorMaxNow', $MeteoalarmColorMaxNow) ||$changed;
-    $changed = $this->checkAndUpdateCmd('MeteoalarmList', $MeteoalarmList) ||$changed;
     return($changed);
   }
 
@@ -1428,12 +1431,12 @@ if(1 || $this->getId() == 2271) {
         $collectDate = $cmd->getCollectDate();
         if($country != '' ) {
           if($province == '') {
-            $replace['#vigilanceMeteoalarm#'] =  "<span title=\"Collecte Jeedom: $collectDate\"><i class=\"icon fas fa-exclamation-triangle icon_red\"></i> Province non définie. <span style=\"font-size:10px;\">";
-            if($dec !== null && isset($dec['areaList']) && count($dec['areaList']))
-              $replace['#vigilanceMeteoalarm#'] .= "Des alertes existent pour $country";
-            else 
+            $replace['#vigilanceMeteoalarm#'] =  "<span title=\"Collecte Jeedom: $collectDate\" style=\"font-size:10px;line-height:10px !important\"><i style=\"font-size:14px;color:#CC0000;\" class=\"icon fas fa-exclamation-triangle\"></i> Province non définie. ";
+            if(trim($this->getConfiguration('otherCountryAlerts', '')) == '')
               $replace['#vigilanceMeteoalarm#'] .= "Pas d'alerte actuellement pour $country";
-            $replace['#vigilanceMeteoalarm#'] .= "</span></span>";
+            else 
+              $replace['#vigilanceMeteoalarm#'] .= "Des alertes existent pour $country";
+            $replace['#vigilanceMeteoalarm#'] .= "</span>";
           }
           else {
             if($dec === null) {
