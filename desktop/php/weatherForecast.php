@@ -86,14 +86,14 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
             <div class="col-lg-6">
               <legend><i class="fas fa-wrench"></i> {{Paramètres généraux}}</legend>
               <div class="form-group">
-                <label class="col-sm-3 control-label">{{Nom de l'équipement}}</label>
+                <label class="col-sm-4 control-label">{{Nom de l'équipement}}</label>
                 <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
                   <input type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l'équipement météo}}"/>
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label" >{{Objet parent}}</label>
+                <label class="col-sm-4 control-label" >{{Objet parent}}</label>
                 <div class="col-sm-4">
                   <select id="sel_object" class="eqLogicAttr form-control" data-l1key="object_id">
                     <option value="">{{Aucun}}</option>
@@ -120,8 +120,8 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label"></label>
-                <div class="col-sm-9">
+                <label class="col-sm-4 control-label"></label>
+                <div class="col-sm-5">
                   <label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="isEnable" checked/>{{Activer}}</label>
                   <label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="isVisible" checked/>{{Visible}}</label>
                 </div>
@@ -129,7 +129,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
 
               <legend><i class="fas fa-cogs"></i> {{Paramètres spécifiques}}</legend>
               <div class="form-group">
-                <label class="col-sm-3 control-label">{{Source des données}}
+                <label class="col-sm-4 control-label">{{Source des données}}
                   <sup><i class="fas fa-question-circle tooltips" title="{{Sélection de la source de données météo}}"></i></sup>
                 </label>
                 <div class="col-sm-4">
@@ -152,13 +152,13 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label" style="line-height: normal">{{Coordonnées}} </label>
+                <label class="col-sm-4 control-label" style="line-height: normal">{{Coordonnées}} </label>
                 <div class="col-sm-4">
                   <input class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="positionGps" type="text" placeholder="{{Latitude,longitude}}">
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label">{{Fuseau horaire}}
+                <label class="col-sm-4 control-label">{{Fuseau horaire}}
                   <sup><i class="fas fa-question-circle" tooltip="{{Sélection du fuseau horaire pour l'affichage de la météo}}"></i></sup>
                 </label>
                 <div class="col-sm-4">
@@ -192,13 +192,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label">{{Vigilances département FR}}</label>
-                <div class="col-sm-4">
-                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="numDeptFr"/>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-sm-3 control-label">{{Template}} </label>
+                <label class="col-sm-4 control-label">{{Template}} </label>
                 <div class="col-sm-4">
                   <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="templateWeatherForecast">
                     <option value="plugin">{{Template du plugin Icônes}}</option>
@@ -234,12 +228,75 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-3 control-label"></label>
+                <label class="col-sm-4 control-label"></label>
                 <div class="col-sm-4">
                   <label class="checkbox-inline">
                     <input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="fullMobileDisplay" />{{Affichage complet en mobile}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Cocher la case pour afficher les informations météo des jours suivants sur les appareils mobiles}}"></i></sup>
 </label>
+                </div>
+              </div>
+
+              <legend><i class="fas fa-exclamation-triangle"></i> {{Vigilances Météo France}}</legend>
+              <div class="form-group">
+                <label class="col-sm-4 control-label">{{Numéro du département FR}}</label>
+                <div class="col-sm-4">
+                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="numDeptFr"/>
+                </div>
+              </div>
+
+              <legend><i class="fas fa-exclamation-triangle"></i> {{Alertes Meteoalarm.org}}</legend>
+              <div class="form-group">
+                <label class="col-sm-4 control-label">{{Pays}}</label>
+                <div class="col-sm-4">
+                  <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="meteoAlarmCountry">
+                    <option value="">{{Pas de vigilance Meteoalarm}}</option>
+                    <option value="Germany">{{Allemagne}}</option>
+                    <option value="Austria">{{Autriche}}</option>
+                    <option value="Belgium">{{Belgique}}</option>
+                    <option value="Bosnia-Herzegovina">{{Bosnie-Herzégovine}}</option>
+                    <option value="Bulgaria">{{Bulgarie}}</option>
+                    <option value="Cyprus">{{Chypre}}</option>
+                    <option value="Croatia">{{Croatie}}</option>
+                    <option value="Denmark">{{Danemark}}</option>
+                    <option value="Spain">{{Espagne}}</option>
+                    <option value="Estonia">{{Estonie}}</option>
+                    <option value="Finland">{{Finlande}}</option>
+                    <option value="France">{{France}}</option>
+                    <option value="Greece">{{Grèce}}</option>
+                    <option value="Hungary">{{Hongrie}}</option>
+                    <option value="Ireland">{{Irlande}}</option>
+                    <option value="Iceland">{{Islande}}</option>
+                    <option value="Israel">{{Israël}}</option>
+                    <option value="Italy">{{Italie}}</option>
+                    <option value="Latvia">{{Lettonie}}</option>
+                    <option value="Lithuania">{{Lituanie}}</option>
+                    <option value="Luxembourg">{{Luxembourg}}</option>
+                    <option value="Republic-of-North-Macedonia">{{Macédoine du Nord}}</option>
+                    <option value="Malta">{{Malte}}</option>
+                    <option value="Moldova">{{Moldavie}}</option>
+                    <option value="Montenegro">{{Monténégro}}</option>
+                    <option value="Netherlands">{{Pays-Bas}}</option>
+                    <option value="Norway">{{Norvège}}</option>
+                    <option value="Poland">{{Pologne}}</option>
+                    <option value="Portugal">{{Portugal}}</option>
+                    <option value="Romania">{{Roumanie}}</option>
+                    <option value="United-Kingdom">{{Royaume uni}}</option>
+                    <option value="Serbia">{{Serbie}}</option>
+                    <option value="Slovakia">{{Slovaquie}}</option>
+                    <option value="Slovenia">{{Slovénie}}</option>
+                    <option value="Sweden">{{Suède}}</option>
+                    <option value="Switzerland">{{Suisse}}</option>
+                    <option value="Ukraine">{{Ukraine}}</option>
+                    <option value="Czechia">{{Tchéquie}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-4 control-label"><a href="https://www.meteoalarm.org/en/live/">Département, Province, Région, Comté ...</a>
+                </label>
+                <div class="col-sm-4">
+                  <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="meteoAlarmArea"/>
                 </div>
               </div>
             </div>
@@ -292,6 +349,17 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </label>
                 <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="refreshMinute" readonly/>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <legend><i class="fas fa-info"></i> {{Meteoalarm}}</legend>
+              <div class="form-group">
+                <label class="col-sm-3 control-label">{{Alertes actuelles du pays}}
+                  <sup><i class="fas fa-question-circle" tooltip="{{Textes à copier / coller dans le champ à gauche}}"></i></sup>
+                </label>
+                <div class="col-sm-5">
+                  <textarea class="form-control eqLogicAttr autogrow" data-l1key="configuration" data-l2key="otherCountryAlerts"></textarea>
                 </div>
               </div>
             </div>

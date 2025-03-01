@@ -1,5 +1,11 @@
-<div style="display: inline-block;font-size: 0.8em;margin-right : 4px;">
-  <center>#day#</center>
-  <center class="state"><i class="#icone#" style="font-size: 2em; display: #visibilityIcon#;"></i></center>
-  <center class="state">#low_temperature# / #high_temperature#</center>
+<div style="display: inline-block;font-size:12px;line-height:normal;margin-right:4px;vertical-align:top" class="cmd noRefresh" data-type="info" data-subtype="string" data-cmd_id="#conditionid#">
+  <center>
+    <div>#day#</div>
+  <div title="#condition#">
+    <span style="display:#displayIcon#"><i class="#icone#" style="font-size: 1.5em;line-height:normal;"></i></span>
+    <span style="display:#displayImage#;background: url('plugins/weatherForecast/core/template/images/#icone#.png') no-repeat center; background-size:100%;width:30px;height:30px;"></span>
+  </div>
+    <div>#low_temperature#° / #high_temperature#°</div>
+    <div>#rain#</div>
+  </center>
 </div>
