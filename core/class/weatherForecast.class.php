@@ -416,7 +416,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       }
       $contents = str_replace('"','&#34;',$contents);
       $len = strlen($contents);
-      if($len > 3000) log::add(__CLASS__, 'error', "  Commande MeteoalarmAlertsJson lg: $len");
+      if($len > 4000) log::add(__CLASS__, 'warning', "  Commande MeteoalarmAlertsJson lg: $len");
       $changed = $this->checkAndUpdateCmd('MeteoalarmAlertsJson', $contents) ||$changed;
       log::add(__CLASS__, 'debug', "  " .json_encode($alerts));
         // Update other commands
@@ -1493,7 +1493,7 @@ if(1 || $this->getId() == 2271) {
                 if($dec['status'] != "OK")
                   $txtAlarm .= "<td style=\"flex:auto;padding-left:4px;padding-right:4px;font-size:10px !important;font-style:italic;line-height:normal;text-align:left;\"><i  style=\"font-size:14px;\" class=\"icon fas fa-exclamation-triangle icon_red\"></i> " .trim(substr($dec['status'],3)) ."</td>";
 
-                $replace['#vigilanceMeteoalarm#'] = "<table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm Collecte Jeedom: $collectDate\"><tr style=\"display:flex;align-content:center;background-color:transparent !important\">$txtAlarm</tr></table>";
+                $replace['#vigilanceMeteoalarm#'] = "<div style=\"overflow-x:auto;\"><table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm Collecte Jeedom: $collectDate\"><tr style=\"display:flex;align-content:center;background-color:transparent !important\">$txtAlarm</tr></table></div>";
               }
               else $replace['#vigilanceMeteoalarm#'] = '';
             }
@@ -2367,8 +2367,8 @@ if(1 || $this->getId() == 2271) {
     if(count($vigJson)) {
       $contents = str_replace('"','&#34;',json_encode($vigJson,JSON_UNESCAPED_UNICODE));
       $changed = $this->checkAndUpdateCmd("VigilanceJson", $contents) || $changed;
-      if(strlen($contents) > 3000)
-        message::add(__CLASS__, "Cmd VigilanceJson Lg:". strlen($contents));
+      $len = strlen($contents);
+      if($len > 4000) log::add(__CLASS__, 'warning', "Cmd VigilanceJson Lg:". $len);
       /*
       $file = __DIR__ ."/../../data/" .__FUNCTION__ ."-$numDept.json";
       $hdle = fopen($file, "wb");
