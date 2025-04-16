@@ -1,4 +1,6 @@
 <?php
+// declare(strict_types=1);
+
 if (!isConnect('admin')) {
   throw new Exception('{{401 - Accès non autorisé}}');
 }
@@ -65,7 +67,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
 			<span class="input-group-btn">
         <!-- Les balises <a></a> sont volontairement fermées à la ligne suivante pour éviter les espaces entre les boutons. Ne pas modifier -->
         <a class="btn btn-sm btn-default eqLogicAction roundedLeft" data-action="configure"><i class="fas fa-cogs"></i><span class="hidden-xs"> {{Configuration avancée}}</span>
-        </a><a class="btn btn-sm btn-success eqLogicAction" data-action="save"><i class="fas fa-check-circle"></i> {{Sauvegarder}}
+        </a><a class="btn btn-default btn-sm eqLogicAction" data-action="copy"><i class="fas fa-copy"></i> {{Dupliquer}}</a><a class="btn btn-sm btn-success eqLogicAction" data-action="save"><i class="fas fa-check-circle"></i> {{Sauvegarder}}
         </a><a class="btn btn-sm btn-danger eqLogicAction roundedRight" data-action="remove"><i class="fas fa-minus-circle"></i> {{Supprimer}}
         </a>
 			</span>
@@ -178,7 +180,8 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                         $h = sprintf('%02d',intval($absDecal/3600));
                         $min = sprintf('%02d',($absDecal % 3600)/60);
                         $pos= strpos($tz,'/');
-                        $newgroup = substr($tz,0,$pos);
+                        if($pos===false) $newgroup = $tz;
+                        else $newgroup = substr($tz,0,$pos);
                         if($group != $newgroup) {
                           if($group != '') echo "</optrgoup>";
                           echo "<optgroup label=\"--- $newgroup ---\">";
