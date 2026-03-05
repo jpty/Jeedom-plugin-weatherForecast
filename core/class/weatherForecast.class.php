@@ -1694,10 +1694,11 @@ if(1 || $this->getId() == 2271) {
     }
     $request = $this->getConfiguration('requestForRainForecast',0);
     if($request == 0) {
-      $replace['#1hRainForecast#'] = '';
+      $replace['#1hRainForecast#'] = '[]';
+      $replace['#RAIN_DATA#'] = '[]';
     }
     else {
-      $replace['#1hRainForecast#'] = '';
+      $replace['#1hRainForecast#'] = '[]';
       $cmd = $this->getCmd(null, '1hRainForecastJson');
       $replace['#RAIN_DATA#'] = '[]';
       if(is_object($cmd)) {
