@@ -76,7 +76,11 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
 		<ul class="nav nav-tabs" role="tablist">
 			<li role="presentation"><a class="eqLogicAction cursor" aria-controls="home" role="tab" data-action="returnToThumbnailDisplay"><i class="fas fa-arrow-circle-left"></i></a></li>
 			<li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-tachometer-alt"></i> {{Equipement}}</a></li>
-			<li role="presentation"><a href="#commandtab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Commandes}}</a></li>
+			<li role="presentation"><a href="#commandtab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Commandes maintenant}}</a></li>
+			<li role="presentation"><a href="#daystab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Jours}}</a></li>
+			<li role="presentation"><a href="#vigilancetab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Vigilances}}</a></li>
+			<li role="presentation"><a href="#raintab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Pluies 1h}}</a></li>
+			<li role="presentation"><a href="#jsontab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Json cmds}}</a></li>
 		</ul>
 		<div class="tab-content">
       <!-- Onglet de configuration de l'équipement -->
@@ -136,6 +140,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </label>
                 <div class="col-sm-4">
                   <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="datasource">
+                    <!-- <option value="meteofrance">{{Météo France}}</option> -->
                     <?php
                       $nbkey= 0;
                       if($apikeyOwm != '') {
@@ -240,11 +245,17 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </div>
               </div>
 
-              <legend><i class="fas fa-exclamation-triangle"></i> {{Vigilances Météo France}}</legend>
+              <legend><i class="fas fa-exclamation-triangle"></i> {{Météo France. (Uniquement pour la France)}}</legend>
               <div class="form-group">
-                <label class="col-sm-4 control-label">{{Numéro du département FR}}</label>
+                <label class="col-sm-4 control-label">{{Numéro du département pour vigilances}}</label>
                 <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="numDeptFr"/>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-4 control-label">{{Pluie dans l'heure}}</label>
+                <div class="col-sm-4">
+                  <input type="checkbox" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="requestForRainForecast"/>
                 </div>
               </div>
 
@@ -359,7 +370,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
               <legend><i class="fas fa-info"></i> {{Meteoalarm}}</legend>
               <div class="form-group">
                 <label class="col-sm-3 control-label">{{Alertes actuelles du pays}}
-                  <sup><i class="fas fa-question-circle" tooltip="{{Textes à copier / coller dans le champ à gauche}}"></i></sup>
+                  <sup><i class="fas fa-question-circle" tooltip="{{Textes à copier / coller dans le champ à gauche. Une virgule permet de séparer les départements}}"></i></sup>
                 </label>
                 <div class="col-sm-5">
                   <textarea class="form-control eqLogicAttr autogrow" data-l1key="configuration" data-l2key="otherCountryAlerts"></textarea>
@@ -390,7 +401,92 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
             </tbody>
           </table>
         </div>
-    </div><!-- /.tabpanel #commandtab-->
+      </div><!-- /.tabpanel #commandtab-->
+
+      <!-- Onglet des commandes days de l'équipement -->
+			<div role="tabpanel" class="tab-pane" id="daystab">
+				<br>
+        <div class="table-responsive">
+          <table id="days_cmd" class="table table-bordered table-condensed">
+            <thead>
+              <tr>
+                <th class="hidden-xs" style="min-width:50px;width:70px;">ID</th>
+                <th style="min-width:100px;width:200px;">{{LogicalId}}</th>
+                <th style="min-width:120px;width:250px;">{{Nom}}</th>
+                <th>{{Paramètres}}</th>
+                <th>{{Etat}}</th>
+                <th style="min-width:80px;">{{Actions}}</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /.tabpanel #daystab-->
+
+      <!-- Onglet des commandes vigilances de l'équipement -->
+			<div role="tabpanel" class="tab-pane" id="vigilancetab">
+				<br>
+        <div class="table-responsive">
+          <table id="vigilance_cmd" class="table table-bordered table-condensed">
+            <thead>
+              <tr>
+                <th class="hidden-xs" style="min-width:50px;width:70px;">ID</th>
+                <th style="min-width:100px;width:200px;">{{LogicalId}}</th>
+                <th style="min-width:120px;width:250px;">{{Nom}}</th>
+                <th>{{Paramètres}}</th>
+                <th>{{Etat}}</th>
+                <th style="min-width:80px;">{{Actions}}</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /.tabpanel #vigilancetab-->
+
+      <!-- Onglet des commandes pluies de l'équipement -->
+			<div role="tabpanel" class="tab-pane" id="raintab">
+				<br>
+        <div class="table-responsive">
+          <table id="rain_cmd" class="table table-bordered table-condensed">
+            <thead>
+              <tr>
+                <th class="hidden-xs" style="min-width:50px;width:70px;">ID</th>
+                <th style="min-width:100px;width:200px;">{{LogicalId}}</th>
+                <th style="min-width:120px;width:250px;">{{Nom}}</th>
+                <th>{{Paramètres}}</th>
+                <th>{{Etat}}</th>
+                <th style="min-width:80px;">{{Actions}}</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /.tabpanel #raintab-->
+
+      <!-- Onglet des commandes JSON de l'équipement -->
+			<div role="tabpanel" class="tab-pane" id="jsontab">
+				<br>
+        <div class="table-responsive">
+          <table id="json_cmd" class="table table-bordered table-condensed">
+            <thead>
+              <tr>
+                <th class="hidden-xs" style="min-width:50px;width:70px;">ID</th>
+                <th style="min-width:100px;width:200px;">{{LogicalId}}</th>
+                <th style="min-width:120px;width:250px;">{{Nom}}</th>
+                <th>{{Paramètres}}</th>
+                <th>{{Etat}}</th>
+                <th style="min-width:80px;">{{Actions}}</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /.tabpanel #jsontab-->
+		
 		
     </div><!-- /.tab-content -->
   </div><!-- /.eqLogic -->

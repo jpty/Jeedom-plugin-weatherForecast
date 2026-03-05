@@ -65,6 +65,14 @@ class weatherForecast extends eqLogic {
     }
   }
 
+  public static function cron5() {
+    $eqLogics = self::byType(__CLASS__, true);
+    foreach ($eqLogics as $equipt) {
+      $changed = $equipt->getRainMF();
+      if($changed) $equipt->refreshWidget();
+    }
+  }
+
   public static function cron() {
     $minute = date('i');
     $hour = date('G');
@@ -120,7 +128,7 @@ class weatherForecast extends eqLogic {
     }
   }
 
-    public static function extractValueFromJsonTxt($cmdValue, $request) {
+  public static function extractValueFromJsonTxt($cmdValue, $request) {
     $txtJson = str_replace(array('&quot;','&#34;'),'"',$cmdValue);
     $json =json_decode($txtJson,true);
     if($json !== null) {
@@ -163,7 +171,7 @@ class weatherForecast extends eqLogic {
         break;
       case   4: $saints = array( 1 => "St Hughes", 2 => "Ste Sandrine", 3 => "St Richard", 4 => "St Isidore", 5 => "Ste Irène", 6 => "St Marcellin", 7 => "St J-B de la Salle", 8 => "Ste Julie", 9 => "St Gautier", 10 => "St Fulbert", 11 => "St Stanislas", 12 => "Ste Jules", 13 => "Ste Ida", 14 => "St Maxime", 15 => "St Paterne", 16 => "St Benoît-Joseph", 17 => "St Anicet", 18 => "St Parfait", 19 => "Ste Emma", 20 => "Ste Odette", 21 => "St Anselme", 22 => "St Alexandre", 23 => "St Georges", 24 => "St Fidèle", 25 => "St Marc", 26 => "Ste Alida", 27 => "Ste Zita", 28 => "Ste Valérie", 29 => "Ste Cath. de Sienne", 30 => "St Robert");
         break;
-      case 5: $saints = array( 1 => "Fête du Travail", 2 => "St Boris", 3 => "St Philippe - Jacques", 4 => "St Sylvain", 5 => "Ste Judith", 6 => "Ste Prudence", 7 => "Ste Gisèle", 8 => "Armistice 1945", 9 => "Ste Pacôme", 10 => "Ste Solange", 11 => "Ste Estelle", 12 => "St Achille", 13 => "Ste Rolande", 14 => "St Matthias", 15 => "Ste Denise", 16 => "St Honoré", 17 => "St Pascal", 18 => "St Eric", 19 => "St Yves", 20 => "St Bernardin", 21 => "St Constantin", 22 => "St Emile", 23 => "St Didier", 24 => "St Donatien", 25 => "Ste Sophie", 26 => "St Béranger", 27 => "St Augustin", 28 => "St Germain", 29 => "St Aymard", 30 => "St Ferdinand", 31 => "Visitation");
+      case 5: $saints = array( 1 => "Fête du Travail", 2 => "St Boris", 3 => "St Philippe - Jacques", 4 => "St Sylvain", 5 => "Ste Judith", 6 => "Ste Prudence", 7 => "Ste Gisèle", 8 => "Armistice 1945", 9 => "St Pacôme", 10 => "Ste Solange", 11 => "Ste Estelle", 12 => "St Achille", 13 => "Ste Rolande", 14 => "St Matthias", 15 => "Ste Denise", 16 => "St Honoré", 17 => "St Pascal", 18 => "St Eric", 19 => "St Yves", 20 => "St Bernardin", 21 => "St Constantin", 22 => "St Emile", 23 => "St Didier", 24 => "St Donatien", 25 => "Ste Sophie", 26 => "St Béranger", 27 => "St Augustin", 28 => "St Germain", 29 => "St Aymard", 30 => "St Ferdinand", 31 => "Visitation");
         break;
       case   6: $saints = array( 1 => "St Justin", 2 => "Ste Blandine", 3 => "St Kévin", 4 => "Ste Clotilde", 5 => "St Igor", 6 => "St Norbert", 7 => "St Gilbert", 8 => "St Médard", 9 => "Ste Diane", 10 => "St Landry", 11 => "St Barnabé", 12 => "St Guy", 13 => "St Antoine de P.", 14 => "St Elisée", 15 => "Ste Germaine", 16 => "St J-F Régis", 17 => "St Hervé", 18 => "St Léonce", 19 => "St Romuald", 20 => "St Silvère", 21 => "Eté", 22 => "St Alban", 23 => "Ste Audrey", 24 => "St Jean-Baptiste", 25 => "St Prosper", 26 => "St Anthelme", 27 => "St Fernand", 28 => "St Irénée", 29 => "St Pierre - Paul", 30 => "St Martial");
         break;
@@ -570,140 +578,140 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Température', __FILE__));
+      $wfCmd->setLogicalId('temperature');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('°C');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_TEMPERATURE');
     }
-    $wfCmd->setName(__('Température', __FILE__));
-    $wfCmd->setLogicalId('temperature');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('°C');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_TEMPERATURE');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'humidity');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Humidité', __FILE__));
+      $wfCmd->setLogicalId('humidity');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('%');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_HUMIDITY');
     }
-    $wfCmd->setName(__('Humidité', __FILE__));
-    $wfCmd->setLogicalId('humidity');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('%');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_HUMIDITY');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'clouds');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Nuages', __FILE__));
+      $wfCmd->setLogicalId('clouds');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('%');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_CLOUDINESS');
     }
-    $wfCmd->setName(__('Nuages', __FILE__));
-    $wfCmd->setLogicalId('clouds');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('%');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_CLOUDINESS');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'pressure');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Pression', __FILE__));
+      $wfCmd->setLogicalId('pressure');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('hPa');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_PRESSURE');
     }
-    $wfCmd->setName(__('Pression', __FILE__));
-    $wfCmd->setLogicalId('pressure');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('hPa');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_PRESSURE');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'wind_speed');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Vitesse du vent', __FILE__));
+      $wfCmd->setLogicalId('wind_speed');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('km/h');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_WIND_SPEED');
     }
-    $wfCmd->setName(__('Vitesse du vent', __FILE__));
-    $wfCmd->setLogicalId('wind_speed');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('km/h');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_WIND_SPEED');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'wind_direction');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Direction du vent', __FILE__));
+      $wfCmd->setLogicalId('wind_direction');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('°');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_WIND_DIRECTION');
     }
-    $wfCmd->setName(__('Direction du vent', __FILE__));
-    $wfCmd->setLogicalId('wind_direction');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('°');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_WIND_DIRECTION');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'wind_gust');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Rafales de vent', __FILE__));
+      $wfCmd->setLogicalId('wind_gust');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('km/h');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_WIND_GUST');
     }
-    $wfCmd->setName(__('Rafales de vent', __FILE__));
-    $wfCmd->setLogicalId('wind_gust');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('km/h');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_WIND_GUST');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'condition');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Condition actuelle', __FILE__));
+      $wfCmd->setLogicalId('condition');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('string');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_CONDITION');
     }
-    $wfCmd->setName(__('Condition actuelle', __FILE__));
-    $wfCmd->setLogicalId('condition');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('string');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_CONDITION');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'condition_id');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Numéro condition actuelle', __FILE__));
+      $wfCmd->setLogicalId('condition_id');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_CONDITION_ID');
     }
-    $wfCmd->setName(__('Numéro condition actuelle', __FILE__));
-    $wfCmd->setLogicalId('condition_id');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_CONDITION_ID');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'rain');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Pluie', __FILE__));
+      $wfCmd->setLogicalId('rain');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('mm');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_RAIN');
     }
-    $wfCmd->setName(__('Pluie', __FILE__));
-    $wfCmd->setLogicalId('rain');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('mm');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setDisplay('generic_type', 'WEATHER_RAIN');
     $wfCmd->save();
 
     if($datasource == 'weatherapi') { // only weather_api
@@ -711,14 +719,14 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
         $wfCmd->setIsVisible(0);
+        $wfCmd->setName(__('Indice UV heure', __FILE__));
+        $wfCmd->setLogicalId('uv_Hcur');
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setUnite('');
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setDisplay('generic_type', 'WEATHER_UV');
       }
-      $wfCmd->setName(__('Indice UV heure', __FILE__));
-      $wfCmd->setLogicalId('uv_Hcur');
-      $wfCmd->setEqLogic_id($this->getId());
-      $wfCmd->setUnite('');
-      $wfCmd->setType('info');
-      $wfCmd->setSubType('numeric');
-      $wfCmd->setDisplay('generic_type', 'WEATHER_UV');
       $wfCmd->save();
     }
 
@@ -727,60 +735,60 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Lever du soleil', __FILE__));
+      $wfCmd->setLogicalId('sunrise');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setOrder(50);
+      $wfCmd->setDisplay('generic_type', 'WEATHER_SUNRISE');
     }
-    $wfCmd->setName(__('Lever du soleil', __FILE__));
-    $wfCmd->setLogicalId('sunrise');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setOrder(50);
-    $wfCmd->setDisplay('generic_type', 'WEATHER_SUNRISE');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'sunriseTs');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Timestamp lever du soleil', __FILE__));
+      $wfCmd->setLogicalId('sunriseTs');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setOrder(51);
+      $wfCmd->setDisplay('generic_type', 'WEATHER_SUNRISE');
     }
-    $wfCmd->setName(__('Timestamp lever du soleil', __FILE__));
-    $wfCmd->setLogicalId('sunriseTs');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setOrder(51);
-    $wfCmd->setDisplay('generic_type', 'WEATHER_SUNRISE');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'sunset');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Coucher du soleil', __FILE__));
+      $wfCmd->setLogicalId('sunset');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setOrder(52);
+      $wfCmd->setDisplay('generic_type', 'WEATHER_SUNSET');
     }
-    $wfCmd->setName(__('Coucher du soleil', __FILE__));
-    $wfCmd->setLogicalId('sunset');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setOrder(52);
-    $wfCmd->setDisplay('generic_type', 'WEATHER_SUNSET');
     $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'sunsetTs');
     if (!is_object($wfCmd)) {
       $wfCmd = new weatherForecastCmd();
       $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Timestamp coucher du soleil', __FILE__));
+      $wfCmd->setLogicalId('sunsetTs');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setOrder(52);
+      $wfCmd->setDisplay('generic_type', 'WEATHER_SUNSET');
     }
-    $wfCmd->setName(__('Timestamp coucher du soleil', __FILE__));
-    $wfCmd->setLogicalId('sunsetTs');
-    $wfCmd->setEqLogic_id($this->getId());
-    $wfCmd->setUnite('');
-    $wfCmd->setType('info');
-    $wfCmd->setSubType('numeric');
-    $wfCmd->setOrder(52);
-    $wfCmd->setDisplay('generic_type', 'WEATHER_SUNSET');
     $wfCmd->save();
 
     $ord = 200;
@@ -792,14 +800,15 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
         $wfCmd->setIsVisible(0);
+        $wfCmd->setName(__("Titre J+$i", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setUnite('');
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
+        $wfCmd->setOrder($ord++);
       }
-      $wfCmd->setName(__("Titre J+$i", __FILE__));
-      $wfCmd->setLogicalId($id);
-      $wfCmd->setEqLogic_id($this->getId());
-      $wfCmd->setUnite('');
-      $wfCmd->setType('info');
-      $wfCmd->setSubType('string');
-      $wfCmd->setOrder($ord++);
+      $wfCmd->setConfiguration('type', 'days');
       $wfCmd->save();
 
       $id = "temperature_min_$i";
@@ -807,15 +816,16 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
         $wfCmd->setIsVisible(0);
+        $wfCmd->setName(__("Température Min J+$i", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setUnite('°C');
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->setDisplay('generic_type', "WEATHER_TEMPERATURE_MIN_$i");
       }
-      $wfCmd->setName(__("Température Min J+$i", __FILE__));
-      $wfCmd->setLogicalId($id);
-      $wfCmd->setEqLogic_id($this->getId());
-      $wfCmd->setUnite('°C');
-      $wfCmd->setType('info');
-      $wfCmd->setSubType('numeric');
-      $wfCmd->setOrder($ord++);
-      $wfCmd->setDisplay('generic_type', "WEATHER_TEMPERATURE_MIN_$i");
+      $wfCmd->setConfiguration('type', 'days');
       $wfCmd->save();
 
       $id = "temperature_max_$i";
@@ -823,15 +833,16 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
         $wfCmd->setIsVisible(0);
+        $wfCmd->setName(__("Température Max J+$i", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setUnite('°C');
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->setDisplay('generic_type', "WEATHER_TEMPERATURE_MAX_$i");
       }
-      $wfCmd->setName(__("Température Max J+$i", __FILE__));
-      $wfCmd->setLogicalId($id);
-      $wfCmd->setEqLogic_id($this->getId());
-      $wfCmd->setUnite('°C');
-      $wfCmd->setType('info');
-      $wfCmd->setSubType('numeric');
-      $wfCmd->setOrder($ord++);
-      $wfCmd->setDisplay('generic_type', "WEATHER_TEMPERATURE_MAX_$i");
+      $wfCmd->setConfiguration('type', 'days');
       $wfCmd->save();
 
       $id = "condition_$i";
@@ -839,15 +850,16 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
         $wfCmd->setIsVisible(0);
+        $wfCmd->setName(__("Condition J+$i", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setUnite('');
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->setDisplay('generic_type', "WEATHER_CONDITION_$i");
       }
-      $wfCmd->setName(__("Condition J+$i", __FILE__));
-      $wfCmd->setLogicalId($id);
-      $wfCmd->setEqLogic_id($this->getId());
-      $wfCmd->setUnite('');
-      $wfCmd->setType('info');
-      $wfCmd->setSubType('string');
-      $wfCmd->setOrder($ord++);
-      $wfCmd->setDisplay('generic_type', "WEATHER_CONDITION_$i");
+      $wfCmd->setConfiguration('type', 'days');
       $wfCmd->save();
 
       $id = "condition_id_$i";
@@ -855,15 +867,16 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
         $wfCmd->setIsVisible(0);
+        $wfCmd->setName(__("Numéro condition J+$i", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setUnite('');
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->setDisplay('generic_type', "WEATHER_CONDITION_ID_$i");
       }
-      $wfCmd->setName(__("Numéro condition J+$i", __FILE__));
-      $wfCmd->setLogicalId($id);
-      $wfCmd->setEqLogic_id($this->getId());
-      $wfCmd->setUnite('');
-      $wfCmd->setType('info');
-      $wfCmd->setSubType('numeric');
-      $wfCmd->setOrder($ord++);
-      $wfCmd->setDisplay('generic_type', "WEATHER_CONDITION_ID_$i");
+      $wfCmd->setConfiguration('type', 'days');
       $wfCmd->save();
 
       $id = "rain_$i";
@@ -871,15 +884,16 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
         $wfCmd->setIsVisible(0);
+        $wfCmd->setName(__("Pluie J+$i", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setUnite('mm');
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setOrder($ord++);
+        $wfCmd->setDisplay('generic_type', "WEATHER_RAIN_$i");
       }
-      $wfCmd->setName(__("Pluie J+$i", __FILE__));
-      $wfCmd->setLogicalId($id);
-      $wfCmd->setEqLogic_id($this->getId());
-      $wfCmd->setUnite('mm');
-      $wfCmd->setType('info');
-      $wfCmd->setSubType('numeric');
-      $wfCmd->setOrder($ord++);
-      $wfCmd->setDisplay('generic_type', "WEATHER_RAIN_$i");
+      $wfCmd->setConfiguration('type', 'days');
       $wfCmd->save();
 
       if($datasource == 'weatherapi' && $i < 3) { // 3 cmds only weather_api
@@ -888,18 +902,37 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         if (!is_object($wfCmd)) {
           $wfCmd = new weatherForecastCmd();
           $wfCmd->setIsVisible(0);
+          $wfCmd->setName(__("Indice UV max J+$i", __FILE__));
+          $wfCmd->setLogicalId($id);
+          $wfCmd->setEqLogic_id($this->getId());
+          $wfCmd->setUnite('');
+          $wfCmd->setType('info');
+          $wfCmd->setSubType('numeric');
+          $wfCmd->setOrder($ord++);
+          $wfCmd->setDisplay('generic_type', "WEATHER_UV_$i");
         }
-        $wfCmd->setName(__("Indice UV max J+$i", __FILE__));
-        $wfCmd->setLogicalId($id);
-        $wfCmd->setEqLogic_id($this->getId());
-        $wfCmd->setUnite('');
-        $wfCmd->setType('info');
-        $wfCmd->setSubType('numeric');
-        $wfCmd->setOrder($ord++);
-        $wfCmd->setDisplay('generic_type', "WEATHER_UV_$i");
+        $wfCmd->setConfiguration('type', 'days');
         $wfCmd->save();
       }
     }
+
+    $id = "Owm3hForecastJson";
+    $wfCmd = $this->getCmd(null, $id);
+    if (!is_object($wfCmd)) {
+      $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
+      $wfCmd->setIsHistorized(0);
+      $wfCmd->setName(__("Prévisions 3h Json", __FILE__));
+      $wfCmd->setLogicalId($id);
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('string');
+      // $wfCmd->setTemplate('dashboard', __CLASS__ .'::ClockWF');
+      // $wfCmd->setTemplate('mobile', __CLASS__ .'::ClockWF');
+      $wfCmd->setOrder(250);
+    }
+    $wfCmd->setConfiguration('type', 'json');
+    $wfCmd->save();
 
     $id = "H0Json4Widget";
     $wfCmd = $this->getCmd(null, $id);
@@ -915,8 +948,9 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $wfCmd->setTemplate('dashboard', __CLASS__ .'::ClockWF');
       $wfCmd->setTemplate('mobile', __CLASS__ .'::ClockWF');
       $wfCmd->setOrder(300);
-      $wfCmd->save();
     }
+    $wfCmd->setConfiguration('type', 'json');
+    $wfCmd->save();
 
     $country = trim($this->getConfiguration('meteoAlarmCountry',''));
     $province = trim($this->getConfiguration('meteoAlarmArea',''));
@@ -933,8 +967,9 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $wfCmd->setType('info');
         $wfCmd->setSubType('string');
         $wfCmd->setOrder($ord++);
-        $wfCmd->save();
       }
+      $wfCmd->setConfiguration('type', 'json');
+      $wfCmd->save();
       $id = "MeteoalarmColorMax";
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
@@ -947,8 +982,9 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $wfCmd->setType('info');
         $wfCmd->setSubType('numeric');
         $wfCmd->setOrder($ord++);
-        $wfCmd->save();
       }
+      $wfCmd->setConfiguration('type', 'vigilance');
+      $wfCmd->save();
       $id = "MeteoalarmColorMaxNow";
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
@@ -961,8 +997,9 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $wfCmd->setType('info');
         $wfCmd->setSubType('numeric');
         $wfCmd->setOrder($ord++);
-        $wfCmd->save();
       }
+      $wfCmd->setConfiguration('type', 'vigilance');
+      $wfCmd->save();
       $id = "MeteoalarmList";
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
@@ -975,8 +1012,9 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $wfCmd->setType('info');
         $wfCmd->setSubType('string');
         $wfCmd->setOrder($ord++);
-        $wfCmd->save();
       }
+      $wfCmd->setConfiguration('type', 'vigilance');
+      $wfCmd->save();
     }
 
     if(trim($this->getConfiguration('numDeptFr')) != '') {
@@ -985,9 +1023,9 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
+        $wfCmd->setName(__("Vigilance - Json", __FILE__));
         $wfCmd->setIsVisible(1);
         $wfCmd->setIsHistorized(0);
-        $wfCmd->setName(__("Vigilance - Json", __FILE__));
         $wfCmd->setLogicalId($id);
         $wfCmd->setEqLogic_id($this->getId());
         $wfCmd->setType('info');
@@ -995,8 +1033,9 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
         $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
         $wfCmd->setOrder($ord++);
-        $wfCmd->save();
       }
+      $wfCmd->setConfiguration('type', 'json');
+      $wfCmd->save();
 
       $id = "Vigilancelist";
       $wfCmd = $this->getCmd(null, $id);
@@ -1010,21 +1049,24 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $wfCmd->setType('info');
         $wfCmd->setSubType('string');
         $wfCmd->setOrder($ord++);
-        $wfCmd->save();
       }
+      $wfCmd->setConfiguration('type', 'vigilance');
+      $wfCmd->save();
 
       $id = "Vigilancecolor_max";
       $wfCmd = $this->getCmd(null, $id);
       if (!is_object($wfCmd)) {
         $wfCmd = new weatherForecastCmd();
         $wfCmd->setIsVisible(0);
+        $wfCmd->setName(__("Vigilance - Niveau actuel maximum", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        $wfCmd->setConfiguration('type', 'vigilance');
+        $wfCmd->setOrder($ord++);
       }
-      $wfCmd->setName(__("Vigilance - Niveau actuel maximum", __FILE__));
-      $wfCmd->setLogicalId($id);
-      $wfCmd->setEqLogic_id($this->getId());
-      $wfCmd->setType('info');
-      $wfCmd->setSubType('numeric');
-      $wfCmd->setOrder($ord++);
+      $wfCmd->setConfiguration('type', 'vigilance');
       $wfCmd->save();
 
       foreach(self::$_vigilanceType as $i => $vig) {
@@ -1035,13 +1077,14 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         if (!is_object($wfCmd)) {
           $wfCmd = new weatherForecastCmd();
           $wfCmd->setIsVisible(0);
+          $wfCmd->setName(__("Vigilance - " .$vig['txt'] ." niveau", __FILE__));
+          $wfCmd->setLogicalId($id);
+          $wfCmd->setEqLogic_id($this->getId());
+          $wfCmd->setType('info');
+          $wfCmd->setSubType('numeric');
+          $wfCmd->setOrder($ord++);
         }
-        $wfCmd->setName(__("Vigilance - " .$vig['txt'] ." niveau", __FILE__));
-        $wfCmd->setLogicalId($id);
-        $wfCmd->setEqLogic_id($this->getId());
-        $wfCmd->setType('info');
-        $wfCmd->setSubType('numeric');
-        $wfCmd->setOrder($ord++);
+        $wfCmd->setConfiguration('type', 'vigilance');
         $wfCmd->save();
 
         $id = "Vigilancephases$i";
@@ -1049,15 +1092,155 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         if (!is_object($wfCmd)) {
           $wfCmd = new weatherForecastCmd();
           $wfCmd->setIsVisible(0);
+          $wfCmd->setName(__("Vigilance - " .$vig['txt'] ." conditions", __FILE__));
+          $wfCmd->setLogicalId($id);
+          $wfCmd->setEqLogic_id($this->getId());
+          $wfCmd->setType('info');
+          $wfCmd->setSubType('string');
+          $wfCmd->setOrder($ord++);
         }
-        $wfCmd->setName(__("Vigilance - " .$vig['txt'] ." conditions", __FILE__));
+        $wfCmd->setConfiguration('type', 'vigilance');
+        $wfCmd->save();
+      }
+    }
+
+    if($this->getConfiguration('requestForRainForecast',0) == 1) {
+      $ord = 500;
+      $t = array(1=>"0-5min", 2=>"5-10min", 3=>"10-15min", 4=>"15-20min", 5=>"20-25min",
+                 6=>"25-30min", 7=>"30-40min", 8=>"40-50min", 9=>"50-60min");
+      for($i=1;$i<10;$i++) {
+        $id = "Rainrain{$i}";
+        $wfCmd = $this->getCmd(null, $id);
+        if (!is_object($wfCmd)) {
+          $wfCmd = new weatherForecastCmd();
+          $wfCmd->setName(__("Pluie 1h - Niveau Pluie {$t[$i]}", __FILE__));
+          $wfCmd->setIsVisible(0);
+          $wfCmd->setIsHistorized(0);
+          $wfCmd->setLogicalId($id);
+          $wfCmd->setEqLogic_id($this->getId());
+          $wfCmd->setType('info');
+          $wfCmd->setSubType('string');
+          // $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
+          // $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
+          $wfCmd->setOrder($ord);
+          $wfCmd->setConfiguration('type', 'rain');
+        }
+        $ord++;
+        $wfCmd->save();
+
+        $id = "Raindesc{$i}";
+        $wfCmd = $this->getCmd(null, $id);
+        if (!is_object($wfCmd)) {
+          $wfCmd = new weatherForecastCmd();
+          $wfCmd->setName(__("Pluie 1h - Prévisions textuelles {$t[$i]}", __FILE__));
+          $wfCmd->setIsVisible(0);
+          $wfCmd->setIsHistorized(0);
+          $wfCmd->setLogicalId($id);
+          $wfCmd->setEqLogic_id($this->getId());
+          $wfCmd->setType('info');
+          $wfCmd->setSubType('string');
+          // $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
+          // $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
+          $wfCmd->setOrder($ord);
+          $wfCmd->setConfiguration('type', 'rain');
+        }
+        $ord++;
+        $wfCmd->save();
+      }
+
+      $id = "Rainheure";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setName(__("Pluie 1h - Heure début des prévisions", __FILE__));
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
         $wfCmd->setLogicalId($id);
         $wfCmd->setEqLogic_id($this->getId());
         $wfCmd->setType('info');
         $wfCmd->setSubType('string');
-        $wfCmd->setOrder($ord++);
-        $wfCmd->save();
+        // $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
+        // $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
+        $wfCmd->setOrder($ord);
+        $wfCmd->setConfiguration('type', 'rain');
       }
+      $ord++;
+      $wfCmd->save();
+
+      $id = "Raincumul";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setName(__("Pluie 1h - Pluie prévue dans l heure", __FILE__));
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        // $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
+        // $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
+        $wfCmd->setOrder($ord);
+        $wfCmd->setConfiguration('type', 'rain');
+      }
+      $ord++;
+      $wfCmd->save();
+      
+      $id = "Rainnext";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setName(__("Pluie 1h - Délai avant prochaine pluie", __FILE__));
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('numeric');
+        // $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
+        // $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
+        $wfCmd->setOrder($ord);
+        $wfCmd->setConfiguration('type', 'rain');
+      }
+      $ord++;
+      $wfCmd->save();
+
+      $id = "Raintype";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setName(__("Pluie 1h - Type de prochaine pluie", __FILE__));
+        $wfCmd->setIsVisible(0);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
+        // $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
+        // $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
+        $wfCmd->setOrder($ord);
+        $wfCmd->setConfiguration('type', 'rain');
+      }
+      $ord++;
+      $wfCmd->save();
+
+      $id = "1hRainForecastJson";
+      $wfCmd = $this->getCmd(null, $id);
+      if (!is_object($wfCmd)) {
+        $wfCmd = new weatherForecastCmd();
+        $wfCmd->setIsVisible(1);
+        $wfCmd->setIsHistorized(0);
+        $wfCmd->setName(__("Pluie dans l heure Json", __FILE__));
+        $wfCmd->setLogicalId($id);
+        $wfCmd->setEqLogic_id($this->getId());
+        $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
+        $wfCmd->setTemplate('dashboard', __CLASS__ .'::1hRainForecast');
+        $wfCmd->setTemplate('mobile', __CLASS__ .'::1hRainForecast');
+        $wfCmd->setOrder($ord);
+      }
+      $wfCmd->setConfiguration('type', 'json');
+      $wfCmd->save();
     }
 
     $id = "refresh";
@@ -1066,11 +1249,11 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $refresh = new weatherForecastCmd();
       $refresh->setIsVisible(1);
       $refresh->setName(__('Rafraichir', __FILE__));
+      $refresh->setEqLogic_id($this->getId());
+      $refresh->setLogicalId($id);
+      $refresh->setType('action');
+      $refresh->setSubType('other');
     }
-    $refresh->setEqLogic_id($this->getId());
-    $refresh->setLogicalId($id);
-    $refresh->setType('action');
-    $refresh->setSubType('other');
     $refresh->setOrder(0);
     $refresh->save();
   }
@@ -1509,6 +1692,22 @@ if(1 || $this->getId() == 2271) {
         }
       }
     }
+    $request = $this->getConfiguration('requestForRainForecast',0);
+    if($request == 0) {
+      $replace['#1hRainForecast#'] = '[]';
+      $replace['#RAIN_DATA#'] = '[]';
+    }
+    else {
+      $replace['#1hRainForecast#'] = '[]';
+      $cmd = $this->getCmd(null, '1hRainForecastJson');
+      $replace['#RAIN_DATA#'] = '[]';
+      if(is_object($cmd)) {
+        $data = $cmd->execCmd(); // Valeur de la commande (JSON météo)
+        $replace['#RAIN_DATA#'] = $data;
+      }
+      else message::add(__CLASS__, "Cmd 1hRainForecastJson not found");
+    }
+    
     $poweredBy = 'Powered by: ';
     if($datasource == 'weatherapi')
       $poweredBy .= '<a target="_blank" href="https://www.weatherapi.com/" title="Free Weather API">WeatherAPI.com</a>';
@@ -1524,6 +1723,7 @@ if(1 || $this->getId() == 2271) {
     else
       return $this->postToHtml($_version, template_replace($replace, getTemplate('core', $version, __CLASS__, __CLASS__)));
   }
+
 
   public function fetchOpenweather($url) {
     $ch = curl_init($url);
@@ -1723,6 +1923,31 @@ if(1 || $this->getId() == 2271) {
         $changed = $this->checkAndUpdateCmd("rain_$i", round($rain,1)) || $changed;
       }
     }
+
+      // cleaning forecastList
+    $nbF = count($forecast['list']);
+    $nbKeep = 1;
+    for($i=0;$i<$nbF;$i++) {
+      if($i < $nbKeep) {
+        unset($forecast['list'][$i]['dt_txt']);
+        unset($forecast['list'][$i]['main']['sea_level']);
+        unset($forecast['list'][$i]['main']['grnd_level']);
+        unset($forecast['list'][$i]['main']['temp_kf']);
+        switch($forecast['list'][$i]['sys']['pod']) {
+          case 'n': $forecast['list'][$i]['sys_pod'] = 0; break;
+          case 'd': $forecast['list'][$i]['sys_pod'] = 1; break;
+          default: $forecast['list'][$i]['sys_pod'] = $forecast['list'][$i]['sys']['pod']; break;
+        }
+        // $forecast['list'][$i]['sys_pod'] = $forecast['list'][$i]['sys']['pod'];
+        unset($forecast['list'][$i]['sys']);
+      }
+      else unset($forecast['list'][$i]);
+    }
+    $hdle = fopen(__DIR__ ."/../../data/OpenWeather-forecast3hRedu-".$this->getId() .".json", "wb");
+    if($hdle !== FALSE) { fwrite($hdle, json_encode($forecast['list'],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)); fclose($hdle); }
+    $forecastList = str_replace('"','&#34;',json_encode($forecast['list'],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+    // message::add(__CLASS__, "Lg: " .strlen($forecastList));
+    $changed = $this->checkAndUpdateCmd("Owm3hForecastJson", $forecastList) || $changed;
     return $changed;
   }
 
@@ -1949,7 +2174,8 @@ if(1 || $this->getId() == 2271) {
       $changed = $this->checkAndUpdateCmd("rain_$i", round($forecastday[$i]['day']['totalprecip_mm'],1)) || $changed;
       $this->checkAndUpdateCmd("temperature_$i", $forecastday[$i]['day']['avgtemp_c']);
       $maxUV = 0;
-      for($k=0; $k<24; $k++) $maxUV = max( $forecastday[$i]['hour'][$k]['uv'], $maxUV);
+      for($k=0; $k<24; $k++) $maxUV = max( isset($forecastday[$i]['hour'][$k]['uv'])?$forecastday[$i]['hour'][$k]['uv']:0, $maxUV);
+      $this->checkAndUpdateCmd("Owm3hForecastJson", []); // OWM only
       $this->checkAndUpdateCmd("uvMax_$i", $maxUV);
       $this->checkAndUpdateCmd("wind_speed_$i", $forecastday[$i]['day']['maxwind_kph']);
       if(0) { // commande JSON
@@ -2225,7 +2451,7 @@ if(1 || $this->getId() == 2271) {
       }
     }
     else {
-      log::add(__CLASS__, 'debug', "  Unable to fetch $url");
+      log::add(__CLASS__, 'warning', "  Unable to fetch $url");
       return 1; // erreur
     }
     return 0; // OK
@@ -2392,12 +2618,109 @@ if(1 || $this->getId() == 2271) {
     return $changed;
   }
 
+    public static function callMeteoWS($_url, $_xml = false, $_token = true,$debugFile='') {
+    //$token = config::byKey('token', 'meteofrance');
+    if ($_token)  {
+      $token = '&token=__Wj7dVSTjV9YGu1guveLyDq0g7S7TfTjaHBTPTpO0kj8__';
+    } else {
+      $token = '';
+    }
+    log::add(__CLASS__, 'debug', "  Get: $_url$token");
+    $request_http = new com_http($_url . $token);
+    $request_http->setNoSslCheck(true);
+    $request_http->setNoReportError(true);
+    $return = $request_http->exec(15,1); // Timeout 15s 1 seul essai
+    if ($return === false) {
+      log::add(__CLASS__, 'debug', "  Unable to fetch $_url");
+      return;
+    } 
+    if ($_xml) {
+      libxml_use_internal_errors(true); // disable warning
+      $xml = simplexml_load_string($return, 'SimpleXMLElement', LIBXML_NOCDATA);
+      $return = json_encode($xml);
+    }
+      // log result in file or with log class
+    $loglevel = log::convertLogLevel(log::getLogLevel(__CLASS__));
+    if($loglevel == 'debug') {
+      if($debugFile != '') {
+        $debugFile = str_replace('/', '', $debugFile); // remove / from fileName
+        $file = __DIR__ ."/../../data/$debugFile";
+        $hdle = fopen($file,"wb");
+        if($hdle !== FALSE) {
+          fwrite($hdle, $return);
+          fclose($hdle);
+          log::add(__CLASS__, 'debug', "  Result saved in file: " .realpath($file));
+        }
+      }
+      else log::add(__CLASS__, 'debug', "  Result $return");
+    }
+    return json_decode($return, true);
+  }
+
+  public function getRainMF() { // cron5 called
+    $changed = false;
+    $request = $this->getConfiguration('requestForRainForecast',0);
+    if($request == 0) {
+      for($i=1;$i<10;$i++) {
+        $this->checkAndUpdateCmd("Rainrain$i", 0);
+        $this->checkAndUpdateCmd("Raindesc$i", "Prévisions de pluie désactivées");
+      }
+      $this->checkAndUpdateCmd('Rainheure', date('Hi'));
+      return;
+    }
+    $lat = $this->getConfiguration('lat'); $lon = $this->getConfiguration('lon');
+    $ville = $this->getConfiguration('ville');
+    log::add(__CLASS__, 'debug', __FUNCTION__ ." $ville $lat/$lon");
+    if($lat == '' || $lon == '') {
+      log::add(__CLASS__, 'debug', "  Invalid latitude/longitude: $lat/$lon");
+      return;
+    }
+    $t0 = -microtime(true);
+    $i = 0; $cumul = 0; $next = 0; $type = ''; $dt = time();
+    $url = "https://rpcache-aa.meteofrance.com/internet2018client/2.0/nowcast/rain?lat=$lat&lon=$lon";
+    // similar to $url = "https://webservice.meteofrance.com/v3/rain?lat=$lat&lon=$lon";
+    $return = self::callMeteoWS($url,false,true,__FUNCTION__ ."-".$this->getId() ."-$ville.json");
+    if(is_array($return) && isset($return['properties']['forecast'])) {
+      $updated_on = strtotime($return['update_time']);
+      log::add(__CLASS__, 'debug', "  ".__FUNCTION__ ." Updated_on: " .date('d-m-Y H:i:s', $updated_on));
+      $contents = str_replace('"','&#34;',json_encode($return['properties'],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+      $changed = $this->checkAndUpdateCmd('1hRainForecastJson', $contents) || $changed;
+      foreach ($return['properties']['forecast'] as $id => $rain) {
+        $i++;
+        $this->checkAndUpdateCmd('Rainrain' . $i, $rain['rain_intensity']);
+        $this->checkAndUpdateCmd('Raindesc' . $i, $rain['rain_intensity_description']);
+        // message::add(__CLASS__, "Raindesc{$i} {$rain['rain_intensity_description']}");
+        if (($rain['rain_intensity'] > 1) && ($next == 0)) {
+          $next = $i * 5;
+          if ($i > 6) {
+            $next += ($i - 6) * 5;
+            //after 30 mn, steps are for 10mn
+          }
+          $type = $rain['rain_intensity_description'];
+        }
+        $cumul += $rain['rain_intensity'];
+      }
+      $dt = strtotime($return['properties']['forecast'][0]['time']);
+    }
+    else {
+      log::add(__CLASS__, 'warning', __FUNCTION__ ." Unable to get data.");
+      $this->checkAndUpdateCmd('1hRainForecastJson', "[]");
+    }
+    $this->checkAndUpdateCmd('Rainheure',  date('Hi',$dt));
+    $this->checkAndUpdateCmd('Raincumul', $cumul);
+    $this->checkAndUpdateCmd('Rainnext', $next);
+    $this->checkAndUpdateCmd('Raintype', $type);
+    log::add(__CLASS__, 'debug', "  ".__FUNCTION__ ." Updated in: " .round($t0+microtime(true),1) ."s");
+    return($changed);
+  }
+
 }
 
 class weatherForecastCmd extends cmd {
   public function execute($_options = [] ) {
     if ($this->getLogicalId() == 'refresh') {
       $this->getEqLogic()->updateWeatherData(0,1);
+      $this->getEqLogic()->getRainMF();
     }
     return false;
   }

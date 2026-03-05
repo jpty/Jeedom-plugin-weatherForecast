@@ -1,0 +1,101 @@
+<div class="cmd cmd-widget #history#" data-type="info" data-subtype="string" data-template="custom" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
+  <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.css" />
+  <script>
+    if (!document.getElementById('WF-rain-css')) {
+      const link = document.createElement('link');
+      link.id = 'WF-rain-css';
+      link.rel = 'stylesheet';
+      link.href = 'plugins/weatherForecast/core/template/css/rain-widget.css';
+      document.head.appendChild(link);
+    }
+    // --- Fonction utilitaire pour charger wf-rain.js ---
+    function loadWFRain(callback) {
+      if (window.WFRain) {
+        callback();
+        return;
+      }
+
+      let script = document.getElementById('wf-rain-js');
+
+      if (!script) {
+        script = document.createElement('script');
+        script.id = 'wf-rain-js';
+        script.src = 'plugins/weatherForecast/core/template/js/wf-rain.js';
+        script.defer = true;
+
+        script.onload = () => {
+          callback();
+        };
+
+        document.head.appendChild(script);
+      } else {
+        // script déjà en cours de chargement → on attend
+        script.addEventListener('load', callback);
+      }
+    }
+  </script>
+<!-- <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/core/template/css/rain-widget.css" /> -->
+  <div class="content">
+    <div class="title #hide_name#">
+      <div  class="cmdName">#name_display#</div>
+    </div>
+    <div class="WF-rain-widget">
+      <table class="WF-rain-table tableCmd">
+        <thead>
+          <tr class="time-row"></tr>
+        </thead>
+        <tbody>
+          <tr class="icon-row"></tr>
+        </tbody>
+      </table>
+    </div>
+    <div title="Message" class="errorMessage"></div>
+  </div>
+  <template>
+    <div>hideWidgetIfRainNotForecasted: {{Masquer le widget si pas de pluieprévue. 0/1 Défaut: 0}}</div>
+    <div>testWidget: {{Test des différents icônes. 0/1 Défaut: 0}}</div>
+    <div>useIconFiles: {{Utilisation des fichiers d'icones. 0/1 Défaut: 0}}</div>
+    <div>withAnimatedDrops: {{Avec les gouttes d'eau animées. 0/1 Défaut: 1}}</div>
+    <div>rainWidgetWidth: {{Largeur du widget. 100%, 400px Défaut: 100%}}</div>
+  </template>
+  <script>
+    jeedom.cmd.addUpdateFunction('#id#',function(_options) {
+      try {
+        if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
+          cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
+// console.log('Widget ' + _options.display_value);
+          const widget = cmd.querySelector('.WF-rain-widget');
+          widget.classList.remove('WF-variant-img', 'WF-variant-svg');
+          if('#useIconFiles#' != '1') { widget.classList.add('WF-variant-svg'); }
+          else { widget.classList.add('WF-variant-img'); }
+          if ('#'+'rainWidgetWidth#' != '#rainWidgetWidth#') widget.style.width = '#rainWidgetWidth#';
+          let jsonData;
+          const rainData = _options.display_value;
+      // console.log('Widget ' +rainData);
+          try {
+            const json = rainData.replaceAll('&quot;', '"').replaceAll('&#34;', '"');
+            jsonData = JSON.parse(json);
+          } catch (e) {
+            cmd.querySelector('.errorMessage').innerHTML = 'Invalid JSON for rain data ' +e.message;
+            return;
+          }
+          if(jsonData != null && typeof(jsonData.forecast) != "undefined") {
+            loadWFRain(() => {
+              WFRain.render(widget, jsonData.forecast, {
+                useIconFiles: '#useIconFiles#' === '1',
+                withAnimatedDrops: '#withAnimatedDrops#' !== '0',
+                hideIfDry: '#hideWidgetIfRainNotForecasted#' === '1',
+                testWidget: '#testWidget#' === '1'
+              });
+            });
+          }
+          else cmd.querySelector('.errorMessage').innerHTML = "No rain data";
+        }
+      }
+      catch(err) {
+        cmd.querySelector('.errorMessage').innerHTML = err.message;
+      }
+    });
+    jeedom.cmd.refreshValue([{cmd_id :'#id#',display_value: '#state#', valueDate: '#valueDate#', collectDate: '#collectDate#', alertLevel: '#alertLevel#', unit: '#unite#'}])
+  </script>
+</div>
