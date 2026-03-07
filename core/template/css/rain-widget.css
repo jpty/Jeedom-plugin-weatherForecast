@@ -1,0 +1,149 @@
+/* ===============================
+   Base widget
+   =============================== */
+
+.WF-rain-widget {
+  width: 100%;
+  font-size: 14px;
+  background-color: transparent;
+  padding: 0 1px;
+}
+
+.WF-rain-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background-color: transparent;
+}
+
+/* ===============================
+   Time header
+   =============================== */
+
+.WF-rain-table th .time-range {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.75em;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.WF-variant-svg .WF-rain-table .time-row th:first-child,
+.WF-rain-table .icon-row td:first-child {
+  border-left: none;
+}
+
+/* ===============================
+   Intensities → CSS variables
+   =============================== */
+
+.WF-rain-table .intensity-1 { --wf-color: #4caf50; }
+.WF-rain-table .intensity-2 { --wf-color: #AAE8FF; }
+.WF-rain-table .intensity-3 { --wf-color: #2196f3; }
+.WF-rain-table .intensity-4 { --wf-color: #0d47a1; }
+.WF-rain-table .intensity-5 { --wf-color: #b71c1c; }
+
+/* ===============================
+   TD common
+   =============================== */
+
+.WF-rain-table td {
+  position: relative;
+  overflow: visible;
+  transition: background-color 0.2s;
+  border-top: 3px solid transparent;
+}
+
+.WF-rain-table td[class*="intensity-"] {
+  color: var(--wf-color);
+  border-left: 1px solid currentColor;
+}
+
+/* ===============================
+   TH (SVG variant)
+   =============================== */
+
+.WF-variant-svg .WF-rain-table th[class*="intensity-"] {
+  border-left: 1px solid var(--wf-color);
+  border-top: 1px solid var(--wf-color);
+}
+
+/* ===============================
+   SVG / IMG icons
+   =============================== */
+
+.WF-rain-table svg,
+.WF-rain-table img {
+  width: 30px;
+  height: 28px;
+  display: block;
+  margin: 2px auto 0;
+  pointer-events: none;
+}
+
+.WF-rain-table svg {
+  color: inherit;
+  overflow: visible;
+}
+
+/* ===============================
+   SVG drops animation
+   =============================== */
+
+.WF-rain-table .drop {
+  fill: currentColor;
+  animation: rainDrop 1.2s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.WF-rain-table td.intensity-3 .drop { animation-duration: 0.9s; }
+.WF-rain-table td.intensity-4 .drop { animation-duration: 0.6s; }
+.WF-rain-table td.intensity-5 .drop { animation-duration: 0.4s; }
+
+@keyframes rainDrop {
+  0%   { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(20px); opacity: 0; }
+}
+
+/* ===============================
+   Variants
+   =============================== */
+
+/* IMG variant → colored background */
+.WF-variant-img .WF-rain-table td[class*="intensity-"] {
+  background-color: var(--wf-color);
+}
+
+/* SVG variant → transparent background */
+.WF-variant-svg .WF-rain-table td {
+  background: transparent;
+}
+
+/* ===============================
+   Hover effects
+   =============================== */
+
+/* SVG hover overlay */
+.WF-variant-svg .WF-rain-table td::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: rgba(60, 115, 165, 0.18);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.WF-variant-svg .WF-rain-table td:hover::after {
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* IMG hover */
+.WF-variant-img .WF-rain-table td:hover {
+  filter: brightness(1.15);
+  cursor: pointer;
+}

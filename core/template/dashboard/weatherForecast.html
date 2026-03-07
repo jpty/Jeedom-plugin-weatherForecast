@@ -1,5 +1,45 @@
 <div class="eqLogic eqLogic-widget text-center allowResize allowReorderCmd #custom_layout# #eqLogic_class# #class# #category#" data-eqType="#eqType#" data-eqLogic_id="#id#" data-eqLogic_uid="#uid#" data-version="#version#" data-translate-category="#translate_category#" data-category="#category#" data-tags="#tags#" style="width: #width#;height: #height#;#style#">
   <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.css" />
+  <script>
+    if (!document.getElementById('WF-rain-css')) {
+      const link = document.createElement('link');
+      link.id = 'WF-rain-css';
+      link.rel = 'stylesheet';
+      link.href = 'plugins/weatherForecast/core/template/css/rain-widget.css';
+      document.head.appendChild(link);
+    }
+    function loadWFRain(callback) {
+      if (window.WFRain) {
+        callback();
+        return;
+      }
+
+      let script = document.getElementById('wf-rain-js');
+
+      if (!script) {
+        script = document.createElement('script');
+        script.id = 'wf-rain-js';
+        script.src = 'plugins/weatherForecast/core/template/js/wf-rain.js';
+        script.defer = true;
+
+        script.onload = () => {
+          callback();
+        };
+
+        document.head.appendChild(script);
+      } else {
+        // script en cours de chargement → on attend
+        script.addEventListener('load', callback);
+      }
+    }
+  </script>
+  <template>
+      <div>hideWidgetIfRainNotForecasted: {{Masquer le widget si pas de pluieprévue. 0/1 Défaut: 0}}</div>
+      <div>testWidget: {{Test des différents icônes. 0/1 Défaut: 0}}</div>
+      <div>useIconFiles: {{Utilisation des fichiers d'icones. 0/1 Défaut: 0}}</div>
+      <div>withAnimatedDrops: {{Avec les gouttes d'eau animées. 0/1 Défaut: 1}}</div>
+      <div>widgetWidth: {{Largeur du widget. 100%, 400px Défaut: 100%}}</div>
+    </template>
   <div class="widget-name">
     <span style="color:#background-color#" title="#alert_name#">
       <i class='#alert_icon#'></i>
@@ -17,12 +57,15 @@
           <div style="display:#displayIcon#"><i class="#icone#" style="font-size: 4em;"></i></div>
           <div style="display:#displayImage#;background: url('plugins/weatherForecast/core/template/images/#icone#.png') no-repeat center; background-size: 100% 100%; width: #wImg#; height: #hImg#;"></div>
         </td>
+        <!--
+        <td style="font-size:12px!important;line-height:normal;max-width:120px;overflow:hidden;text-overflow: ellipsis;white-space: nowrap;">
+        -->
         <td style="font-size:12px!important;line-height:normal;">
           #condition#
           <br/>
-          <i class="wi wi-thermometer"></i> #temperature# °C &nbsp; <i title="Humidité" class="wi wi-humidity"></i> #humidity# %
-          <br/>
-          <i title="Pression atmosphérique" class="wi wi-barometer"></i> #pressure# hPa &nbsp; <i title="Nuages" class="wi wi-cloud"></i> #clouds# % &nbsp; <i title="Pluie" class="wi wi-raindrop icon_blue"></i> #rain#mm #uv_Hcur#
+          <i title="Température" class="wi wi-thermometer"></i> #temperature# °C &nbsp; <i title="Humidité" class="wi wi-humidity"></i> #humidity# % &nbsp; <i title="Pression atmosphérique" class="wi wi-barometer"></i> #pressure# hPa
+          <br>
+          <i title="Nuages" class="wi wi-cloud"></i> #clouds# % &nbsp; <i title="Pluie" class="wi wi-raindrop icon_blue"></i> #rain#mm #uv_Hcur#
           <br/>
           #sunrise_sunset#
         </td>
@@ -43,6 +86,19 @@
     </table>
 
     <div style="margin-top: 0px;">
+      <div class="WF-rain-widget" data-uid="#uid#">
+        <table class="WF-rain-table tableCmd">
+          <thead>
+            <tr class="time-row"></tr>
+          </thead>
+          <tbody>
+            <tr class="icon-row"></tr>
+          </tbody>
+        </table>
+        <div title="Message" class="errorMessage"></div>
+      </div>
+    </div>
+    <div style="margin-top: 0px;">
       #vigilance#
     </div>
     <div style="margin-top: 0px;">
@@ -56,10 +112,47 @@
     </div>
   </div>
   #divGraphInfo#
-
   <script>
     $('.eqLogic[data-eqLogic_uid=#uid#] .cmd').on('click', function() {
       jeedom.cmd.execute({id: $(this).data('cmd_id')});
     });
-  </script>
+    (function() {
+      const widget = document.querySelector('.WF-rain-widget[data-uid="#uid#"]');
+      if (!widget) return;
+        const errorMessage = widget.querySelector('.errorMessage');
+      try {
+        widget.classList.remove('WF-variant-img', 'WF-variant-svg');
+        if('#useIconFiles#' != '1') { widget.classList.add('WF-variant-svg'); }
+        else { widget.classList.add('WF-variant-img'); }
+            if ('#'+'widgetWidth#' != '#widgetWidth#') widget.style.width = '#widgetWidth#';
+            let jsonData;
+        const rainData = '#1hRainForecast#';
+        console.log('Template ' +rainData);
+        try {
+          const json = rainData.replaceAll('&quot;', '"').replaceAll('&#34;', '"');
+          if (!json.length) return;
+          jsonData = JSON.parse(json);
+        } catch (e) {
+          errorMessage.innerHTML = 'Invalid JSON for rain data ' +e.message;
+          return;
+        }
+        if(jsonData != null && typeof(jsonData.forecast) != "undefined") {
+          loadWFRain(() => {
+            WFRain.render(widget, jsonData.forecast, {
+              useIconFiles: '#useIconFiles#' === '1',
+              withAnimatedDrops: '#withAnimatedDrops#' !== '0',
+              hideIfDry: '#hideWidgetIfRainNotForecasted#' === '1',
+              testWidget: '#testWidget#' === '1'
+            });
+          });
+        }
+      }
+      catch(err) {
+        errorMessage.innerHTML = err.message;
+        console.log("Erreur JS " +err.message);
+        return;
+      }
+
+    })();
+</script>
 </div>
