@@ -1695,15 +1695,13 @@ if(1 || $this->getId() == 2271) {
     $request = $this->getConfiguration('requestForRainForecast',0);
     if($request == 0) {
       $replace['#1hRainForecast#'] = '[]';
-      $replace['#RAIN_DATA#'] = '[]';
     }
     else {
       $replace['#1hRainForecast#'] = '[]';
       $cmd = $this->getCmd(null, '1hRainForecastJson');
-      $replace['#RAIN_DATA#'] = '[]';
       if(is_object($cmd)) {
         $data = $cmd->execCmd(); // Valeur de la commande (JSON météo)
-        $replace['#RAIN_DATA#'] = $data;
+        $replace['#1hRainForecast#'] = $data;
       }
       else message::add(__CLASS__, "Cmd 1hRainForecastJson not found");
     }
@@ -2700,10 +2698,10 @@ if(1 || $this->getId() == 2271) {
         }
         $cumul += $rain['rain_intensity'];
       }
-      $dt = strtotime($return['properties']['forecast'][0]['time']);
+      $dt = strtotime($return['properties']['forecast'][0]['time']) - 300; // 5min avant
     }
     else {
-      log::add(__CLASS__, 'warning', __FUNCTION__ ." Unable to get data.");
+      log::add(__CLASS__, 'warning', __FUNCTION__ ." Unable to get rain data for equipment {$this->getName()} ($lat , $lon).");
       $this->checkAndUpdateCmd('1hRainForecastJson', "[]");
     }
     $this->checkAndUpdateCmd('Rainheure',  date('Hi',$dt));
