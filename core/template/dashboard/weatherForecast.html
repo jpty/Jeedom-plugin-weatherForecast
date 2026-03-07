@@ -86,7 +86,7 @@
     </table>
 
     <div style="margin-top: 0px;">
-      <div class="WF-rain-widget" data-rain='#RAIN_DATA#' data-uid="#uid#">
+      <div class="WF-rain-widget" data-uid="#uid#">
         <table class="WF-rain-table tableCmd">
           <thead>
             <tr class="time-row"></tr>
@@ -126,7 +126,7 @@
         else { widget.classList.add('WF-variant-img'); }
             if ('#'+'widgetWidth#' != '#widgetWidth#') widget.style.width = '#widgetWidth#';
             let jsonData;
-        const rainData = '#RAIN_DATA#';
+        const rainData = '#1hRainForecast#';
         console.log('Template ' +rainData);
         try {
           const json = rainData.replaceAll('&quot;', '"').replaceAll('&#34;', '"');
