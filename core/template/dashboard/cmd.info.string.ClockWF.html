@@ -377,8 +377,12 @@ timeZones#id#.forEach(timeZone => {
             let obj = JSON.parse(json);
             if(obj != null && typeof(obj.weather) != 'undefined') {
               if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
-              let icon = "url('plugins/weatherForecast/core/template/images/" +obj.weather.icon +".png')"
-              cmd.querySelector('.wIcon#uid#').style.setProperty('background-image', icon)
+              let icon;
+              if(obj.datasource == 'meteofrance')
+                icon = "url('plugins/meteofrance/data/icones/" +obj.weather.icon +".svg')";
+              else
+                icon = "url('plugins/weatherForecast/core/template/images/" +obj.weather.icon +".png')";
+              cmd.querySelector('.wIcon#uid#').style.setProperty('background-image', icon);
               cmd.querySelector('.condition').innerHTML = obj.weather.desc;
                   
               cmd.querySelector('.Tvalue').innerHTML = Intl.NumberFormat(undefined,{minimumFractionDigits: 1,maximumFractionDigits: 1,style:"unit",unit:"celsius",unitDisplay:"narrow"}).format(obj.T.value);
