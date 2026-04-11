@@ -54,6 +54,7 @@ if (!isConnect('admin')) {
       <label class="col-md-6 control-label" style="text-align: left;line-height:normal">{{Le plugin peut récupérer les données de vigilances avec l'API <a href="https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesVigilance">DonneesPubliquesVigilance</a> de Météo France ou sur le <a href="http://storage.gra.cloud.ovh.net/v1/AUTH_555bdc85997f4552914346d4550c421e/gra-vigi6-archive_public/">site d'archives de Météo France</a>.}}
       </label>
     </div>
+<!--
     <div class="form-group">
 			<label class="col-md-3 control-label">{{Utilisation de l'API Météo des forêts}}</label>
 			<div class="col-sm-1" style="width:2%">
@@ -62,6 +63,7 @@ if (!isConnect('admin')) {
       <label class="col-md-6 control-label" style="text-align: left;line-height:normal">{{Vous devez vous abonnez à l'API <a href="https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesMeteoForets">DonneesPubliquesMeteoForets</a> de Météo France.</a>.}}
       </label>
 		</div>
+-->
 <!--
     <div class="form-group">
       <label class="col-md-3 control-label">{{Commentaires}}
