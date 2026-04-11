@@ -98,7 +98,7 @@ window.WFRain = (function () {
         g.appendChild(drop);
       }
     }
-    g.setAttribute("transform", "translate(0,-4)");
+    g.setAttribute("transform", "translate(0,-2)");
     svg.appendChild(g);
     return svg;
   }

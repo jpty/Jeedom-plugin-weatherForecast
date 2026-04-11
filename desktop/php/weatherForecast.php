@@ -140,20 +140,12 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                 </label>
                 <div class="col-sm-4">
                   <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="datasource">
-                    <!-- <option value="meteofrance">{{Météo France}}</option> -->
+                    <option value="meteofrance">{{Météo France}}</option>
                     <?php
-                      $nbkey= 0;
-                      if($apikeyOwm != '') {
-                        echo '<option value="openweathermap">{{OpenWeather}}</option>';
-                        $nbkey++;
-                      }
-                      if($apikeyWapi != '') {
-                        echo '<option value="weatherapi">{{Weather API}}</option>';
-                        $nbkey++;
-                      }
-                      if($nbkey == 0) {
-                        echo '<option value="">{{Aucune clé API renseignée dans la configuration du plugin}}</option>';
-                      }
+                      $disable = ($apikeyOwm == '') ? "disabled" : "";
+                      echo '<option value="openweathermap" ' .$disable .'>{{OpenWeather}}</option>';
+                      $disable = ($apikeyWapi == '') ? "disabled" : "";
+                      echo '<option value="weatherapi" ' .$disable .'>{{Weather API}}</option>';
                     ?>
                   </select>
                 </div>
