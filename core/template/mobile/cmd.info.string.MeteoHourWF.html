@@ -2,7 +2,7 @@
   <div class="title #hide_name#">
     <div  class="cmdName">#name_display#</div>
   </div>
-  <link rel="stylesheet" type="text/css" href="plugins/meteofrance/desktop/weather-icons/css/weather-icons.css" />
+  <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.css" />
   <div class="dateText"></div>
   <div class="weatherIcon" style="margin-top: -5px;margin-bottom: -5px"></div>
   <div title="Température" class="Tvalue"></div>
@@ -11,16 +11,16 @@
   <div title="Pluie" class="rain" style="margin-top: 4px"></div>
   <div title="Message" class="errorMessage"></div>
   <template>
-    <div>color : rgb(20,20,20) ({{Couleur de fond}})</div>
-    <div>fontColor : rgb(20,20,20) ({{Couleur du texte}})</div>
-    <div>displayDate : 0/1 ({{Affichage du jour}})</div>
-    <div>displayTime : 0/1 ({{Affichage de l'heure}})</div>
-    <div>displayDescription : 0/1 ({{Affichage de la description}})</div>
-    <div>displayTemperature : 0/1 ({{Affichage de la température}})</div>
-    <div>displayWind : 0/1 ({{Affichage du vent}})</div>
-    <div>displayClouds : 0/1 ({{Affichage du pourcentage de nuages}})</div>
-    <div>displayRain : 0/1 ({{Affichage de la pluie dans l'heure}})</div>
-    <div>displayError : 0/1 ({{Affichage des erreurs JS}})</div>
+    <div>color: rgb(20,20,20) ({{Couleur de fond}})</div>
+    <div>fontColor: rgb(20,20,20) ({{Couleur du texte}})</div>
+    <div>displayDate: 0/1 ({{Affichage du jour}})</div>
+    <div>displayTime: 0/1 ({{Affichage de l'heure}})</div>
+    <div>displayDescription: 0/1 ({{Affichage de la description}})</div>
+    <div>displayTemperature: 0/1 ({{Affichage de la température}})</div>
+    <div>displayWind: 0/1 ({{Affichage du vent}})</div>
+    <div>displayClouds: 0/1 ({{Affichage du pourcentage de nuages}})</div>
+    <div>displayRain: 0/1 ({{Affichage de la pluie dans l'heure}})</div>
+    <div>displayError: 0/1 ({{Affichage des erreurs JS}})</div>
   </template>
   <script>
     /* JSON structure:
@@ -34,7 +34,8 @@
         "iso0":2900,
         "rain snow limit":"Non pertinent",
         "clouds":10,
-        "weather":{"icon":"p1j","desc":"Ensoleillé"}
+        "weather":{"icon":"p1j","desc":"Ensoleillé"},
+        "timezone": "Europe/Paris"
       }
    */
     jeedom.cmd.addUpdateFunction('#id#',function(_options) {
@@ -44,20 +45,21 @@
         let json = _options.display_value.replaceAll('&quot;','"');
         let obj = JSON.parse(json);
         if(obj != null) {
-          cmd.find('.weatherIcon').empty().append('<img src="plugins/meteofrance/data/icones/' +obj.weather.icon +'.svg">');
+          cmd.find('.weatherIcon').empty().append('<img src="plugins/weatherForecast/data/icones/' +obj.weather.icon +'.svg" style="width:50px">');
           let weatherIconTitle = obj.weather.desc;
+          let timezone#id# = obj.timezone;
 
           let cd = new Date(obj.dt * 1000);
           let dateTime = '';
-          let dayTxt = cd.toLocaleDateString('fr-FR', {month: 'short', day: 'numeric',weekday: 'short'});
+          let dayTxt = cd.toLocaleDateString([], {timeZone: timezone#id#, month: 'short', day: 'numeric',weekday: 'short'});
           let day = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1); // ucfirst
           if('#displayDate#' != '0') dateTime += day;
           else weatherIconTitle += '<br/>' +day;
           if('#displayTime#' != '0') {
             if(dateTime.length) dateTime += '<br/>';
-            dateTime += cd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
+            dateTime += cd.toLocaleTimeString([], {timeZone: timezone#id#, hour: '2-digit'});
           }
-          else weatherIconTitle += '<br/>Heure: ' +cd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
+          else weatherIconTitle += '<br/>Heure: ' +cd.toLocaleTimeString([], {timeZone: timezone#id#, hour: '2-digit'});
           if('#displayDescription#' != '0') {
             if(dateTime.length) dateTime += '<br/>';
             dateTime += obj.weather.desc;
@@ -69,7 +71,7 @@
             cmd.find('.Tvalue').empty().append(temp);
             cmd.find('.Tvalue').attr('title', ' Temp. ressentie: '+obj.T.windchill +'°C');
           }
-          else weatherIconTitle += '<br/>Température: ' +temp +' Ressentie: '+obj.T.windchill +'°C';
+          else weatherIconTitle += '<br/>Température: ' +temp +' Ressentie: '+obj.T.windchill;
 
           let vent = Math.round(obj.wind.speed*3.6) +'km/h';
           let raf = obj.wind.gust;
@@ -86,15 +88,18 @@
           }
           else weatherIconTitle += '<br/>Vent: ' +obj.wind.icon +' '+vent;
           if('#displayClouds#' != '0') {
-            let clouds = obj.clouds +'%';
-               cmd.find('.clouds').empty().append('<i class="wi wi-cloud"></i> ' +clouds);
+            cmd.find('.clouds').empty().append('<i class="wi wi-cloud"></i> ' +obj.clouds +'%');
           }
           if('#displayRain#' != '0') {
             let rain = obj.rain['1h'];
-            let snow = obj.snow['1h'];
+            let snow = 0;
+            if(obj.snow != undefined) {
+              if(obj.snow['1h'] != undefined) snow = obj.snow['1h'];
+              if(obj.snow['3h'] != undefined) snow = obj.snow['3h'];
+            }
             let txtPrecip = '';
-            if(rain) txtPrecip += '<i class="wi wi-raindrop"></i>' +rain +'mm '
-            if(snow) txtPrecip += '<i class="fas fa-snowflake"></i>' +snow +'mm'
+            if(rain) txtPrecip += '<i class="wi wi-raindrop"></i> ' +rain +'mm '
+            if(snow) txtPrecip += '<i class="fas fa-snowflake"></i> ' +snow +'cm'
             cmd.find('.rain').empty().append(txtPrecip);
           }
               

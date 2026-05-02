@@ -1,12 +1,30 @@
-<div style="display: inline-block;font-size:12px;line-height:normal;margin-right:4px;vertical-align:top" class="cmd noRefresh" data-type="info" data-subtype="string" data-cmd_id="#conditionid#">
-  <center>
-    <div>#day#</div>
+<div style="flex:0 0 auto;font-size:12px;line-height:normal;text-align:center;min-width:60px;padding:0 2px" class="cmd noRefresh" data-type="info" data-subtype="string" data-cmd_id="#conditionid#">
+  <div>#day#</div>
+    <!--
   <div title="#condition#">
-    <span style="display:#displayIcon#"><i class="#icone#" style="font-size: 1.5em;line-height:normal;"></i></span>
-    <span style="display:#displayImage#;background: url('#icone#') no-repeat center; background-size:100%;width:30px;height:30px;"></span>
+    <span style="display:#displayIcon#">
+      <i class="#icone#" style="padding-top:3px;font-size:1.8em;line-height:1;height:30px;vertical-align:middle;"></i>
+    </span>
+
+    <span style="display:#displayImage#;background:url('#icone#') no-repeat center;background-size:100%;width:40px;height:40px;margin:0 auto;">
+    </span>
   </div>
-    <div title="Temp. min / max" style="font-size:0.8em">#low_temperature#° / #high_temperature#°</div>
-    <div title="Indice UV" style="font-size:0.8em">#uvMax#</div>
-    <div title="Pluie" style="font-size:0.8em">#rain#</div>
-  </center>
+    -->
+  <div title="#condition#" style="display:flex;justify-content:center;align-items:center;">
+    <i class="wi wi-owm-day-800" style="display:#displayIcon#;font-size:1.8em;height:30px;"> </i>
+    <img src="#icone#" style="display:#displayImage#; width:40px;">
+  </div>
+
+  <div title="Temp. min / max" style="font-size:0.8em">
+    #low_temperature#°/#high_temperature#°C
+  </div>
+
+  <div title="Indice UV" style="font-size:0.8em">
+    #uvMax#
+  </div>
+
+  <div title="Pluie" style="font-size:0.8em">
+    #rain#
+  </div>
+
 </div>

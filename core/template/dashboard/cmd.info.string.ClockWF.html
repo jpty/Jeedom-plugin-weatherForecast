@@ -289,7 +289,7 @@ timeZones#id#.forEach(timeZone => {
       else {
         let lastHours = last#id#.substring(0,2);
         let lastMinutes = last#id#.substring(3,5);
-        let nowTime = now.toLocaleTimeString('fr-FR', {timeZone:timezone#id#});
+        let nowTime = now.toLocaleTimeString(undefined, {timeZone:timezone#id#});
         let nowHours = nowTime.substring(0,2);
         let nowMinutes = nowTime.substring(3,5);
         let nowSeconds = nowTime.substring(6,8);
@@ -379,7 +379,7 @@ timeZones#id#.forEach(timeZone => {
               if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
               let icon;
               if(obj.datasource == 'meteofrance')
-                icon = "url('plugins/meteofrance/data/icones/" +obj.weather.icon +".svg')";
+                icon = "url('plugins/weatherForecast/data/icones/" +obj.weather.icon +".svg')";
               else
                 icon = "url('plugins/weatherForecast/core/template/images/" +obj.weather.icon +".png')";
               cmd.querySelector('.wIcon#uid#').style.setProperty('background-image', icon);

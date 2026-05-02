@@ -65,19 +65,19 @@
 
             let cd = new Date(jsonData.begin_validity_time);
             let dateTime = '';
-            let dayTxt = cd.toLocaleDateString('fr-FR', {month: 'short', day: 'numeric',weekday: 'short'});
+            let dayTxt = cd.toLocaleDateString(undefined, {month: 'short', day: 'numeric',weekday: 'short'});
             let day = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1); // ucfirst
             if('#displayDate#' != '0') dateTime += day;
             let vigilanceIconTitle = day;
             let cdEnd = new Date(jsonData.end_validity_time);
             if('#displayTime#' != '0') {
               if(dateTime.length) dateTime += ' ';
-              dateTime += cd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
-              dateTime += ' - ' +cdEnd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
+              dateTime += cd.toLocaleTimeString(undefined, {hour: '2-digit'});
+              dateTime += ' - ' +cdEnd.toLocaleTimeString(undefined, {hour: '2-digit'});
             }
             else {
-              vigilanceIconTitle += ' ' +cd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
-              vigilanceIconTitle += ' - ' +cdEnd.toLocaleTimeString('fr-FR', {hour: '2-digit'});
+              vigilanceIconTitle += ' ' +cd.toLocaleTimeString(undefined, {hour: '2-digit'});
+              vigilanceIconTitle += ' - ' +cdEnd.toLocaleTimeString(undefined, {hour: '2-digit'});
             }
                 
             cmd.querySelector('.dateText').innerHTML = dateTime;
