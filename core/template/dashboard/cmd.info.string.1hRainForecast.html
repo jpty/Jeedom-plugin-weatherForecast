@@ -20,7 +20,7 @@
       if (!script) {
         script = document.createElement('script');
         script.id = 'wf-rain-js';
-        script.src = 'plugins/weatherForecast/core/template/js/wf-rain.js';
+        script.src = 'plugins/weatherForecast/core/template/js/wf-rain.js?v=1.0.0';
         script.defer = true;
 
         script.onload = () => {
@@ -60,40 +60,69 @@
   </template>
   <script>
     jeedom.cmd.addUpdateFunction('#id#',function(_options) {
-      try {
-        if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
-          cmd.querySelector('.errorMessage').innerHTML = ''; // clean previous error
+      if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
+        const error = cmd.querySelector('.errorMessage');
+        error.innerHTML = '';
 // console.log('Widget ' + _options.display_value);
-          const widget = cmd.querySelector('.WF-rain-widget');
-          widget.classList.remove('WF-variant-img', 'WF-variant-svg');
-          if('#useIconFiles#' != '1') { widget.classList.add('WF-variant-svg'); }
-          else { widget.classList.add('WF-variant-img'); }
-          if ('#'+'rainWidgetWidth#' != '#rainWidgetWidth#') widget.style.width = '#rainWidgetWidth#';
-          let jsonData;
+        const widget = cmd.querySelector('.WF-rain-widget');
+        widget.classList.remove('WF-variant-img', 'WF-variant-svg');
+        if('#useIconFiles#' != '1') { widget.classList.add('WF-variant-svg'); }
+        else { widget.classList.add('WF-variant-img'); }
+        if ('#'+'rainWidgetWidth#' != '#rainWidgetWidth#') widget.style.width = '#rainWidgetWidth#';
+
+        let forecast = [];
+        if('#testWidget#' === '1') { // Build forecast from current time for widget test
+          const now = new Date();
+          const step = 60 * 1000;
+          let currentTime = new Date(Math.floor(now.getTime() / step) * step);
+          const periods = [ { duration: 5, intensity: 1 }, { duration: 5, intensity: 2 },
+            { duration: 5, intensity: 3 }, { duration: 5, intensity: 4 }, { duration: 5, intensity: 1 },
+            { duration: 5, intensity: 2 }, { duration: 10, intensity: 3 },
+            { duration: 10, intensity: 3 }, { duration: 10, intensity: 4 }
+          ];
+          const intensityDescriptions = { 1: "Temps sec", 2: "Pluie fine",
+            3: "Pluie modérée", 4: "Pluie forte", 5: "Pluie diluvienne" };
+          periods.forEach(period => {
+            currentTime = new Date(currentTime.getTime() + period.duration * 60 * 1000);
+            forecast.push({
+              time: currentTime.toISOString(),
+              rain_intensity: period.intensity,
+              rain_intensity_description:
+                intensityDescriptions[period.intensity]
+            });
+          });
+        }
+        else {
+          let data;
           const rainData = _options.display_value;
       // console.log('Widget ' +rainData);
           try {
             const json = rainData.replaceAll('&quot;', '"').replaceAll('&#34;', '"');
-            jsonData = JSON.parse(json);
+            data = JSON.parse(json);
+            if (!Array.isArray(data?.forecast)) {
+              error.innerHTML = "No rain data";
+              return;
+            }
+            forecast = data.forecast;
           } catch (e) {
-            cmd.querySelector('.errorMessage').innerHTML = 'Invalid JSON for rain data ' +e.message;
+            error.innerHTML = 'Invalid JSON for rain data ' +e.message;
             return;
           }
-          if(jsonData != null && typeof(jsonData.forecast) != "undefined") {
-            loadWFRain(() => {
-              WFRain.render(widget, jsonData.forecast, {
-                useIconFiles: '#useIconFiles#' === '1',
-                withAnimatedDrops: '#withAnimatedDrops#' !== '0',
-                hideIfDry: '#hideWidgetIfRainNotForecasted#' === '1',
-                testWidget: '#testWidget#' === '1'
-              });
-            });
+
+          const hasRain = forecast.some(f => f.rain_intensity > 1);
+          if('#hideWidgetIfRainNotForecasted#' === '1' && !hasRain) {
+            cmd.style.display = 'none';
+            return;
           }
-          else cmd.querySelector('.errorMessage').innerHTML = "No rain data";
         }
-      }
-      catch(err) {
-        cmd.querySelector('.errorMessage').innerHTML = err.message;
+
+        cmd.style.display = '';
+        loadWFRain(() => {
+          WFRain.render(widget, forecast, {
+            useIconFiles: '#useIconFiles#' === '1',
+            withAnimatedDrops: '#withAnimatedDrops#' !== '0',
+          });
+        });
       }
     });
     jeedom.cmd.refreshValue([{cmd_id :'#id#',display_value: '#state#', valueDate: '#valueDate#', collectDate: '#collectDate#', alertLevel: '#alertLevel#', unit: '#unite#'}])
