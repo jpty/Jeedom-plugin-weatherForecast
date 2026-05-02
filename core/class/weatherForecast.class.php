@@ -2789,7 +2789,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     return 0;
   }
 
-    function getMeteoFranceToken($credential,$forceRenew=0) {
+  private static function getMeteoFranceToken($credential,$forceRenew=0) {
     $token = config::byKey("apiToken", __CLASS__, '');
     $tokenTS = config::byKey("apiTokenTS", __CLASS__, 0);
     if($token == '' || $tokenTS-30 < time() || $forceRenew) { // create / renew / force renew token
@@ -2824,7 +2824,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     return $token;
   }
 
-  public function downloadVigDataApi($file,$token,$json,$fileResu,&$dateMaj=null) {
+  public static function downloadVigDataApi($file,$token,$json,$fileResu,&$dateMaj=null) {
     $url = "https://public-api.meteofrance.fr/public/$file";
     log::add(__CLASS__, 'debug', "  " .__FUNCTION__ ." Fetching data $file Url API: $url");
     $header = array("Authorization: Bearer $token");
@@ -2867,7 +2867,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     return 1; // OK
   }
 
-    public function getVigilanceDataApiCloudMF() {
+    public static function getVigilanceDataApiCloudMF() {
     log::add(__CLASS__, 'debug', __FUNCTION__ ." http://storage.gra.cloud.ovh.net/v1/AUTH_555bdc85997f4552914346d4550c421e/gra-vigi6-archive_public");
     $credential = trim(config::byKey('credentialApiMeteoFrance', __CLASS__));
     $fileAlert = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
