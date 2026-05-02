@@ -2,7 +2,7 @@
   <div class="title #hide_name#">
     <div  class="cmdName">#name_display#</div>
   </div>
-  <link rel="stylesheet" type="text/css" href="plugins/meteofrance/desktop/weather-icons/css/weather-icons.css" />
+  <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.css" />
   <div class="dateText"></div>
   <div class="weatherIcon" style="margin-top: -5px;margin-bottom: -5px"></div>
   <div title="Température Min / Max" class="Tvalue"></div>
@@ -42,29 +42,28 @@
         let json = _options.display_value.replaceAll('&quot;','"');
         let obj = JSON.parse(json);
         if(obj != null) {
-          cmd.find('.weatherIcon').empty().append('<img src="plugins/meteofrance/data/icones/' +obj.weather12H.icon +'.svg"  style="width:50px">');
+          cmd.find('.weatherIcon').empty().append('<img src="plugins/weatherForecast/data/icones/' +obj.weather12H.icon +'.svg" style="width:50px">');
           let weatherIconTitle = obj.weather12H.desc;
           let timezone = obj.timezone;
 
           let cd = new Date(obj.dt12H * 1000);
           let dateTime = '';
-          // let dayTxt = cd.toLocaleDateString('fr-FR', {timeZone: timezone, month: 'short', day: 'numeric',weekday: 'short'});
-          let dayTxt = cd.toLocaleDateString('fr-FR', {timeZone: timezone, weekday: 'long'});
+          let dayTxt = cd.toLocaleDateString(undefined, {timeZone: timezone, weekday: 'long'});
           let day = dayTxt.charAt(0).toUpperCase() + dayTxt.slice(1); // ucfirst
           if('#displayDate#' != '0') dateTime += day;
           else weatherIconTitle += '<br/>' +day;
           if('#displayTime#' != '0') {
             if(dateTime.length) dateTime += '<br/>';
-            dateTime += cd.toLocaleTimeString('fr-FR', {timeZone: timezone, hour: '2-digit'});
+            dateTime += cd.toLocaleTimeString(undefined, {timeZone: timezone, hour: '2-digit'});
           }
-          else weatherIconTitle += '<br/>Heure: ' +cd.toLocaleTimeString('fr-FR', {timeZone: timezone, hour: '2-digit'});
+          else weatherIconTitle += '<br/>Heure: ' +cd.toLocaleTimeString(undefined, {timeZone: timezone, hour: '2-digit'});
           if('#displayDescription#' != '0') {
             if(dateTime.length) dateTime += '<br/>';
             dateTime += obj.weather12H.desc;
           }
           cmd.find('.dateText').empty().append(dateTime);
 
-          let temp = Math.round(obj.T.min) + ' / ' +Math.round(obj.T.max) +'°C';
+          let temp = Math.round(obj.T.min) + '°/' +Math.round(obj.T.max) +'°C';
           if('#displayTemperature#' != '0') cmd.find('.Tvalue').empty().append(temp);
           else weatherIconTitle += '<br/>Température: ' +temp;
 
