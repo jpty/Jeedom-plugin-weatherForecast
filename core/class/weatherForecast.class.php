@@ -874,11 +874,11 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $wfCmd->setEqLogic_id($this->getId());
         $wfCmd->setUnite('');
         $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
         $wfCmd->setOrder($ord++);
         $wfCmd->setDisplay('generic_type', "WEATHER_CONDITION_ID_$i");
       }
       $wfCmd->setConfiguration('type', 'days');
-      $wfCmd->setSubType('string');
       $wfCmd->save();
 
       $id = "rain_$i";
@@ -1318,6 +1318,17 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     }
     $refresh->setOrder(0);
     $refresh->save();
+  
+    // correction subType de condition_id_xx des commandes existantes
+    for($i = 0;$i < 7; $i++) {
+      $id = "condition_id_$i";
+      $wfCmd = $this->getCmd(null, $id);
+      if(is_object($wfCmd) && $wfCmd->getSubType() != 'string') {
+message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
+        $wfCmd->setSubType('string');
+        $wfCmd->save();
+      }
+    }
   }
 
   public function postSave() {
@@ -1453,71 +1464,111 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if(file_exists( __DIR__ ."/../template/$_version/custom.forecast.html"))
         $forcast_template = getTemplate('core', $version, 'custom.forecast', __CLASS__);
       else $forcast_template = getTemplate('core', $version, 'forecast', __CLASS__);
-      
-      $dateTime->setTimestamp(time());
-      $hour = $dateTime->format('G');
+
       $nbForecastDays = $this->getConfiguration('forecastDaysNumber', 5);
-      for ($i = 0; $i < $nbForecastDays; $i++) {
-        if($i == 0) {
-          $condition = $this->getCmd(null, "condition_$i");
-          if(is_object($condition)) {
-            $val = $condition->execCmd();
-            if($val == '') continue;
+      if($datasource == 'meteofrance') {
+        /*
+        $formatter = new IntlDateFormatter( config::byKey('language','core', 'fr_FR'),
+            IntlDateFormatter::NONE, IntlDateFormatter::NONE,
+            $timezone, IntlDateFormatter::GREGORIAN, "EEE d");
+              // $result = ucfirst($formatter->format($date));
+         */
+        $nowTS = time();
+        for ($i = 0; $i < $nbForecastDays; $i++) {
+          $cmd = $this->getCmd(null,"MeteoDay{$i}Json");
+          if(is_object($cmd)) {
+            $json = $cmd->execCmd();
+            $json = str_replace(array('&quot;','&#34;'), '"', $json);
+            $dec = json_decode($json,true);
+            if($dec !== null) {
+              if($dec['dt12H'] < $nowTS) continue;
+              $date = (new DateTime())->setTimestamp($dec['dt12H'])->setTimezone(new DateTimeZone($timezone));
+              $replaceDay['#day#'] = date_fr($date->format('D j'));
+
+              $replaceDay['#low_temperature#'] = $dec['T']['min'];
+              $replaceDay['#high_temperature#'] = $dec['T']['max'];
+              $replaceDay['#condition#'] = $dec['weather12H']['desc'];
+              $replaceDay['#icone#'] = self::getMFimg($dec['weather12H']['icon'] .".svg");
+              $val = $dec['uv'];
+              if($val != -1 && $val != null) $uvMax = "<i class=\"icon fas fa-glasses\"></i> $val";
+              else $uvMax = '';
+              $replaceDay['#uvMax#'] = $uvMax;
+              $val = $dec['precipitation']['24h'];
+              $rain = ($val>0)?$val .'mm':'';
+              $replaceDay['#rain#'] = $rain;
+
+              $replace['#forecast#'] .= template_replace($replaceDay, $forcast_template);
+            }
+            else message::add(__CLASS__, "MeteoDay $i Json decode pb");
           }
-          // if($hour == 23) continue; // Pas d'affichage si dernière heure du jour
+          else message::add(__CLASS__, "MeteoDay $i cmd not found");
         }
-        $titleCmd = $this->getCmd(null, "title_day$i");
-        $replaceDay['#day#'] = is_object($titleCmd) ? $titleCmd->execCmd() : '';
+      }
+      else {
+        $dateTime->setTimestamp(time());
+        $hour = $dateTime->format('G');
+        for ($i = 0; $i < $nbForecastDays; $i++) {
+          if($i == 0) {
+            $condition = $this->getCmd(null, "condition_$i");
+            if(is_object($condition)) {
+              $val = $condition->execCmd();
+              if($val == '') continue;
+            }
+            // if($hour == 23) continue; // Pas d'affichage si dernière heure du jour
+          }
+          $titleCmd = $this->getCmd(null, "title_day$i");
+          $replaceDay['#day#'] = is_object($titleCmd) ? $titleCmd->execCmd() : '';
 
-        $temperature_min = $this->getCmd(null, "temperature_min_$i");
-        $replaceDay['#low_temperature#'] = is_object($temperature_min) ? $temperature_min->execCmd() : '';
+          $temperature_min = $this->getCmd(null, "temperature_min_$i");
+          $replaceDay['#low_temperature#'] = is_object($temperature_min) ? $temperature_min->execCmd() : '';
 
-        $temperature_max = $this->getCmd(null, "temperature_max_$i");
-        $replaceDay['#high_temperature#'] = is_object($temperature_max) ? $temperature_max->execCmd() : '';
-        $replaceDay['#tempid#'] = is_object($temperature_max) ? $temperature_max->getId() : '';
-        $conditionID = $this->getCmd(null, "condition_id_$i");
-        if(is_object($conditionID)) {
-          if($datasource == 'meteofrance') {
-            $replaceDay['#icone#'] = self::getMFimg($conditionID->execCmd() .".svg");
+          $temperature_max = $this->getCmd(null, "temperature_max_$i");
+          $replaceDay['#high_temperature#'] = is_object($temperature_max) ? $temperature_max->execCmd() : '';
+          $replaceDay['#tempid#'] = is_object($temperature_max) ? $temperature_max->getId() : '';
+          $conditionID = $this->getCmd(null, "condition_id_$i");
+          if(is_object($conditionID)) {
+            if($datasource == 'meteofrance') {
+              $replaceDay['#icone#'] = self::getMFimg($conditionID->execCmd() .".svg");
+            }
+            else {
+              $dayNight = "day"; // day icon
+              if($i == 0) {
+                if($sunrise === false) $dayNight = "night";
+                else if($sunrise !== true) {
+                  $t = time();
+                  if($t < $sunrise || $t > $sunset) $dayNight = "night";
+                }
+              }
+              $ico = self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight,$templateIMG);
+              if($datasource == 'openweathermap' && $templateIMG == 0)
+                $replace['#icone#'] = $ico;
+              else
+                $replace['#icone#'] = "plugins/weatherForecast/core/template/images/{$ico}.png";
+            }
           }
           else {
-            $dayNight = "day"; // day icon
-            if($i == 0) {
-              if($sunrise === false) $dayNight = "night";
-              else if($sunrise !== true) {
-                $t = time();
-                if($t < $sunrise || $t > $sunset) $dayNight = "night";
-              }
-            }
-            $ico = self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight,$templateIMG);
-            if($datasource == 'openweathermap' && $templateIMG == 0)
-              $replace['#icone#'] = $ico;
-            else
-              $replace['#icone#'] = "plugins/weatherForecast/core/template/images/{$ico}.png";
+            $replaceDay['#icone#'] = '';
           }
-        }
-        else {
-          $replaceDay['#icone#'] = '';
-        }
-        $condition = $this->getCmd(null, "condition_$i");
-        $replaceDay['#condition#'] = is_object($condition) ? $condition->execCmd() : '';
-        $rainCmd = $this->getCmd(null, "rain_$i");
-        if(is_object($rainCmd)) {
-          $val = $rainCmd->execCmd();
-          $rain = ($val>0)?$val .'mm':'';
-        }
-        else $rain = '';
-        $replaceDay['#rain#'] = $rain;
-        $uvMaxCmd = $this->getCmd(null, "uvMax_$i");
-        if(is_object($uvMaxCmd)) {
-          $val = $uvMaxCmd->execCmd();
-          if($val != -1) $uvMax = "<i class=\"icon fas fa-glasses\"></i> $val";
+          $condition = $this->getCmd(null, "condition_$i");
+          $replaceDay['#condition#'] = is_object($condition) ? $condition->execCmd() : '';
+          $rainCmd = $this->getCmd(null, "rain_$i");
+          if(is_object($rainCmd)) {
+            $val = $rainCmd->execCmd();
+            $rain = ($val>0)?$val .'mm':'';
+          }
+          else $rain = '';
+          $replaceDay['#rain#'] = $rain;
+          $uvMaxCmd = $this->getCmd(null, "uvMax_$i");
+          if(is_object($uvMaxCmd)) {
+            $val = $uvMaxCmd->execCmd();
+            if($val != -1) $uvMax = "<i class=\"icon fas fa-glasses\"></i> $val";
+            else $uvMax = '';
+          }
           else $uvMax = '';
-        }
-        else $uvMax = '';
-        $replaceDay['#uvMax#'] = $uvMax;
+          $replaceDay['#uvMax#'] = $uvMax;
 
-        $replace['#forecast#'] .= template_replace($replaceDay, $forcast_template);
+          $replace['#forecast#'] .= template_replace($replaceDay, $forcast_template);
+        }
       }
     }
     $temperature = $this->getCmd(null, 'temperature');
@@ -2009,7 +2060,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           break;
         }
         else if($weather['dt_txt'] == $midday) { // condition à 12h uniquement
-          $middayDate = $dateRech->format('D. j');
+          $middayDate = $dateRech->format('D j');
           $title = date_fr($middayDate);
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
@@ -2373,7 +2424,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             // log::add(__CLASS__, 'debug', "    Filling: $j forecast:" .date('d-m-Y H:i:s', $value['dt']) ." Moment: " .$value['moment_day']);
             $img = self::getMFimg($value['weather']['icon'] .'.svg'); // download svg for usage
             $value['timezone'] = $timezone;
-            $contents = str_replace('"','&quot;',json_encode($value,JSON_UNESCAPED_UNICODE));
+            $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
             $this->checkAndUpdateCmd("MeteoInstant{$j}Json", $contents);
             if(strlen($contents) > 3000)
               message::add(__CLASS__, "Cmd MeteoInstant{$j}Json Lg:". strlen($contents));
@@ -2430,6 +2481,24 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     }
   }
 
+  public static function getNextLocalNoon(int $timestamp, string $timezone): int {
+    $tz = new DateTimeZone($timezone);
+
+    // Convertir le timestamp en date locale
+    $date = new DateTime("@$timestamp");
+    $date->setTimezone($tz);
+
+    // Construire midi du jour courant
+    $noon = new DateTime($date->format('Y-m-d') . ' 12:00:00', $tz);
+
+    // Si on est déjà passé après midi → prendre demain
+    if ($date >= $noon) {
+        $noon->modify('+1 day');
+    }
+
+    return $noon->getTimestamp();
+  }
+
   public function updateWeatherMF($_updateConfig, $lat, $lon, $lang, &$H0array) {
     $changed = false;
     if($_updateConfig == 1) { // memo dans la config de l'équipement
@@ -2458,6 +2527,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     log::add(__CLASS__, 'debug', __FUNCTION__ ." $ville $lat/$lon");
     $url = "https://webservice.meteofrance.com/forecast?lat=$lat&lon=$lon&id=&instants=&day=7";
     $return = self::callMeteoWS($url,false,true,__FUNCTION__ ."-".$this->getId() ."-$ville.json");
+    $this->checkAndUpdateCmd("uv_Hcur", -1) || $changed; // not available with MF
     if(is_array($return) && isset($return['forecast'])) {
       $timezone = $return['position']['timezone'];
       $nb = count($return['forecast']);
@@ -2532,7 +2602,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             }
             $value["saintOfTheDay"] = $saintOfTheDay;
           }
-          $contents = str_replace('"','&quot;',json_encode($value,JSON_UNESCAPED_UNICODE));
+          $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
           $this->checkAndUpdateCmd("MeteoHour{$j}Json", $contents);
           if(strlen($contents) > 3000)
             message::add(__CLASS__, "Cmd MeteoHour{$j}Json Lg:". strlen($contents));
@@ -2568,7 +2638,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             // $value['dt'] = $forecastTS;
             $img = self::getMFimg($value['weather']['icon'] .'.svg'); // download svg for usage
             $value['timezone'] = $timezone;
-            $contents = str_replace('"','&quot;',json_encode($value,JSON_UNESCAPED_UNICODE));
+            $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
             $this->checkAndUpdateCmd("MeteoInstant{$j}Json", $contents);
             if(strlen($contents) > 3000)
               message::add(__CLASS__, "Cmd MeteoInstant{$j}Json Lg:". strlen($contents));
@@ -2588,7 +2658,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
 
         // Update the daily_forecast commands
       $nbD = count($return['daily_forecast']);
-      log::add(__CLASS__, 'debug', "  NbDaily_forecast: $nbD");
+      log::add(__CLASS__, 'debug', "  NbDaily_forecast: $nbD Timezone: $timezone Ville: $ville");
       for($i=0;$i<$nbD;$i++) {
         $value= $return['daily_forecast'][$i];
         $forecastTS = $value['dt'];
@@ -2601,9 +2671,12 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         date_default_timezone_set($defTz);
         $value['dt12H'] = strtotime("$forecastDate 12:00:00 $timezone");
          */
-        $value['dt12H'] = strtotime(date('Y-m-d',$forecastTS) ." 12:00:00 $timezone");
+        // $value['dt12H'] = strtotime(date('Y-m-d',$forecastTS) ." 12:00:00 AM $timezone");
+        $value['dt12H'] = self::getNextLocalNoon($forecastTS, $timezone);
         // log::add(__CLASS__, 'error', "$timezone   $i dt12H:" .date('d-m-Y H:i:s', $value['dt12H']));
         // log::add(__CLASS__, 'debug', "    $i daily_forecast:" .date('d-m-Y H:i:s', $forecastTS));
+        $defTz = date_default_timezone_get();
+        date_default_timezone_set($timezone);
         if($i < 7) {
           $title = date_fr(date('D. j', $value['dt12H']));
           $this->checkAndUpdateCmd("title_day$i", $title);
@@ -2612,16 +2685,18 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           if(!isset($value['weather12H']['desc'])) {
             $this->checkAndUpdateCmd("condition_{$i}", '?');
             $this->checkAndUpdateCmd("condition_id_{$i}", '0');
-            // message::add(__CLASS__, "weather12H not set for $ville. ID: " .$this->getId());
+// message::add(__CLASS__, "I=$i weather12H desc not set for $ville. ID: " .$this->getId());
           }
           else {
             $this->checkAndUpdateCmd("condition_{$i}", $value['weather12H']['desc']);
             $this->checkAndUpdateCmd("condition_id_{$i}", $value['weather12H']['icon']);
+// message::add(__CLASS__, "I=$i weather12H Desc: {$value['weather12H']['desc']} Icon: {$value['weather12H']['icon']} " .$this->getId());
             $img = self::getMFimg($value['weather12H']['icon'] .'.svg'); // download svg for usage
           }
           $this->checkAndUpdateCmd("temperature_min_{$i}", $value['T']['min']);
           $this->checkAndUpdateCmd("temperature_max_{$i}", $value['T']['max']);
         }
+        date_default_timezone_set($defTz);
         /* JSON structure
           { "dt":1686096000,
             "T":{"min":12.1,"max":26.1,"sea":null},
@@ -2635,7 +2710,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           }
          */
         $value['timezone'] = $timezone;
-        $contents = str_replace('"','&quot;',json_encode($value,JSON_UNESCAPED_UNICODE));
+        $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
         $this->checkAndUpdateCmd("MeteoDay{$i}Json", $contents);
         if(strlen($contents) > 3000)
           message::add(__CLASS__, "Cmd MeteoDay{$i}Json Lg:". strlen($contents));
