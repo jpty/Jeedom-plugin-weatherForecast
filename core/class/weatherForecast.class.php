@@ -1324,7 +1324,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $id = "condition_id_$i";
       $wfCmd = $this->getCmd(null, $id);
       if(is_object($wfCmd) && $wfCmd->getSubType() != 'string') {
-message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
+// message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
         $wfCmd->setSubType('string');
         $wfCmd->save();
       }
