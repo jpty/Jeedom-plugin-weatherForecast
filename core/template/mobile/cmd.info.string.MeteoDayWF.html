@@ -39,7 +39,7 @@
       let cmd = $('.cmd[data-cmd_id=#id#]');
       cmd.find('.errorMessage').empty(); // clean previous error
       try {
-        let json = _options.display_value.replaceAll('&quot;','"');
+        let json = _options.display_value.replaceAll('&quot;','"').replaceAll('&#34;','"');
         let obj = JSON.parse(json);
         if(obj != null) {
           cmd.find('.weatherIcon').empty().append('<img src="plugins/weatherForecast/data/icones/' +obj.weather12H.icon +'.svg" style="width:50px">');
