@@ -23,6 +23,9 @@ function weatherForecast_install() {
 
 // Fonction exécutée automatiquement après la mise à jour du plugin
 function weatherForecast_update() {
+  $plugin = plugin::byId('weatherForecast');
+  $plugin->dependancy_install();
+
   foreach (eqLogic::byType('weatherForecast') as $eqLogic) {
     $eqLogic->save();
   }

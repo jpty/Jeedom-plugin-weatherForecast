@@ -12,6 +12,8 @@
   "author": "jpty",
   "require": "3.3",
   "category": "weather",
+  "hasDependency": true,
+  "hasOwnDeamon": false,
   "changelog": "https://jpty.github.io/jeedom/plugins/weatherForecast/fr_FR/changelog.html",
   "changelog_beta": "https://jpty.github.io/jeedom/plugins/weatherForecast/fr_FR/changelog.html",
   "documentation": "https://jpty.github.io/jeedom/plugins/weatherForecast/",
