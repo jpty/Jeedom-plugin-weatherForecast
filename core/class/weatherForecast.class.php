@@ -1481,14 +1481,14 @@ message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
             $json = str_replace(array('&quot;','&#34;'), '"', $json);
             $dec = json_decode($json,true);
             if($dec !== null) {
-              if($dec['dt12H'] < $nowTS) continue;
+              // if($dec['dt12H'] < $nowTS) continue;
               $date = (new DateTime())->setTimestamp($dec['dt12H'])->setTimezone(new DateTimeZone($timezone));
-              $replaceDay['#day#'] = date_fr($date->format('D j'));
+              $replaceDay['#day#'] = date_fr($date->format('D j H'));
 
               $replaceDay['#low_temperature#'] = $dec['T']['min'];
               $replaceDay['#high_temperature#'] = $dec['T']['max'];
-              $replaceDay['#condition#'] = $dec['weather12H']['desc'];
-              $replaceDay['#icone#'] = self::getMFimg($dec['weather12H']['icon'] .".svg");
+              $replaceDay['#condition#'] = isset($dec['weather12H']['desc']) ? $dec['weather12H']['desc'] : '?';
+              $replaceDay['#icone#'] = self::getMFimg(isset($dec['weather12H']['icon']) ? $dec['weather12H']['icon'] .".svg" : "0.svg");
               $val = $dec['uv'];
               if($val != -1 && $val != null) $uvMax = "<i class=\"icon fas fa-glasses\"></i> $val";
               else $uvMax = '';
@@ -1499,9 +1499,9 @@ message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
 
               $replace['#forecast#'] .= template_replace($replaceDay, $forcast_template);
             }
-            else message::add(__CLASS__, "MeteoDay $i Json decode pb");
+            // else message::add(__CLASS__, "MeteoDay $i Json decode pb");
           }
-          else message::add(__CLASS__, "MeteoDay $i cmd not found");
+          // else message::add(__CLASS__, "MeteoDay $i cmd not found");
         }
       }
       else {
@@ -2481,21 +2481,21 @@ message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
     }
   }
 
-  public static function getNextLocalNoon(int $timestamp, string $timezone): int {
-    $tz = new DateTimeZone($timezone);
+  public static function getLocalDateFmt(int $ts, string $tz, string $fmt): string {
+    $d = new DateTime("@$ts");
+    $d->setTimezone(new DateTimeZone($tz));
+    return $d->format($fmt);
+  }
 
-    // Convertir le timestamp en date locale
-    $date = new DateTime("@$timestamp");
-    $date->setTimezone($tz);
+  public static function getForecastLocalDate(int $ts, string $tz): string {
+    $d = new DateTime("@$ts");
+    $d->setTimezone(new DateTimeZone($tz));
+    return $d->format('Y-m-d');
+  }
 
-    // Construire midi du jour courant
-    $noon = new DateTime($date->format('Y-m-d') . ' 12:00:00', $tz);
-
-    // Si on est déjà passé après midi → prendre demain
-    if ($date >= $noon) {
-        $noon->modify('+1 day');
-    }
-
+  public static function getForecastNoon(int $ts, string $tz): int {
+    $date = self::getForecastLocalDate($ts, $tz);
+    $noon = new DateTime($date . ' 12:00:00', new DateTimeZone($tz));
     return $noon->getTimestamp();
   }
 
@@ -2660,25 +2660,14 @@ message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
       $nbD = count($return['daily_forecast']);
       log::add(__CLASS__, 'debug', "  NbDaily_forecast: $nbD Timezone: $timezone Ville: $ville");
       for($i=0;$i<$nbD;$i++) {
-        $value= $return['daily_forecast'][$i];
+        $value = $return['daily_forecast'][$i];
         $forecastTS = $value['dt'];
-        // $value['dt12H'] = mktime(12,0,0,date('m',$forecastTS),date('d',$forecastTS),date('Y',$forecastTS));
-        // TODO calculer correctement dt12H suivant le timezone
-        /*
-        $defTz = date_default_timezone_get();
-        date_default_timezone_set($timezone);
-        $forecastDate = date('Y-m-d',$forecastTS);
-        date_default_timezone_set($defTz);
-        $value['dt12H'] = strtotime("$forecastDate 12:00:00 $timezone");
-         */
-        // $value['dt12H'] = strtotime(date('Y-m-d',$forecastTS) ." 12:00:00 AM $timezone");
-        $value['dt12H'] = self::getNextLocalNoon($forecastTS, $timezone);
+        // $value['dt12H'] = self::getNextLocalNoon($forecastTS, $timezone);
+        $value['dt12H'] = self::getForecastNoon($forecastTS, $timezone);
         // log::add(__CLASS__, 'error', "$timezone   $i dt12H:" .date('d-m-Y H:i:s', $value['dt12H']));
         // log::add(__CLASS__, 'debug', "    $i daily_forecast:" .date('d-m-Y H:i:s', $forecastTS));
-        $defTz = date_default_timezone_get();
-        date_default_timezone_set($timezone);
         if($i < 7) {
-          $title = date_fr(date('D. j', $value['dt12H']));
+          $title = date_fr(self::getLocalDateFmt($value['dt12H'], $timezone, 'D. j'));
           $this->checkAndUpdateCmd("title_day$i", $title);
           $this->checkAndUpdateCmd("rain_{$i}", $value['precipitation']['24h']);
           $this->checkAndUpdateCmd("uvMax_{$i}", $value['uv']);
@@ -2696,7 +2685,6 @@ message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
           $this->checkAndUpdateCmd("temperature_min_{$i}", $value['T']['min']);
           $this->checkAndUpdateCmd("temperature_max_{$i}", $value['T']['max']);
         }
-        date_default_timezone_set($defTz);
         /* JSON structure
           { "dt":1686096000,
             "T":{"min":12.1,"max":26.1,"sea":null},
