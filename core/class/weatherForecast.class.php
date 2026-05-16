@@ -3150,10 +3150,11 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         if($i > 100) break; // Valeurs de Météoalarm 
         $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0) || $changed;
         $changed = $this->checkAndUpdateCmd("Vigilancephases$i",'') || $changed;
-        $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', 0) || $changed;
-        $changed = $this->checkAndUpdateCmd('Vigilancelist', '') || $changed;
-        $changed = $this->checkAndUpdateCmd("VigilanceJson", '[]') || $changed;
       }
+      $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', 0) || $changed;
+      $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', 0) || $changed;
+      $changed = $this->checkAndUpdateCmd('Vigilancelist', '') || $changed;
+      $changed = $this->checkAndUpdateCmd("VigilanceJson", '[]') || $changed;
       return $changed;
     }
     log::add(__CLASS__, 'debug', __FUNCTION__ .". Département: $numDept");
