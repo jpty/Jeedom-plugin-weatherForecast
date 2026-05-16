@@ -117,30 +117,35 @@
   </div>
   #divGraphInfo#
   <script>
-    $('.eqLogic[data-eqLogic_uid=#uid#] .cmd').on('click', function() {
-      jeedom.cmd.execute({id: $(this).data('cmd_id')});
-    });
+    (function() {
+      const cmd = document.querySelector('.eqLogic[data-eqLogic_uid="#uid#"] .cmd');
+      if (!cmd) return;
+      cmd.addEventListener('click', function() {
+        jeedom.cmd.execute({id: this.getAttribute('data-cmd_id')});
+      });
+    })();
+
     (function() {
       const widget = document.querySelector('.WF-rain-widget[data-uid="#uid#"]');
       if (!widget) return;
-        const errorMessage = widget.querySelector('.errorMessage');
+      const errorMessage = widget.querySelector('.errorMessage');
       try {
         widget.classList.remove('WF-variant-img', 'WF-variant-svg');
-        if('#useIconFiles#' != '1') { widget.classList.add('WF-variant-svg'); }
-        else { widget.classList.add('WF-variant-img'); }
-            if ('#'+'widgetWidth#' != '#widgetWidth#') widget.style.width = '#widgetWidth#';
-            let jsonData;
+        widget.classList.add('#useIconFiles#' != '1' ? 'WF-variant-svg' : 'WF-variant-img');
+        if ('#'+'widgetWidth#' != '#widgetWidth#') widget.style.width = '#widgetWidth#';
         const rainData = '#1hRainForecast#';
-        console.log('Template ' +rainData);
+        // console.log('Template ' + rainData);
+        let jsonData;
         try {
           const json = rainData.replaceAll('&quot;', '"').replaceAll('&#34;', '"');
           if (!json.length) return;
           jsonData = JSON.parse(json);
         } catch (e) {
-          errorMessage.innerHTML = 'Invalid JSON for rain data ' +e.message;
+          errorMessage.innerHTML = 'Invalid JSON for rain data ' + e.message;
           return;
         }
-        if(jsonData != null && typeof(jsonData.forecast) != "undefined") {
+
+        if (jsonData != null && typeof(jsonData.forecast) != "undefined") {
           loadWFRain(() => {
             WFRain.render(widget, jsonData.forecast, {
               useIconFiles: '#useIconFiles#' === '1',
@@ -150,13 +155,11 @@
             });
           });
         }
-      }
-      catch(err) {
+      } catch(err) {
         errorMessage.innerHTML = err.message;
-        console.log("Erreur JS " +err.message);
-        return;
+        console.log("Erreur JS " + err.message);
       }
-
-    })();
+  })();
+    
 </script>
 </div>

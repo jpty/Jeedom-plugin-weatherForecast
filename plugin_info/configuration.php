@@ -55,6 +55,7 @@ if (!isConnect('admin')) {
       </label>
     </div>
 <!--
+-->
     <div class="form-group">
 			<label class="col-md-3 control-label">{{Utilisation de l'API Météo des forêts}}</label>
 			<div class="col-sm-1" style="width:2%">
@@ -63,7 +64,6 @@ if (!isConnect('admin')) {
       <label class="col-md-6 control-label" style="text-align: left;line-height:normal">{{Vous devez vous abonnez à l'API <a href="https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesMeteoForets">DonneesPubliquesMeteoForets</a> de Météo France.</a>.}}
       </label>
 		</div>
--->
 <!--
     <div class="form-group">
       <label class="col-md-3 control-label">{{Commentaires}}

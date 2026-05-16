@@ -89,6 +89,7 @@ class weatherForecast extends eqLogic {
         $stat = @stat($fileAlert);
         if($minute == $minuteVigilance || file_exists($fileAlert) === false
            || ($stat && (time() - $stat['mtime']) > 86000)) {
+          self::getVigilanceMeteoForestMF();
           self::getVigilanceDataApiCloudMF();
           $recupVigMF = 0;
         }
@@ -131,7 +132,7 @@ class weatherForecast extends eqLogic {
   }
 
   public static function extractValueFromJsonTxt($cmdValue, $request) {
-    $txtJson = str_replace(array('&quot;','&#34;'),'"',$cmdValue);
+    $txtJson = str_replace('&#34;', '"', $cmdValue);
     $json =json_decode($txtJson,true);
     if($json !== null) {
       $tags = explode('>', $request);
@@ -410,7 +411,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
         if(is_object($cmd)) {
           $json = $cmd->execCmd();
-          $json = str_replace(array('&quot;','&#34;'), '"', $json);
+          $json = str_replace('&#34;', '"', $json);
           $alerts = json_decode($json,true);
           $alerts['status'] = "NOK $nbErr errors fetching data for $country / $province";
         }
@@ -874,11 +875,11 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $wfCmd->setEqLogic_id($this->getId());
         $wfCmd->setUnite('');
         $wfCmd->setType('info');
+        $wfCmd->setSubType('string');
         $wfCmd->setOrder($ord++);
         $wfCmd->setDisplay('generic_type', "WEATHER_CONDITION_ID_$i");
       }
       $wfCmd->setConfiguration('type', 'days');
-      $wfCmd->setSubType('string');
       $wfCmd->save();
 
       $id = "rain_$i";
@@ -1133,36 +1134,53 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
 
       foreach(self::$_vigilanceType as $i => $vig) {
         if($i > 100) break; // Valeurs de meteoalarm
-        if($i == 10) continue; // Pas de météo des forêts pour le moment.
-        $id = "Vigilancephenomenon_max_color_id$i";
-        $wfCmd = $this->getCmd(null, $id);
-        if(!is_object($wfCmd)) {
-          $wfCmd = new weatherForecastCmd();
-          $wfCmd->setIsVisible(0);
-          $wfCmd->setName(__("Vigilance - " .$vig['txt'] ." niveau", __FILE__));
-          $wfCmd->setLogicalId($id);
-          $wfCmd->setEqLogic_id($this->getId());
-          $wfCmd->setType('info');
-          $wfCmd->setSubType('numeric');
-          $wfCmd->setOrder($ord++);
+        if($i == 10) { // météo des forêts
+          $id = "Vigilance_color_forest";
+          $wfCmd = $this->getCmd(null, $id);
+          if(!is_object($wfCmd)) {
+            $wfCmd = new weatherForecastCmd();
+            $wfCmd->setIsVisible(0);
+            $wfCmd->setName(__("Vigilance - " .$vig['txt'], __FILE__));
+            $wfCmd->setLogicalId($id);
+            $wfCmd->setEqLogic_id($this->getId());
+            $wfCmd->setType('info');
+            $wfCmd->setSubType('numeric');
+            $wfCmd->setOrder($ord++);
+          }
+          $wfCmd->setConfiguration('type', 'vigilance');
+          $wfCmd->save();
         }
-        $wfCmd->setConfiguration('type', 'vigilance');
-        $wfCmd->save();
+        else {
+          $id = "Vigilancephenomenon_max_color_id$i";
+          $wfCmd = $this->getCmd(null, $id);
+          if(!is_object($wfCmd)) {
+            $wfCmd = new weatherForecastCmd();
+            $wfCmd->setIsVisible(0);
+            $wfCmd->setName(__("Vigilance - " .$vig['txt'] ." niveau", __FILE__));
+            $wfCmd->setLogicalId($id);
+            $wfCmd->setEqLogic_id($this->getId());
+            $wfCmd->setType('info');
+            $wfCmd->setSubType('numeric');
+            $wfCmd->setOrder($ord++);
+          }
+          $wfCmd->setConfiguration('type', 'vigilance');
+          $wfCmd->save();
 
-        $id = "Vigilancephases$i";
-        $wfCmd = $this->getCmd(null, $id);
-        if(!is_object($wfCmd)) {
-          $wfCmd = new weatherForecastCmd();
-          $wfCmd->setIsVisible(0);
-          $wfCmd->setName(__("Vigilance - " .$vig['txt'] ." conditions", __FILE__));
-          $wfCmd->setLogicalId($id);
-          $wfCmd->setEqLogic_id($this->getId());
-          $wfCmd->setType('info');
-          $wfCmd->setSubType('string');
-          $wfCmd->setOrder($ord++);
+          $id = "Vigilancephases$i";
+          $wfCmd = $this->getCmd(null, $id);
+          if(!is_object($wfCmd)) {
+            $wfCmd = new weatherForecastCmd();
+            $wfCmd->setIsVisible(0);
+            $wfCmd->setName(__("Vigilance - " .$vig['txt'] ." conditions", __FILE__));
+            $wfCmd->setLogicalId($id);
+            $wfCmd->setEqLogic_id($this->getId());
+            $wfCmd->setType('info');
+            $wfCmd->setSubType('string');
+            $wfCmd->setOrder($ord++);
+          }
+          $wfCmd->setConfiguration('type', 'vigilance');
+          $wfCmd->save();
         }
-        $wfCmd->setConfiguration('type', 'vigilance');
-        $wfCmd->save();
       }
     }
 
@@ -1318,6 +1336,17 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     }
     $refresh->setOrder(0);
     $refresh->save();
+  
+    // correction subType de condition_id_xx des commandes existantes
+    for($i = 0;$i < 7; $i++) {
+      $id = "condition_id_$i";
+      $wfCmd = $this->getCmd(null, $id);
+      if(is_object($wfCmd) && $wfCmd->getSubType() != 'string') {
+// message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
+        $wfCmd->setSubType('string');
+        $wfCmd->save();
+      }
+    }
   }
 
   public function postSave() {
@@ -1361,6 +1390,172 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     $ret = $sector[$idx];
     if($deg) $ret .= " $degrees" ."°";
     return($ret);
+  }
+
+  private function carteVigFrance($ts, $img, $demain) {
+    return '<td rowspan="2" class="tableCmdcss" style="width:10%;text-align:center" title="Vigilance: ' .date_fr(date('l  d  F',$ts)) .'"><a href="https://vigilance.meteofrance.fr/fr' .$demain .'" style="display:inline-block;width:60px;height:60px" target="_blank"><img style="width:76px;margin:-8px;display:box" src="plugins/weatherForecast/data/' .$img .'"/></a></td>';
+  }
+
+  public function toHtmlVigilanceMF($_version, $numDept) {
+    $vigilanceMF = '';
+    $maxColorCmd = $this->getCmd(null,'Vigilancecolor_max');
+    if(is_object($maxColorCmd)) {
+      $maxColor = $maxColorCmd->execCmd();
+      if($maxColor > 0) {
+        $prevVigRecup = trim(config::byKey('prevVigilanceRecovery', __CLASS__));
+        if(date('Ymd') != substr($prevVigRecup,0,8)) {
+          $img = 'VIGNETTE_NATIONAL_J1_500X500.png';
+          $localFile = __DIR__ ."/../../data/$img";
+          $ts1 = @filemtime($localFile);
+          $img .= "?ts=" .@filemtime($localFile);
+          $ts1 += 86400;
+          $img2 = '';
+        }
+        else  {
+          $img = 'VIGNETTE_NATIONAL_J_500X500.png';
+          $localFile = __DIR__ ."/../../data/$img";
+          $ts1 = @filemtime($localFile);
+          $img .= "?ts=" .$ts1;
+          $img2 = 'VIGNETTE_NATIONAL_J1_500X500.png';
+          $localFile = __DIR__ ."/../../data/$img2";
+          $ts2 = @filemtime($localFile);
+          $img2 .= "?ts=" .$ts2;
+          $ts2 += 86400;
+        }
+        $vigilanceMF = '<table border=0 style="border-spacing: 0px; width: 100%;"><tr style="background-color:transparent !important;">' .$this->carteVigFrance($ts1, $img, '');
+        $nbVig = 0;
+        foreach(self::$_vigilanceType as $i => $vig) {
+          if($i >= 100) break; // Valeurs de Météoalarm 
+          if ($i >= 1 && $i <= 10) { // 10 = Météo des forêts
+            if($i == 10) $cmd = $this->getCmd(null, "Vigilance_color_forest");
+            else $cmd = $this->getCmd(null, "Vigilancephenomenon_max_color_id$i");
+            if(is_object($cmd))  {
+              $col = (int)$cmd->execCmd();
+              if($col > 0) {
+                $nbVig++;
+                if($i == 10) $desc = ': ' .self::$_vigilanceColors[$col]['desc'];
+                else {
+                  $desc = '';
+                  $phase = $this->getCmd(null, "Vigilancephases$i");
+                  if(is_object($phase))  {
+                    $txt = htmlspecialchars($phase->execCmd(), ENT_QUOTES, 'UTF-8');
+                    foreach(self::$_vigilanceColors as $color) {
+                      $txt = str_replace($color['desc'] .":", "<i class='fa fa-circle' style='color:" .$color['color'] ."'></i>", $txt);
+                    }
+                    $txt = str_replace('.', "<br>", $txt);
+                    if($txt != '') {
+                      $desc = ": &nbsp;$txt";
+                    }
+                  }
+                }
+                $file = __DIR__ ."/../template/images/Vigilance{$i}.svg";
+                $vigilanceMF .= '<td class="tableCmdcss" style="width:10%;height:40px;text-align: center" title="' .$vig['txt'] .$desc .'">';
+                if(file_exists($file) === false) {
+                  $vigilanceMF .= '<i class="wi ' .$vig['icon'] .'" style="font-size:24px;color: '.self::$_vigilanceColors[$col]['color'] .'"></i>';
+                }
+                else {
+                  $svg = @file_get_contents($file);
+                  $svg = str_replace('#888888', self::$_vigilanceColors[$col]['color'], $svg);
+                  $vigilanceMF .= $svg;
+                }
+                $vigilanceMF .= '</td>';
+              }
+            }
+          }
+        }
+            // Carte demain
+        if($img2 != '' && $_version != 'mobile')
+          $vigilanceMF .= $this->carteVigFrance($ts2, $img2, '/demain');
+        $vigilanceMF .= '</tr><tr style="background-color:transparent !important;"><td colspan="' .$nbVig .'" style="font-size:10px !important;line-height:.8;font-style:italic;text-align:center">Vigilances du département ' .$numDept .'</td></tr></table>';
+      }
+      else {
+        $vigilanceMF = '<table border=0 style="border-spacing:0px;width:100%;"><tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align:left;font-size:12px;" title="Vigilances">Pas de données de vigilance pour le département: ' .$numDept .'</td></tr></table>';
+      }
+    }
+    return $vigilanceMF;
+  }
+
+  public function toHtmlVigilanceMeteoalarm($country, $timezone) {
+    $vigilanceMeteoalarm =  '';
+    $province = trim($this->getConfiguration('meteoAlarmArea',''));
+    $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
+    if(is_object($cmd)) {
+      $json = $cmd->execCmd();
+      $json = str_replace('&#34;', '"', $json);
+      $dec = json_decode($json,true);
+      $collectDate = $cmd->getCollectDate();
+      if($country != '' ) {
+        if($province == '') {
+          $vigilanceMeteoalarm =  "<span title=\"Collecte Jeedom: $collectDate\" style=\"font-size:10px;line-height:10px !important\"><i style=\"font-size:14px;color:#CC0000;\" class=\"icon fas fa-exclamation-triangle\"></i> Province non définie. ";
+          if(trim($this->getConfiguration('otherCountryAlerts', '')) == '')
+            $vigilanceMeteoalarm .= "Pas d'alerte actuellement pour $country";
+          else 
+            $vigilanceMeteoalarm .= "Des alertes existent pour $country";
+          $vigilanceMeteoalarm .= "</span>";
+        }
+        else {
+          if($dec === null) {
+            $vigilanceMeteoalarm = 'Unable to decode Json cmd';
+          } else {
+            $txtAlarm = '';
+            if(isset($dec['capArea'])) {
+              $nbArea = count($dec['capArea']);
+              foreach($dec['capArea'] as $capArea) {
+                if($txtAlarm != '') $txtAlarm .= '<td style="border-right:1px #3C73A5 solid"></td>';
+                $nbInfo = count($capArea['info']);
+                if($nbInfo) {
+                  for($j=101;$j<116;$j++) {
+                    if($j == 111) continue;
+                    $idx = $j - 100;
+                    $imgFile = __DIR__ ."/../template/images/AlertCAP$idx.svg";
+                    for($i=0;$i<$nbInfo;$i++) {
+                      if($idx == $capArea['info'][$i]['type']) {
+                        $level = $capArea['info'][$i]['level'];
+                        $desc = '';
+                        if(isset($capArea['info'][$i]['event'])) $desc .= $capArea['info'][$i]['event'];
+                        if(isset($capArea['info'][$i]['description'])) {
+                          $desc .= (($desc == '')? '' : '<br>') .$capArea['info'][$i]['description'];
+                        }
+                        $title = $country .' / ' .$capArea['name'] ."<br>" .self::$_vigilanceType[$j]['txt'];
+                        if(time() < $capArea['info'][$i]['onset'])
+                          $title .= ' de ' .self::dateTimezone('d-m-Y H:i',$capArea['info'][$i]['onset'],$timezone) .' à ' .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
+                        else
+                          $title .= " jusqu'à " .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
+                        $title .= '<br>' .$desc;
+                        $svg = @file_get_contents($imgFile);
+                        if($svg === false) {
+                          log::add(__CLASS__, 'warning', "$imgFile not found");
+                          $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['maColor'] .';color:' .self::$_vigilanceColors[$level]['hiColor'].';border-radius:999px;" title="' .$title .'">' .self::$_vigilanceType[$j]['txt'] .'</span>';
+                        }
+                        else {
+                          $svg = str_replace('#888888', self::$_vigilanceColors[$level]['hiColor'], $svg);
+                          $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['maColor'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
+                        }
+                        $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
+                      }
+                    }
+                  }
+                }
+                else {
+                  $svg = "<img src=\"plugins/weatherForecast/core/template/images/AlertCAP0.svg\" alt=\"No alert\"/>";
+                  $title = $country .' / ' .$capArea['name'] .'<br>' .self::$_vigilanceType[100]['txt'];
+                  $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[1]['maColor'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
+                  $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
+                }
+              }
+            }
+            if($txtAlarm != '') {
+              if($dec['status'] != "OK")
+                $txtAlarm .= "<td style=\"flex:auto;padding-left:4px;padding-right:4px;font-size:10px !important;font-style:italic;line-height:normal;text-align:left;\"><i  style=\"font-size:14px;\" class=\"icon fas fa-exclamation-triangle icon_red\"></i> " .trim(substr($dec['status'],3)) ."</td>";
+
+              $vigilanceMeteoalarm = "<div style=\"overflow-x:auto;\"><table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm Collecte Jeedom: $collectDate\"><tr style=\"display:flex;align-content:center;background-color:transparent !important\">$txtAlarm</tr></table></div>";
+            }
+            else $vigilanceMeteoalarm = '';
+          }
+        }
+      }
+    }
+    return $vigilanceMeteoalarm;
   }
 
   public function toHtml($_version = 'dashboard') {
@@ -1453,71 +1648,111 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       if(file_exists( __DIR__ ."/../template/$_version/custom.forecast.html"))
         $forcast_template = getTemplate('core', $version, 'custom.forecast', __CLASS__);
       else $forcast_template = getTemplate('core', $version, 'forecast', __CLASS__);
-      
-      $dateTime->setTimestamp(time());
-      $hour = $dateTime->format('G');
+
       $nbForecastDays = $this->getConfiguration('forecastDaysNumber', 5);
-      for ($i = 0; $i < $nbForecastDays; $i++) {
-        if($i == 0) {
-          $condition = $this->getCmd(null, "condition_$i");
-          if(is_object($condition)) {
-            $val = $condition->execCmd();
-            if($val == '') continue;
+      if($datasource == 'meteofrance') {
+        /*
+        $formatter = new IntlDateFormatter( config::byKey('language','core', 'fr_FR'),
+            IntlDateFormatter::NONE, IntlDateFormatter::NONE,
+            $timezone, IntlDateFormatter::GREGORIAN, "EEE d");
+              // $result = ucfirst($formatter->format($date));
+         */
+        $nowTS = time();
+        for ($i = 0; $i < $nbForecastDays; $i++) {
+          $cmd = $this->getCmd(null,"MeteoDay{$i}Json");
+          if(is_object($cmd)) {
+            $json = $cmd->execCmd();
+            $json = str_replace('&#34;', '"', $json);
+            $dec = json_decode($json,true);
+            if($dec !== null) {
+              // if($dec['dt12H'] < $nowTS) continue; // TODO avec ou sans jour écoulé ????
+              $date = (new DateTime())->setTimestamp($dec['dt12H'])->setTimezone(new DateTimeZone($timezone));
+              $replaceDay['#day#'] = date_fr($date->format('D j'));
+
+              $replaceDay['#low_temperature#'] = $dec['T']['min'];
+              $replaceDay['#high_temperature#'] = $dec['T']['max'];
+              $replaceDay['#condition#'] = isset($dec['weather12H']['desc']) ? $dec['weather12H']['desc'] : '?';
+              $replaceDay['#icone#'] = self::getMFimg(isset($dec['weather12H']['icon']) ? $dec['weather12H']['icon'] .".svg" : "0.svg");
+              $val = $dec['uv'];
+              if($val != -1 && $val != null) $uvMax = "<i class=\"icon fas fa-glasses\"></i> $val";
+              else $uvMax = '';
+              $replaceDay['#uvMax#'] = $uvMax;
+              $val = $dec['precipitation']['24h'];
+              $rain = ($val>0)?$val .'mm':'';
+              $replaceDay['#rain#'] = $rain;
+
+              $replace['#forecast#'] .= template_replace($replaceDay, $forcast_template);
+            }
+            // else message::add(__CLASS__, "MeteoDay $i Json decode pb");
           }
-          // if($hour == 23) continue; // Pas d'affichage si dernière heure du jour
+          // else message::add(__CLASS__, "MeteoDay $i cmd not found");
         }
-        $titleCmd = $this->getCmd(null, "title_day$i");
-        $replaceDay['#day#'] = is_object($titleCmd) ? $titleCmd->execCmd() : '';
+      }
+      else {
+        $dateTime->setTimestamp(time());
+        $hour = $dateTime->format('G');
+        for ($i = 0; $i < $nbForecastDays; $i++) {
+          if($i == 0) {
+            $condition = $this->getCmd(null, "condition_$i");
+            if(is_object($condition)) {
+              $val = $condition->execCmd();
+              if($val == '') continue;
+            }
+            // if($hour == 23) continue; // Pas d'affichage si dernière heure du jour
+          }
+          $titleCmd = $this->getCmd(null, "title_day$i");
+          $replaceDay['#day#'] = is_object($titleCmd) ? $titleCmd->execCmd() : '';
 
-        $temperature_min = $this->getCmd(null, "temperature_min_$i");
-        $replaceDay['#low_temperature#'] = is_object($temperature_min) ? $temperature_min->execCmd() : '';
+          $temperature_min = $this->getCmd(null, "temperature_min_$i");
+          $replaceDay['#low_temperature#'] = is_object($temperature_min) ? $temperature_min->execCmd() : '';
 
-        $temperature_max = $this->getCmd(null, "temperature_max_$i");
-        $replaceDay['#high_temperature#'] = is_object($temperature_max) ? $temperature_max->execCmd() : '';
-        $replaceDay['#tempid#'] = is_object($temperature_max) ? $temperature_max->getId() : '';
-        $conditionID = $this->getCmd(null, "condition_id_$i");
-        if(is_object($conditionID)) {
-          if($datasource == 'meteofrance') {
-            $replaceDay['#icone#'] = self::getMFimg($conditionID->execCmd() .".svg");
+          $temperature_max = $this->getCmd(null, "temperature_max_$i");
+          $replaceDay['#high_temperature#'] = is_object($temperature_max) ? $temperature_max->execCmd() : '';
+          $replaceDay['#tempid#'] = is_object($temperature_max) ? $temperature_max->getId() : '';
+          $conditionID = $this->getCmd(null, "condition_id_$i");
+          if(is_object($conditionID)) {
+            if($datasource == 'meteofrance') {
+              $replaceDay['#icone#'] = self::getMFimg($conditionID->execCmd() .".svg");
+            }
+            else {
+              $dayNight = "day"; // day icon
+              if($i == 0) {
+                if($sunrise === false) $dayNight = "night";
+                else if($sunrise !== true) {
+                  $t = time();
+                  if($t < $sunrise || $t > $sunset) $dayNight = "night";
+                }
+              }
+              $ico = self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight,$templateIMG);
+              if($datasource == 'openweathermap' && $templateIMG == 0)
+                $replace['#icone#'] = $ico;
+              else
+                $replace['#icone#'] = "plugins/weatherForecast/core/template/images/{$ico}.png";
+            }
           }
           else {
-            $dayNight = "day"; // day icon
-            if($i == 0) {
-              if($sunrise === false) $dayNight = "night";
-              else if($sunrise !== true) {
-                $t = time();
-                if($t < $sunrise || $t > $sunset) $dayNight = "night";
-              }
-            }
-            $ico = self::getIconFromCondition($conditionID->execCmd(),$datasource,$dayNight,$templateIMG);
-            if($datasource == 'openweathermap' && $templateIMG == 0)
-              $replace['#icone#'] = $ico;
-            else
-              $replace['#icone#'] = "plugins/weatherForecast/core/template/images/{$ico}.png";
+            $replaceDay['#icone#'] = '';
           }
-        }
-        else {
-          $replaceDay['#icone#'] = '';
-        }
-        $condition = $this->getCmd(null, "condition_$i");
-        $replaceDay['#condition#'] = is_object($condition) ? $condition->execCmd() : '';
-        $rainCmd = $this->getCmd(null, "rain_$i");
-        if(is_object($rainCmd)) {
-          $val = $rainCmd->execCmd();
-          $rain = ($val>0)?$val .'mm':'';
-        }
-        else $rain = '';
-        $replaceDay['#rain#'] = $rain;
-        $uvMaxCmd = $this->getCmd(null, "uvMax_$i");
-        if(is_object($uvMaxCmd)) {
-          $val = $uvMaxCmd->execCmd();
-          if($val != -1) $uvMax = "<i class=\"icon fas fa-glasses\"></i> $val";
+          $condition = $this->getCmd(null, "condition_$i");
+          $replaceDay['#condition#'] = is_object($condition) ? $condition->execCmd() : '';
+          $rainCmd = $this->getCmd(null, "rain_$i");
+          if(is_object($rainCmd)) {
+            $val = $rainCmd->execCmd();
+            $rain = ($val>0)?$val .'mm':'';
+          }
+          else $rain = '';
+          $replaceDay['#rain#'] = $rain;
+          $uvMaxCmd = $this->getCmd(null, "uvMax_$i");
+          if(is_object($uvMaxCmd)) {
+            $val = $uvMaxCmd->execCmd();
+            if($val != -1) $uvMax = "<i class=\"icon fas fa-glasses\"></i> $val";
+            else $uvMax = '';
+          }
           else $uvMax = '';
-        }
-        else $uvMax = '';
-        $replaceDay['#uvMax#'] = $uvMax;
+          $replaceDay['#uvMax#'] = $uvMax;
 
-        $replace['#forecast#'] .= template_replace($replaceDay, $forcast_template);
+          $replace['#forecast#'] .= template_replace($replaceDay, $forcast_template);
+        }
       }
     }
     $temperature = $this->getCmd(null, 'temperature');
@@ -1614,187 +1849,17 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $replace['#collectDate#'] = '';
     }
 
-      // Vigilances météo france
+      // Vigilances météo france / Meteoalarm
     $numDept = trim($this->getConfiguration('numDeptFr'));
     $country = trim($this->getConfiguration('meteoAlarmCountry',''));
     $replace['#vigilance#'] = ''; $replace['#vigilanceMeteoalarm#'] = '';
     if($numDept != '' && $country == '') {
-      $maxColorCmd = $this->getCmd(null,'Vigilancecolor_max');
-      if(is_object($maxColorCmd)) {
-        $maxColor = $maxColorCmd->execCmd();
-        if($maxColor > 0) {
-          $prevVigRecup = trim(config::byKey('prevVigilanceRecovery', __CLASS__));
-          if(date('Ymd') != substr($prevVigRecup,0,8)) {
-            $img = 'VIGNETTE_NATIONAL_J1_500X500.png';
-            $localFile = __DIR__ ."/../../data/$img";
-            $ts1 = @filemtime($localFile);
-            $img .= "?ts=" .@filemtime($localFile);
-            $ts1 += 86400;
-            $img2 = '';
-          }
-          else  {
-            $img = 'VIGNETTE_NATIONAL_J_500X500.png';
-            $localFile = __DIR__ ."/../../data/$img";
-            $ts1 = @filemtime($localFile);
-            $img .= "?ts=" .$ts1;
-            $img2 = 'VIGNETTE_NATIONAL_J1_500X500.png';
-            $localFile = __DIR__ ."/../../data/$img2";
-            $ts2 = @filemtime($localFile);
-            $img2 .= "?ts=" .$ts2;
-            $ts2 += 86400;
-          }
-          // if($_version != 'mobile')
-          $replace['#vigilance#'] = '<table border=0 style="border-spacing: 0px; width: 100%;">
-        <tr style="background-color:transparent !important;"><td rowspan="2" class="tableCmdcss" style="width:10%;text-align: center" title="Vigilance: ' .date_fr(date('l  d  F',$ts1)) .'<br>Collecte: ' .date('d-m-Y H:i:s',$ts1) .'"><a href="https://vigilance.meteofrance.fr/fr" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img .'"/></a></td>';
-          foreach(self::$_vigilanceType as $i => $vig) {
-            if($i >= 100) break; // Valeurs de Météoalarm 
-            if($i == 10) continue; // Météo des forêts
-            $vigilance = $this->getCmd(null, "Vigilancephenomenon_max_color_id$i");
-            if(is_object($vigilance))  {
-              $col = $vigilance->execCmd();
-              if(!is_numeric($col)) $col = 0;
-            }
-            else $col = 0;
-            $replace['#vig'.$i.'Colors#'] = ' color: '.self::$_vigilanceColors[$col]['color'];
-            $replace['#vig'.$i.'Icon#'] =  $vig['icon'];
-            $desc = '';
-            $phase = $this->getCmd(null, "Vigilancephases$i");
-            if(is_object($phase))  {
-              // $txt = $phase->execCmd();
-              $txt = htmlspecialchars($phase->execCmd(), ENT_QUOTES, 'UTF-8');
-              foreach(self::$_vigilanceColors as $color) {
-                $txt = str_replace($color['desc'] .":", "<i class='fa fa-circle' style='color:" .$color['color'] ."'></i>", $txt);
-              }
-              $txt = str_replace('.', "<br>", $txt);
-              if($txt != '') {
-                $desc = ": &nbsp;$txt";
-              }
-            }
-            $replace['#vig'.$i.'Desc#'] = $vig['txt'] .$desc;
-            if($col > 0) {
-              if($i >= 1 && $i < 10) {
-                $file = __DIR__ ."/../template/images/Vigilance$i.svg";
-                $svg = @file_get_contents($file);
-                if($svg === false) log::add(__CLASS__, 'debug', "  Unable to read SVG : $file");
-                else {
-                  $svg = str_replace('#888888', self::$_vigilanceColors[$col]['color'], $svg);
-                  $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:45px;text-align: center" title="' .$vig['txt'] .$desc .'">' .$svg .'</td>';
-                }
-              }
-              else
-                $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:45px;text-align: center" title="' .$vig['txt'] .$desc .'"><i class="wi ' .$vig['icon'] .'" style="font-size:24px;color: '.self::$_vigilanceColors[$col]['color'] .'"></i></td>';
-            }
-          }
-          /*
-            // Météo des forêts TODO ou pas
-            $forest = $this->getCmd(null, "Vigilance_color_forest");
-            if(is_object($forest))  {
-              $col = $forest->execCmd();
-              if($col > 0) {
-                $desc = ': ' .self::$_vigilanceColors[$col]['desc'];
-                $file = __DIR__ ."/../template/images/VigilanceFire.svg";
-                $svg = @file_get_contents($file);
-                if($svg === false) {
-                  log::add(__CLASS__, 'debug', "  Unable to read SVG : $file");
-                  $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:45px;text-align: center" title="' .$vig['txt'] .$desc .'"><a href="https://meteofrance.com/meteo-des-forets" target="_blank"><i class="wi ' .$vig['icon'] .'" style="font-size: 24px;color: '.self::$_vigilanceColors[$col]['color'] .'"></i></a></td>';
-                }
-                else {
-                  $svg = str_replace('#888888', self::$_vigilanceColors[$col]['color'], $svg);
-                  $replace['#vigilance#'] .= '<td class="tableCmdcss" style="width:10%;height:45px;text-align: center" title="' .$vig['txt'] .$desc .'"><a href="https://meteofrance.com/meteo-des-forets" target="_blank">' .$svg .'</a></td>';
-                }
-              }
-            }
-          */
-              // Carte demain
-          if($img2 != '' && $_version != 'mobile')
-            $replace['#vigilance#'] .= '<td rowspan="2" class="tableCmdcss" style="width:10%;text-align:center" title="Vigilance: ' .date_fr(date('l  d  F',$ts2)) .'"><a href="https://vigilance.meteofrance.fr/fr/demain" target="_blank"><img style="width:70px" src="plugins/weatherForecast/data/' .$img2 .'"/></a></td>';
-          $replace['#vigilance#'] .= '</tr><tr style="background-color:transparent !important;"><td colspan="5" style="margin-left:8px;font-size:10px !important;font-style:italic;text-align:center">Vigilances du département ' .$numDept .'</td></tr></table>';
-        }
-        else {
-          $replace['#vigilance#'] = '<table border=0 style="border-spacing:0px;width:100%;"><tr style="background-color:transparent !important;"><td class="tableCmdcss" style="width:10%;text-align:left;font-size:12px;" title="Vigilances">Pas de données de vigilance pour le département: ' .$numDept .'</td></tr></table>';
-        }
-      }
+      $replace['#vigilance#'] = $this->toHtmlVigilanceMF($_version, $numDept);
     }
     else { // vigilanceMeteoalarm
-      $province = trim($this->getConfiguration('meteoAlarmArea',''));
-      $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
-      if(is_object($cmd)) {
-        $json = $cmd->execCmd();
-        $json = str_replace('&#34;', '"', $json);
-        $dec = json_decode($json,true);
-        $collectDate = $cmd->getCollectDate();
-        if($country != '' ) {
-          if($province == '') {
-            $replace['#vigilanceMeteoalarm#'] =  "<span title=\"Collecte Jeedom: $collectDate\" style=\"font-size:10px;line-height:10px !important\"><i style=\"font-size:14px;color:#CC0000;\" class=\"icon fas fa-exclamation-triangle\"></i> Province non définie. ";
-            if(trim($this->getConfiguration('otherCountryAlerts', '')) == '')
-              $replace['#vigilanceMeteoalarm#'] .= "Pas d'alerte actuellement pour $country";
-            else 
-              $replace['#vigilanceMeteoalarm#'] .= "Des alertes existent pour $country";
-            $replace['#vigilanceMeteoalarm#'] .= "</span>";
-          }
-          else {
-            if($dec === null) {
-              $replace['#vigilanceMeteoalarm#'] = 'Unable to decode Json cmd';
-            } else {
-              $txtAlarm = '';
-              if(isset($dec['capArea'])) {
-                $nbArea = count($dec['capArea']);
-                foreach($dec['capArea'] as $capArea) {
-                  if($txtAlarm != '') $txtAlarm .= '<td style="border-right:1px #3C73A5 solid"></td>';
-                  $nbInfo = count($capArea['info']);
-                  if($nbInfo) {
-                    for($j=101;$j<116;$j++) {
-                      if($j == 111) continue;
-                      $idx = $j - 100;
-                      $imgFile = __DIR__ ."/../template/images/AlertCAP$idx.svg";
-                      for($i=0;$i<$nbInfo;$i++) {
-                        if($idx == $capArea['info'][$i]['type']) {
-                          $level = $capArea['info'][$i]['level'];
-                          $desc = '';
-                          if(isset($capArea['info'][$i]['event'])) $desc .= $capArea['info'][$i]['event'];
-                          if(isset($capArea['info'][$i]['description'])) {
-                            $desc .= (($desc == '')? '' : '<br>') .$capArea['info'][$i]['description'];
-                          }
-                          $title = $country .' / ' .$capArea['name'] ."<br>" .self::$_vigilanceType[$j]['txt'];
-                          if(time() < $capArea['info'][$i]['onset'])
-                            $title .= ' de ' .self::dateTimezone('d-m-Y H:i',$capArea['info'][$i]['onset'],$timezone) .' à ' .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
-                          else
-                            $title .= " jusqu'à " .self::dateTimezone('d-m-Y H:i (\U\T\CP)',$capArea['info'][$i]['expires'],$timezone);
-                          $title .= '<br>' .$desc;
-                          $svg = @file_get_contents($imgFile);
-                          if($svg === false) {
-                            log::add(__CLASS__, 'warning', "$imgFile not found");
-                            $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['maColor'] .';color:' .self::$_vigilanceColors[$level]['hiColor'].';border-radius:999px;" title="' .$title .'">' .self::$_vigilanceType[$j]['txt'] .'</span>';
-                          }
-                          else {
-                            $svg = str_replace('#888888', self::$_vigilanceColors[$level]['hiColor'], $svg);
-                            $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[$level]['maColor'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
-                          }
-                          $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
-                        }
-                      }
-                    }
-                  }
-                  else {
-                    $svg = "<img src=\"plugins/weatherForecast/core/template/images/AlertCAP0.svg\" alt=\"No alert\"/>";
-                    $title = $country .' / ' .$capArea['name'] .'<br>' .self::$_vigilanceType[100]['txt'];
-                    $icon = '<span style="display:flex;flex:none;padding:.5rem;margin:.25rem;background-color:' .self::$_vigilanceColors[1]['maColor'] .';border-radius:999px;" title="' .$title .'">' .$svg .'</span>';
-                    $txtAlarm .= '<td style="padding-left:4px;padding-right:4px;">' .$icon ."</td>";
-                  }
-                }
-              }
-              if($txtAlarm != '') {
-                if($dec['status'] != "OK")
-                  $txtAlarm .= "<td style=\"flex:auto;padding-left:4px;padding-right:4px;font-size:10px !important;font-style:italic;line-height:normal;text-align:left;\"><i  style=\"font-size:14px;\" class=\"icon fas fa-exclamation-triangle icon_red\"></i> " .trim(substr($dec['status'],3)) ."</td>";
-
-                $replace['#vigilanceMeteoalarm#'] = "<div style=\"overflow-x:auto;\"><table border=0 style=\"width:100%\" title=\"Vigilances Meteoalarm Collecte Jeedom: $collectDate\"><tr style=\"display:flex;align-content:center;background-color:transparent !important\">$txtAlarm</tr></table></div>";
-              }
-              else $replace['#vigilanceMeteoalarm#'] = '';
-            }
-          }
-        }
-      }
+      $replace['#vigilanceMeteoalarm#'] = $this->toHtmlVigilanceMeteoalarm($country, $timezone);
     }
+
     $rainForecast = $this->getConfiguration('requestForRainForecast',0);
     if($rainForecast == 0) {
       $replace['#1hRainForecast#'] = '[]';
@@ -2009,7 +2074,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           break;
         }
         else if($weather['dt_txt'] == $midday) { // condition à 12h uniquement
-          $middayDate = $dateRech->format('D. j');
+          $middayDate = $dateRech->format('D j');
           $title = date_fr($middayDate);
           $changed = $this->checkAndUpdateCmd("title_day$i", $title) || $changed;
           $condition_id = $weather['weather'][0]['id'];
@@ -2373,7 +2438,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             // log::add(__CLASS__, 'debug', "    Filling: $j forecast:" .date('d-m-Y H:i:s', $value['dt']) ." Moment: " .$value['moment_day']);
             $img = self::getMFimg($value['weather']['icon'] .'.svg'); // download svg for usage
             $value['timezone'] = $timezone;
-            $contents = str_replace('"','&quot;',json_encode($value,JSON_UNESCAPED_UNICODE));
+            $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
             $this->checkAndUpdateCmd("MeteoInstant{$j}Json", $contents);
             if(strlen($contents) > 3000)
               message::add(__CLASS__, "Cmd MeteoInstant{$j}Json Lg:". strlen($contents));
@@ -2419,15 +2484,25 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     }
     else {
       log::add(__CLASS__, 'warning', __FUNCTION__ ." Unable to get data.");
-      /*
-      $t =mktime(date('G'),0);
-      for($i=0;$i<8;$i++) {
-        $ti = $t + $i * 6 * 3600;
-        $json = '{"dt": ' .$ti .',"weather": {"icon":"0","desc":"Curl error"}}'; 
-        $this->checkAndUpdateCmd("MeteoInstant{$i}Json", $json);
-      }
-       */
     }
+  }
+
+  public static function getLocalDateFmt(int $ts, string $tz, string $fmt): string {
+    $d = new DateTime("@$ts");
+    $d->setTimezone(new DateTimeZone($tz));
+    return $d->format($fmt);
+  }
+
+  public static function getForecastLocalDate(int $ts, string $tz): string {
+    $d = new DateTime("@$ts");
+    $d->setTimezone(new DateTimeZone($tz));
+    return $d->format('Y-m-d');
+  }
+
+  public static function getForecastNoonTS(int $ts, string $tz): int {
+    $date = self::getForecastLocalDate($ts, $tz);
+    $noon = new DateTime($date . ' 12:00:00', new DateTimeZone($tz));
+    return $noon->getTimestamp();
   }
 
   public function updateWeatherMF($_updateConfig, $lat, $lon, $lang, &$H0array) {
@@ -2458,6 +2533,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     log::add(__CLASS__, 'debug', __FUNCTION__ ." $ville $lat/$lon");
     $url = "https://webservice.meteofrance.com/forecast?lat=$lat&lon=$lon&id=&instants=&day=7";
     $return = self::callMeteoWS($url,false,true,__FUNCTION__ ."-".$this->getId() ."-$ville.json");
+    $this->checkAndUpdateCmd("uv_Hcur", -1) || $changed; // not available with MF
     if(is_array($return) && isset($return['forecast'])) {
       $timezone = $return['position']['timezone'];
       $nb = count($return['forecast']);
@@ -2532,7 +2608,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             }
             $value["saintOfTheDay"] = $saintOfTheDay;
           }
-          $contents = str_replace('"','&quot;',json_encode($value,JSON_UNESCAPED_UNICODE));
+          $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
           $this->checkAndUpdateCmd("MeteoHour{$j}Json", $contents);
           if(strlen($contents) > 3000)
             message::add(__CLASS__, "Cmd MeteoHour{$j}Json Lg:". strlen($contents));
@@ -2568,7 +2644,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             // $value['dt'] = $forecastTS;
             $img = self::getMFimg($value['weather']['icon'] .'.svg'); // download svg for usage
             $value['timezone'] = $timezone;
-            $contents = str_replace('"','&quot;',json_encode($value,JSON_UNESCAPED_UNICODE));
+            $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
             $this->checkAndUpdateCmd("MeteoInstant{$j}Json", $contents);
             if(strlen($contents) > 3000)
               message::add(__CLASS__, "Cmd MeteoInstant{$j}Json Lg:". strlen($contents));
@@ -2587,66 +2663,50 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       }
 
         // Update the daily_forecast commands
-      $nbD = count($return['daily_forecast']);
-      log::add(__CLASS__, 'debug', "  NbDaily_forecast: $nbD");
-      for($i=0;$i<$nbD;$i++) {
-        $value= $return['daily_forecast'][$i];
-        $forecastTS = $value['dt'];
-        // $value['dt12H'] = mktime(12,0,0,date('m',$forecastTS),date('d',$forecastTS),date('Y',$forecastTS));
-        // TODO calculer correctement dt12H suivant le timezone
-        /*
-        $defTz = date_default_timezone_get();
-        date_default_timezone_set($timezone);
-        $forecastDate = date('Y-m-d',$forecastTS);
-        date_default_timezone_set($defTz);
-        $value['dt12H'] = strtotime("$forecastDate 12:00:00 $timezone");
-         */
-        $value['dt12H'] = strtotime(date('Y-m-d',$forecastTS) ." 12:00:00 $timezone");
-        // log::add(__CLASS__, 'error', "$timezone   $i dt12H:" .date('d-m-Y H:i:s', $value['dt12H']));
-        // log::add(__CLASS__, 'debug', "    $i daily_forecast:" .date('d-m-Y H:i:s', $forecastTS));
-        if($i < 7) {
-          $title = date_fr(date('D. j', $value['dt12H']));
-          $this->checkAndUpdateCmd("title_day$i", $title);
-          $this->checkAndUpdateCmd("rain_{$i}", $value['precipitation']['24h']);
-          $this->checkAndUpdateCmd("uvMax_{$i}", $value['uv']);
-          if(!isset($value['weather12H']['desc'])) {
-            $this->checkAndUpdateCmd("condition_{$i}", '?');
-            $this->checkAndUpdateCmd("condition_id_{$i}", '0');
-            // message::add(__CLASS__, "weather12H not set for $ville. ID: " .$this->getId());
-          }
-          else {
-            $this->checkAndUpdateCmd("condition_{$i}", $value['weather12H']['desc']);
-            $this->checkAndUpdateCmd("condition_id_{$i}", $value['weather12H']['icon']);
-            $img = self::getMFimg($value['weather12H']['icon'] .'.svg'); // download svg for usage
-          }
-          $this->checkAndUpdateCmd("temperature_min_{$i}", $value['T']['min']);
-          $this->checkAndUpdateCmd("temperature_max_{$i}", $value['T']['max']);
-        }
-        /* JSON structure
-          { "dt":1686096000,
-            "T":{"min":12.1,"max":26.1,"sea":null},
-            "humidity":{"min":40,"max":75},
-            "precipitation":{"24h":0},
-            "uv":8,
-            "weather12H":{"icon":"p1j","desc":"Ensoleillé"},
-            "sun":{"rise":1686108819,"set":1686166464},
-            "dt12H":1686132000,
-            "timezone": "Europe/Paris"
-          }
-         */
-        $value['timezone'] = $timezone;
-        $contents = str_replace('"','&quot;',json_encode($value,JSON_UNESCAPED_UNICODE));
-        $this->checkAndUpdateCmd("MeteoDay{$i}Json", $contents);
-        if(strlen($contents) > 3000)
-          message::add(__CLASS__, "Cmd MeteoDay{$i}Json Lg:". strlen($contents));
-      }
+      $this->updateDailyForecastMF($return['daily_forecast'], $timezone, $ville);
       return $stepHour;
     }
     else {
-      log::add(__CLASS__, 'warning', __FUNCTION__ ." Unable to get data.");
+      log::add(__CLASS__, 'warning', __FUNCTION__ ." Unable to get forecast data.");
       return 0;
     }
     return $changed;
+  }
+
+  public function updateDailyForecastMF($daily_forecast, $tz, $ville) {
+    $nbD = count($daily_forecast);
+    log::add(__CLASS__, 'debug', "  NbDaily_forecast: $nbD Timezone: $tz Ville: $ville");
+    for($i=0;$i<$nbD;$i++) {
+      $value = $daily_forecast[$i];
+      $forecastTS = $value['dt'];
+      $value['dt12H'] = self::getForecastNoonTS($forecastTS, $tz);
+      // log::add(__CLASS__, 'error', "$tz   $i dt12H:" .date('d-m-Y H:i:s', $value['dt12H']));
+      // log::add(__CLASS__, 'debug', "    $i daily_forecast:" .date('d-m-Y H:i:s', $forecastTS));
+      if($i < 7) {
+        $title = date_fr(self::getLocalDateFmt($value['dt12H'], $tz, 'D. j'));
+        $this->checkAndUpdateCmd("title_day$i", $title);
+        $this->checkAndUpdateCmd("rain_{$i}", $value['precipitation']['24h']);
+        $this->checkAndUpdateCmd("uvMax_{$i}", $value['uv']);
+        if(!isset($value['weather12H']['desc'])) {
+          $this->checkAndUpdateCmd("condition_{$i}", '?');
+          $this->checkAndUpdateCmd("condition_id_{$i}", '0');
+// message::add(__CLASS__, "I=$i weather12H desc not set for $ville. ID: " .$this->getId());
+        }
+        else {
+          $this->checkAndUpdateCmd("condition_{$i}", $value['weather12H']['desc']);
+          $this->checkAndUpdateCmd("condition_id_{$i}", $value['weather12H']['icon']);
+// message::add(__CLASS__, "I=$i weather12H Desc: {$value['weather12H']['desc']} Icon: {$value['weather12H']['icon']} " .$this->getId());
+          $img = self::getMFimg($value['weather12H']['icon'] .'.svg'); // download svg for usage
+        }
+        $this->checkAndUpdateCmd("temperature_min_{$i}", $value['T']['min']);
+        $this->checkAndUpdateCmd("temperature_max_{$i}", $value['T']['max']);
+      }
+      $value['timezone'] = $tz;
+      $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
+      $this->checkAndUpdateCmd("MeteoDay{$i}Json", $contents);
+      if(strlen($contents) > 3000)
+        message::add(__CLASS__, "Cmd MeteoDay{$i}Json Lg:". strlen($contents));
+    }
   }
 
   // updateConfig 0 : immediatly / 1 : just after creating commands / 2 : cronDayly
@@ -2703,7 +2763,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     $H0array['saintOfTheDay'] = self::saintOfTheDay($date_n,$date_j);
     $H0array['timezone'] = $timezone;
       // update vigilances if department is informed 
-    $changed = $this->updateVigilanceMeteoFrance() || $changed;
+    $changed = $this->updateVigilanceMF() || $changed;
       // update Meteoalarm vigilances if country and province are informed 
     $country = strtolower(trim($this->getConfiguration('meteoAlarmCountry','')));
     $province = trim($this->getConfiguration('meteoAlarmArea',''));
@@ -2867,7 +2927,84 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     return 1; // OK
   }
 
-    public static function getVigilanceDataApiCloudMF() {
+  public static function downloadVigForetApi($file,$token,$fileResu,&$dateMaj=null) {
+    $url = "https://public-api.meteofrance.fr/public/$file";
+    log::add(__CLASS__, 'debug', "  " .__FUNCTION__ ." Fetching data $file Url API: $url");
+    $header = array("Authorization: Bearer $token");
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $url, CURLOPT_HTTPHEADER => $header,
+        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_RETURNTRANSFER => true));
+    $resu = curl_exec($curl);
+    $curl_error = curl_error($curl);
+    $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+    if($resu !== false) {
+      $dec = json_decode($resu,true);
+      $jsonError = json_last_error();
+      if($jsonError != JSON_ERROR_NONE) {
+        log::add(__CLASS__, 'warning', "  Unable to get data from MeteoFrance. Json error: ($jsonError) ".json_last_error_msg());
+        return 1;
+      }
+
+        // writing result in file
+      $hdle = fopen($fileResu, "wb");
+      if($hdle !== FALSE) { fwrite($hdle, $resu); fclose($hdle); }
+      else log::add(__CLASS__, 'warning', "  Unable to open file $fileResu for writing.");
+      if(isset($dec[0]['reference_time'])) {
+        if($dateMaj == -1)
+          $dateMaj = strtotime($dec[0]['reference_time']);
+      }
+      else {
+        log::add(__CLASS__, 'warning', "  [reference_time] not found in [$resu].");
+        return 1;
+      }
+      
+    }
+    else  {
+      log::add(__CLASS__, 'warning', "  Unable to fetch $file. Http_code: $http_code Curl_error: $curl_error");
+      return 1;
+    }
+    // log::add(__CLASS__, 'info', "    " .__FUNCTION__ ." return 0");
+    return 0; // OK
+  }
+
+  public static function getVigilanceMeteoForestMF() {
+    $month = (int)date('n');
+      // Meteo des forets disponible de juin à septembre uniquement
+    if($month < 6 || $month > 9) return;
+    $credential = trim(config::byKey('credentialApiMeteoFrance', __CLASS__));
+    $useForestAPI = config::byKey('useForestAPI', __CLASS__, 0);
+        // Meteo des forets avec l'API
+    if( $useForestAPI == 1 && $credential != '') {
+      log::add(__CLASS__, 'debug', "Appel " .__FUNCTION__ ."()");
+      $token = self::getMeteoFranceToken($credential,0);
+      if($token != '') {
+          // Json des vigilances
+        $dateMaj = -1;
+        $file = "DPMeteoForets/v1/carte/departement/encours?format=json&echeance=J1J2";
+        $fileResu = __DIR__ ."/../../data/DataMeteoForetsJ1J2.json";
+        $recupAPI = self::downloadVigForetApi($file,$token,$fileResu,$dateMaj);
+        if($recupAPI == 1) { // 2eme essai après renew token (=bidouille mais MF)
+          $token = self::getMeteoFranceToken($credential,1); // force renew token
+          if($token != '') {
+            $recupAPI = self::downloadVigForetApi($file,$token,$fileResu,$dateMaj);
+          }
+        }
+        if($recupAPI == 1) {
+          log::add(__CLASS__, 'debug', "  Data successfully downloaded using MF API");
+          $latestFull = gmdate('YmdHis') .'Z';
+          config::save('prevMeteoForestRecovery', $latestFull, __CLASS__);
+          return 0; // OK
+        }
+        else return 1; // NOK token
+      }
+      else return 1; // NOK token
+    }
+    return 0; // OK
+  }
+
+  public static function getVigilanceDataApiCloudMF() {
     log::add(__CLASS__, 'debug', __FUNCTION__ ." http://storage.gra.cloud.ovh.net/v1/AUTH_555bdc85997f4552914346d4550c421e/gra-vigi6-archive_public");
     $credential = trim(config::byKey('credentialApiMeteoFrance', __CLASS__));
     $fileAlert = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
@@ -3004,7 +3141,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     return 0; // OK
   }
 
-  public function updateVigilanceMeteoFrance() {
+  public function updateVigilanceMF() {
     $changed = false;
     $numDept = $this->getConfiguration('numDeptFr');
     if($numDept == '') {
@@ -3013,16 +3150,18 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         if($i > 100) break; // Valeurs de Météoalarm 
         $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0) || $changed;
         $changed = $this->checkAndUpdateCmd("Vigilancephases$i",'') || $changed;
-        $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', 0) || $changed;
-        $changed = $this->checkAndUpdateCmd('Vigilancelist', '') || $changed;
-        $changed = $this->checkAndUpdateCmd("VigilanceJson", '[]') || $changed;
       }
+      $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', 0) || $changed;
+      $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', 0) || $changed;
+      $changed = $this->checkAndUpdateCmd('Vigilancelist', '') || $changed;
+      $changed = $this->checkAndUpdateCmd("VigilanceJson", '[]') || $changed;
       return $changed;
     }
     log::add(__CLASS__, 'debug', __FUNCTION__ .". Département: $numDept");
-      // Météo des forêts
-    if(config::byKey('useForestAPI', __CLASS__, 0)) {
-      $fileData = __DIR__ ."/../../data/DataMeteoForetsJ1.json";
+      // Meteo des forets disponible de juin à septembre uniquement
+    $month = (int)date('n');
+    if(config::byKey('useForestAPI', __CLASS__, 0) && $month > 5 && $month > 10) {
+      $fileData = __DIR__ ."/../../data/DataMeteoForetsJ1J2.json";
       $contents = @file_get_contents($fileData);
       if($contents !== false) {
         $return = json_decode($contents,true);
@@ -3050,19 +3189,19 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             }
             if(!$found)  {
               log::add(__CLASS__, 'warning', "  Forest. Department $numDept not found");
-              $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', -1) || $changed;
+              $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', 0) || $changed;
             }
           }
         }
         else {
           log::add(__CLASS__, 'warning', "  Unable to json_decode data from $fileData");
           @unlink($fileData);
-          $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', -1) || $changed;
+          $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', 0) || $changed;
         }
       }
       else {
         log::add(__CLASS__, 'warning', "  Unable to load data from $fileData");
-        $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', -1) || $changed;
+        $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', 0) || $changed;
       }
     }
     else $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', 0) || $changed;
@@ -3265,9 +3404,9 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
 class weatherForecastCmd extends cmd {
   public function execute($_options = [] ) {
     if($this->getLogicalId() == 'refresh') {
-      $eqL = $this->getEqLogic();
-      $eqL->updateWeatherData(0,1);
-      $eqL->getRainMF();
+      $eqLogic = $this->getEqLogic();
+      $eqLogic->updateWeatherData(0,1);
+      $eqLogic->getRainMF();
     }
     return false;
   }

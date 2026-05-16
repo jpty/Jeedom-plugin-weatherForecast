@@ -53,8 +53,12 @@
   </div>
 
   <script>
-    $('.eqLogic[data-eqLogic_uid=#uid#] .cmd').on('click', function () {
-      jeedom.cmd.execute({id: $(this).data('cmd_id')});
-    });
+    (function() {
+      const cmd = document.querySelector('.eqLogic[data-eqLogic_uid="#uid#"] .cmd');
+      if (!cmd) return;
+      cmd.addEventListener('click', function() {
+        jeedom.cmd.execute({id: this.getAttribute('data-cmd_id')});
+      });
+    })();
   </script>
 </div>

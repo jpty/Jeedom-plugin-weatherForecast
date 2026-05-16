@@ -44,7 +44,7 @@
       let cmd = $('.cmd[data-cmd_id=#id#]');
       cmd.find('.errorMessage').empty(); // clean previous error
       try {
-        let json = _options.display_value.replaceAll('&quot;','"');
+        let json = _options.display_value.replaceAll('&quot;','"').replaceAll('&#34;','"');
         if(json != "Not available") {
           let obj = JSON.parse(json);
           if(obj != null) {
