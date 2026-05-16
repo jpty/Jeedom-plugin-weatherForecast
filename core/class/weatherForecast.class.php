@@ -132,7 +132,7 @@ class weatherForecast extends eqLogic {
   }
 
   public static function extractValueFromJsonTxt($cmdValue, $request) {
-    $txtJson = str_replace(array('&quot;','&#34;'),'"',$cmdValue);
+    $txtJson = str_replace('&#34;', '"', $cmdValue);
     $json =json_decode($txtJson,true);
     if($json !== null) {
       $tags = explode('>', $request);
@@ -411,7 +411,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         $cmd = $this->getCmd(null,'MeteoalarmAlertsJson');
         if(is_object($cmd)) {
           $json = $cmd->execCmd();
-          $json = str_replace(array('&quot;','&#34;'), '"', $json);
+          $json = str_replace('&#34;', '"', $json);
           $alerts = json_decode($json,true);
           $alerts['status'] = "NOK $nbErr errors fetching data for $country / $province";
         }
@@ -1662,10 +1662,10 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           $cmd = $this->getCmd(null,"MeteoDay{$i}Json");
           if(is_object($cmd)) {
             $json = $cmd->execCmd();
-            $json = str_replace(array('&quot;','&#34;'), '"', $json);
+            $json = str_replace('&#34;', '"', $json);
             $dec = json_decode($json,true);
             if($dec !== null) {
-              if($dec['dt12H'] < $nowTS) continue;
+              // if($dec['dt12H'] < $nowTS) continue; // TODO avec ou sans jour écoulé ????
               $date = (new DateTime())->setTimestamp($dec['dt12H'])->setTimezone(new DateTimeZone($timezone));
               $replaceDay['#day#'] = date_fr($date->format('D j'));
 
