@@ -1422,8 +1422,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           $img2 .= "?ts=" .$ts2;
           $ts2 += 86400;
         }
-        $vigilanceMF = '<table border=0 style="border-spacing: 0px; width: 100%;">
-      <tr style="background-color:transparent !important;">' .$this->carteVigFrance($ts1, $img, '');
+        $vigilanceMF = '<table border=0 style="border-spacing: 0px; width: 100%;"><tr style="background-color:transparent !important;">' .$this->carteVigFrance($ts1, $img, '');
         $nbVig = 0;
         foreach(self::$_vigilanceType as $i => $vig) {
           if($i >= 100) break; // Valeurs de Météoalarm 
@@ -1668,7 +1667,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             if($dec !== null) {
               if($dec['dt12H'] < $nowTS) continue;
               $date = (new DateTime())->setTimestamp($dec['dt12H'])->setTimezone(new DateTimeZone($timezone));
-              $replaceDay['#day#'] = date_fr($date->format('D j H'));
+              $replaceDay['#day#'] = date_fr($date->format('D j'));
 
               $replaceDay['#low_temperature#'] = $dec['T']['min'];
               $replaceDay['#high_temperature#'] = $dec['T']['max'];
