@@ -372,8 +372,7 @@ timeZones#id#.forEach(timeZone => {
         let cd = new Date();
         try {
           if('#displayWeather#' != '0' &&  _options.display_value != '') {
-            let json = _options.display_value.replaceAll('&quot;','"');
-            json = json.replaceAll('&#34;','"');
+            let json = _options.display_value.replaceAll('&quot;','"').replaceAll('&#34;','"');
             let obj = JSON.parse(json);
             if(obj != null && typeof(obj.weather) != 'undefined') {
               if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
