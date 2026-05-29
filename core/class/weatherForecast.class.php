@@ -1336,12 +1336,12 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     $refresh->setOrder(0);
     $refresh->save();
   
-    // correction subType de condition_id_xx des commandes existantes
+    // correction subType de condition_id_xx des commandes existantes TODO a supprimer
     for($i = 0;$i < 7; $i++) {
       $id = "condition_id_$i";
       $wfCmd = $this->getCmd(null, $id);
       if(is_object($wfCmd) && $wfCmd->getSubType() != 'string') {
-// message::add(__CLASS__, "Changing subTyep of command " .$wfCmd->getId());
+// message::add(__CLASS__, "Changing subType of command " .$wfCmd->getId());
         $wfCmd->setSubType('string');
         $wfCmd->save();
       }
@@ -2183,7 +2183,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $file = __DIR__ ."/../../data/weatherApi-error-" .$this->getId() .".json";
       $hdle = fopen($file, "wb");
       if($hdle !== FALSE) { fwrite($hdle, $content); fclose($hdle); }
-      else log::add(__CLASS__, 'info', "Unable to write $file");
+      else log::add(__CLASS__, 'warning', "  Unable to open file $file for writing.");
         // {"error":{"code":1006,"message":"No matching location found."}}
       if($_updateConfig == 1) { // memo dans la config de l'équipement
         if(isset($datas['error'])) {
@@ -2209,7 +2209,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       fwrite($hdle, json_encode($datas,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
       fclose($hdle);
     }
-    else message::add(__CLASS__, "Unable to write $file");
+    else log::add(__CLASS__, 'warning', "  Unable to open file $file for writing.");
     log::add(__CLASS__, 'debug', $urlAnon . ' : ' . substr(json_encode($datas),0, 100) .'...');
     $current = $datas['current'];
     log::add(__CLASS__, 'debug', "  Data updated on " .$current['last_updated'] ." Condition: " .$current['condition']['text']); // ." Icon: " .$current['condition']['icon']);
@@ -2443,7 +2443,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
             $this->checkAndUpdateCmd("MeteoInstant{$j}Json", $contents);
             if(strlen($contents) > 3000)
-              message::add(__CLASS__, "Cmd MeteoInstant{$j}Json Lg:". strlen($contents));
+              log::add(__CLASS__, 'warning', "Cmd MeteoInstant{$j}Json Lg:". strlen($contents));
           }
           break;
         }
@@ -2613,7 +2613,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
           $this->checkAndUpdateCmd("MeteoHour{$j}Json", $contents);
           if(strlen($contents) > 3000)
-            message::add(__CLASS__, "Cmd MeteoHour{$j}Json Lg:". strlen($contents));
+            log::add(__CLASS__, 'warning', "Cmd MeteoHour{$j}Json Lg:". strlen($contents));
           if($stepHour != 1 && $j == 1) break; // Not an hourly forecast
           $j++;
         }
@@ -2649,7 +2649,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
             $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
             $this->checkAndUpdateCmd("MeteoInstant{$j}Json", $contents);
             if(strlen($contents) > 3000)
-              message::add(__CLASS__, "Cmd MeteoInstant{$j}Json Lg:". strlen($contents));
+              log::add(__CLASS__, 'warning', "Cmd MeteoInstant{$j}Json Lg:". strlen($contents));
             $j++;
           }
         }
@@ -2707,7 +2707,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $contents = str_replace('"','&#34;',json_encode($value,JSON_UNESCAPED_UNICODE));
       $this->checkAndUpdateCmd("MeteoDay{$i}Json", $contents);
       if(strlen($contents) > 3000)
-        message::add(__CLASS__, "Cmd MeteoDay{$i}Json Lg:". strlen($contents));
+        log::add(__CLASS__, 'warning', "Cmd MeteoDay{$i}Json Lg:". strlen($contents));
     }
   }
 
