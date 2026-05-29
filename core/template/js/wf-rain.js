@@ -110,8 +110,6 @@ window.WFRain = (function () {
     const {
       useIconFiles = false,
       withAnimatedDrops = true,
-      hideIfDry = false,
-      testWidget = false
     } = options;
 
     const table = widget.querySelector('.WF-rain-table');
@@ -120,38 +118,13 @@ window.WFRain = (function () {
     timeRow.innerHTML = '';
     iconRow.innerHTML = '';
 
-    if(testWidget) { // Build forecast from current time for widget test
-      const now = new Date();
-      const step = 60 * 1000;
-      let currentTime = new Date(Math.floor(now.getTime() / step) * step);
-      forecast = [];
-      const periods = [ { duration: 5, intensity: 1 }, { duration: 5, intensity: 2 },
-        { duration: 5, intensity: 3 }, { duration: 5, intensity: 4 }, { duration: 5, intensity: 1 },
-        { duration: 5, intensity: 2 }, { duration: 10, intensity: 3 },
-        { duration: 10, intensity: 3 }, { duration: 10, intensity: 4 }
-      ];
-      const intensityDescriptions = { 1: "Temps sec", 2: "Pluie fine",
-        3: "Pluie modérée", 4: "Pluie forte", 5: "Pluie diluvienne" };
-      periods.forEach(period => {
-        currentTime = new Date(currentTime.getTime() + period.duration * 60 * 1000);
-        forecast.push({
-          time: currentTime.toISOString(),
-          rain_intensity: period.intensity,
-          rain_intensity_description:
-            intensityDescriptions[period.intensity]
-        });
-      });
-    }
+    
     if (!forecast || !forecast.length) {
       widget.style.display = 'none';
       return;
     }
     const intervals = parseForecast(forecast);
     const groups = groupByIntensity(intervals);
-    if ( hideIfDry && groups.length === 1 && groups[0].intensity === 1) {
-      widget.style.display = 'none';
-      return;
-    }
 
     widget.style.display = '';
 

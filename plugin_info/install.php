@@ -24,6 +24,7 @@ function weatherForecast_install() {
   $plugin = plugin::byId($pluginName);
   $plugin->dependancy_install();
   log::add($pluginName, 'info', "Installation  $pluginName's plugin dependencies complete.");
+  // TODO activer l'extension intl dans le php.ini utilisé
 }
 
 // Fonction exécutée automatiquement après la mise à jour du plugin
