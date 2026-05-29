@@ -28,19 +28,18 @@ if (!isConnect('admin')) {
       <div class="col-lg-4">
         <input class="configKey form-control" data-l1key="apikeyOwm" />
       </div>
-      <a href="https://home.openweathermap.org/api_keys" target="_blank">Site Web OpenWeather ICI</a> <sup><i class="fas fa-question-circle tooltips" title="{{La clé API est à récupérer dans votre compte sur le site openweathermap.org<br/>Aprés génération d'une clé API, son activation n'est pas immédiate. Veuillez patienter.}}"></i></sup>
+      <a href="https://home.openweathermap.org/api_keys" target="_blank">Site Web OpenWeather <sup><i class="fas fa-external-link-alt tooltips"></i></sup></a> <sup><i class="fas fa-question-circle tooltips" title="{{La clé API est à récupérer dans votre compte sur le site openweathermap.org<br/>Aprés génération d'une clé API, son activation n'est pas immédiate. Veuillez patienter.}}"></i></sup>
     </div>
     <div class="form-group">
       <label class="col-md-3 control-label">{{Clef API WeatherApi}}</label>
       <div class="col-lg-4">
         <input class="configKey form-control" data-l1key="apikeyWapi" />
       </div>
-      <a href="https://www.weatherapi.com/my/" target="_blank">Site Web WeatherAPI ICI</a> <sup><i class="fas fa-question-circle tooltips" title="{{La clé API est à récupérer dans votre compte sur le site WeatherApi}}"></i></sup>
+      <a href="https://www.weatherapi.com/my/" target="_blank">Site Web WeatherAPI <sup><i class="fas fa-external-link-alt tooltips"></i></sup></a> <sup><i class="fas fa-question-circle tooltips" title="{{La clé API est à récupérer dans votre compte sur le site WeatherApi}}"></i></sup>
     </div>
     <div class="form-group">
       <label class="col-md-3 control-label">{{APPLICATION_ID Météo France}}
-        <a target="blank" href="https://portail-api.meteofrance.fr/web/fr/faq">Plus d'info ICI</a>
-        <sup><i class="fas fa-question-circle tooltips" title="{{A copier sur le site MF et à coller ici}}"></i></sup>
+        <a href="https://portail-api.meteofrance.fr/web/fr/faq" target="_blank">Site Web MF <sup><i class="fas fa-external-link-alt tooltips"></i></sup></a>
       </label>
       <div class="col-md-7">
         <input type="text" class="configKey form-control" data-l1key="credentialApiMeteoFrance"/>
@@ -51,7 +50,10 @@ if (!isConnect('admin')) {
 			<div class="col-sm-1" style="width:2%">
 				<input type="checkbox" class="configKey tooltips" data-l1key="useVigilanceAPI">
 			</div>
-      <label class="col-md-6 control-label" style="text-align: left;line-height:normal">{{Le plugin peut récupérer les données de vigilances avec l'API <a href="https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesVigilance">DonneesPubliquesVigilance</a> de Météo France ou sur le <a href="http://storage.gra.cloud.ovh.net/v1/AUTH_555bdc85997f4552914346d4550c421e/gra-vigi6-archive_public/">site d'archives de Météo France</a>.}}
+      <label class="col-md-6 control-label" style="text-align: left;line-height:normal">{{Vous devez souscrire à l'API <a href="https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesVigilance" target="_blank">Donnees Publiques Vigilance <sup><i class="fas fa-external-link-alt tooltips"></i></sup></a> de Météo France.}}
+<!--
+      <label class="col-md-6 control-label" style="text-align: left;line-height:normal">{{Le plugin peut récupérer les données de vigilances avec l'API <a href="https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesVigilance" target="_blank">DonneesPubliquesVigilance</a> de Météo France ou sur le <a href="http://storage.gra.cloud.ovh.net/v1/AUTH_555bdc85997f4552914346d4550c421e/gra-vigi6-archive_public/" target="_blank">site d'archives de Météo France</a>.}}
+-->
       </label>
     </div>
 <!--
@@ -61,10 +63,9 @@ if (!isConnect('admin')) {
 			<div class="col-sm-1" style="width:2%">
 				<input type="checkbox" class="configKey tooltips" data-l1key="useForestAPI">
 			</div>
-      <label class="col-md-6 control-label" style="text-align: left;line-height:normal">{{Vous devez vous abonnez à l'API <a href="https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesMeteoForets">DonneesPubliquesMeteoForets</a> de Météo France.</a>.}}
+      <label class="col-md-6 control-label" style="text-align: left;line-height:normal">{{Vous devez souscrire à l'API <a href="https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesMeteoForets" target="_blank">Donnees Publiques Meteo Forets <sup><i class="fas fa-external-link-alt tooltips"></i></sup></a> de Météo France.}}
       </label>
 		</div>
-<!--
     <div class="form-group">
       <label class="col-md-3 control-label">{{Commentaires}}
       </label>
@@ -72,7 +73,6 @@ if (!isConnect('admin')) {
         <input type="text" class="configKey form-control" data-l1key="comment"/>
       </div>
     </div>
--->
   </fieldset>
 </form>
 
