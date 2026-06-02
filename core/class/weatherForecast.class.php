@@ -1228,7 +1228,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           $wfCmd->setLogicalId($id);
           $wfCmd->setEqLogic_id($this->getId());
           $wfCmd->setType('info');
-          $wfCmd->setSubType('string');
+          $wfCmd->setSubType('numeric');
           // $wfCmd->setTemplate('dashboard', __CLASS__ .'::VigilanceWF');
           // $wfCmd->setTemplate('mobile', __CLASS__ .'::VigilanceWF');
           $wfCmd->setOrder($ord);
@@ -1368,11 +1368,20 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     $refresh->save();
   
     // correction subType de condition_id_xx des commandes existantes TODO a supprimer
-    for($i = 0;$i < 7; $i++) {
+    for($i = 0; $i < 7; $i++) {
       $id = "condition_id_$i";
       $wfCmd = $this->getCmd(null, $id);
       if(is_object($wfCmd) && $wfCmd->getSubType() != 'string') {
         $wfCmd->setSubType('string');
+        $wfCmd->save();
+      }
+    }
+    // correction subType de Rainrainxx des commandes existantes TODO a supprimer
+    for($i = 1; $i < 10; $i++) {
+      $id = "Rainrain{$i}";
+      $wfCmd = $this->getCmd(null, $id);
+      if(is_object($wfCmd) && $wfCmd->getSubType() != 'numeric') {
+        $wfCmd->setSubType('numeric');
         $wfCmd->save();
       }
     }
@@ -3188,7 +3197,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     return $changed;
   }
 
-    public static function callMeteoWS($_url, $_xml = false, $_token = true, $debugFile='') {
+  public static function callMeteoWS($_url, $_xml = false, $_token = true, $debugFile='') {
     if($_token) $token = '&token=__Wj7dVSTjV9YGu1guveLyDq0g7S7TfTjaHBTPTpO0kj8__';
     else $token = '';
     log::add(__CLASS__, 'debug', "  Get: $_url$token");
