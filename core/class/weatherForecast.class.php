@@ -3232,23 +3232,23 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     return json_decode($return, true);
   }
 
-  public function getRainMF() { // cron5 called
+  public function getRainMF(): bool{ // cron5 called
     $changed = false;
     $request = $this->getConfiguration('requestForRainForecast',0);
     if($request == 0) {
       for($i=1;$i<10;$i++) {
-        $this->checkAndUpdateCmd("Rainrain$i", 0);
-        $this->checkAndUpdateCmd("Raindesc$i", "Prévisions de pluie désactivées");
+        $changed = $this->checkAndUpdateCmd("Rainrain$i", 0) || $changed;
+        $changed = $this->checkAndUpdateCmd("Raindesc$i", "Prévisions de pluie désactivées") || $changed;
       }
-      $this->checkAndUpdateCmd('Rainheure', date('Hi'));
-      return;
+      $changed = $this->checkAndUpdateCmd('Rainheure', date('Hi')) || $changed;
+      return $changed;
     }
     $lat = $this->getConfiguration('lat'); $lon = $this->getConfiguration('lon');
     $ville = $this->getConfiguration('ville');
-    log::add(__CLASS__, 'debug', __FUNCTION__ ." $ville $lat/$lon");
+    log::add(__CLASS__, 'debug', __FUNCTION__ ." $ville $lat/$lon EquipID:{$this->getId()}");
     if($lat == '' || $lon == '') {
       log::add(__CLASS__, 'debug', "  Invalid latitude/longitude: $lat/$lon");
-      return;
+      return false;
     }
     $t0 = -microtime(true);
     $cumul = 0; $next = -1; $type = ''; $dt = time();
@@ -3261,8 +3261,8 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $changed = $this->checkAndUpdateCmd('1hRainForecastJson', $contents) || $changed;
       $i = 1; 
       foreach ($return['properties']['forecast'] as $id => $rain) {
-        $this->checkAndUpdateCmd('Rainrain' . $i, $rain['rain_intensity']);
-        $this->checkAndUpdateCmd('Raindesc' . $i, $rain['rain_intensity_description']);
+        $changed = $this->checkAndUpdateCmd("Rainrain$i", $rain['rain_intensity']) || $changed;
+        $changed = $this->checkAndUpdateCmd("Raindesc$i", $rain['rain_intensity_description']) || $changed;
         if(($rain['rain_intensity'] > 1) && ($next == -1)) {
           if($i <= 6) $next = ($i - 1) * 5; // steps 5 minutes
           else $next = 30 + ($i - 7) * 10; // after 30 min, steps are 10 minutes
@@ -3275,14 +3275,14 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     }
     else {
       log::add(__CLASS__, 'warning', __FUNCTION__ ." Unable to get rain data for equipment {$this->getName()} ($lat , $lon).");
-      $this->checkAndUpdateCmd('1hRainForecastJson', "[]");
+      $changed = $this->checkAndUpdateCmd('1hRainForecastJson', "[]") || $changed;
     }
-    $this->checkAndUpdateCmd('Rainheure',  date('Hi', $dt));
-    $this->checkAndUpdateCmd('Raincumul', $cumul);
-    $this->checkAndUpdateCmd('Rainnext', $next);
-    $this->checkAndUpdateCmd('Raintype', $type);
-    log::add(__CLASS__, 'debug', "  ".__FUNCTION__ ." Updated in: " .round($t0+microtime(true),1) ."s");
-    return($changed);
+    $changed = $this->checkAndUpdateCmd('Rainheure',  date('Hi', $dt)) || $changed;
+    $changed = $this->checkAndUpdateCmd('Raincumul', $cumul) || $changed;
+    $changed = $this->checkAndUpdateCmd('Rainnext', $next) || $changed;
+    $changed = $this->checkAndUpdateCmd('Raintype', $type) || $changed;
+    log::add(__CLASS__, 'debug', "  ".__FUNCTION__ ." Updated in: " .round($t0+microtime(true),1) ."s Changed=" .(($changed) ? "TRUE":"false"));
+    return $changed;
   }
 
 }
