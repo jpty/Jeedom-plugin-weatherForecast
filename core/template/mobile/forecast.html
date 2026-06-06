@@ -1,12 +1,40 @@
-<div style="display: inline-block;font-size:12px;line-height:normal;margin-right:4px;vertical-align:top" class="cmd noRefresh" data-type="info" data-subtype="string" data-cmd_id="#conditionid#">
-  <center>
-    <div>#day#</div>
-  <div title="#condition#">
-    <span style="display:#displayIcon#"><i class="#icone#" style="font-size: 1.5em;line-height:normal;"></i></span>
-    <span style="display:#displayImage#;background: url('plugins/weatherForecast/core/template/images/#icone#.png') no-repeat center; background-size:100%;width:30px;height:30px;"></span>
+<div class="cmd noRefresh"
+     data-type="info"
+     data-subtype="string"
+     data-cmd_id="#conditionid#"
+     style="flex:0 0 auto;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:flex-start;
+            padding:3px 4px;
+            font-size:11px;
+            line-height:1.2;
+            min-width:50px;">
+
+  <!-- Jour -->
+  <div style="font-weight:bold;">#day#</div>
+
+  <!-- Icône -->
+  <div title="#condition#"
+       style="display:flex;align-items:center;justify-content:center;height:32px;">
+
+    <span style="display:#displayIcon#;">
+      <i class="#icone#" style="font-size:1.4em;line-height:1"></i>
+    </span>
+
+    <span style="display:#displayImage#;background:url('#icone#') no-repeat center;background-size:contain;width:40px;height:40px;">
+    </span>
+
   </div>
-    <div title="Temp. min / max">#low_temperature#° / #high_temperature#°</div>
+
+  <!-- Temp -->
+  <div>#low_temperature#°/#high_temperature#°C</div>
+
+  <!-- Infos secondaires -->
+  <div style="display:flex;flex-direction:column;align-items:center;font-size:0.85em;gap:2px;opacity:0.85;">
     <div title="Indice UV">#uvMax#</div>
     <div title="Pluie">#rain#</div>
-  </center>
+  </div>
+
 </div>

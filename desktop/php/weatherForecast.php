@@ -212,7 +212,10 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
                             $files[] = array('name' => 'Template custom Images', 'fileName' => $file);
                           elseif(substr($file,0,26) == 'custom.weatherForecastIMG.')
                             $files[] = array('name' => substr($file,26,-5).' (custom Images)', 'fileName' => $file);
-                          // else $files[] = array('name' => 'Out', 'fileName' => $file);
+                          elseif(substr($file, 0, 15) == 'weatherForecast' && $file != 'weatherForecast.html')
+                            $files[] = array('name' => 'Template du plugin : ' .substr($file,16,-5), 'fileName' => $file);
+
+                          // else $files[] = array('name' => 'Out ' .$file, 'fileName' => $file);
                         }
                       }
                       closedir($dh);

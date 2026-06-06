@@ -1,39 +1,64 @@
-<div class="eqLogic eqLogic-widget" data-eqType="#eqType#" data-translate-category="#translate_category#" data-category="#category#" data-tags="#tags#" style="border:#border#;border-radius:#border-radius#;background-color: #background-color#;color: #color#;#style#" data-eqLogic_id="#id#" data-eqLogic_uid="#uid#" data-version="#version#">
-	<span class="statusCmd" style="position : absolute;left : 5px; width : 30px;z-index: 1030;"></span>
-	<span class="cmd refresh pull-right cursor" data-cmd_id="#refresh_id#" style="margin-top: 2px;margin-right: 2px;">
-		<i class="fas fa-sync"></i>
-	</span>
-	<span class="cmd cmd-widget" data-cmd_id="#refresh_id#" style="display:none;"></span>
-	<center>
-		<span class="widget-name">
-			<span style="#hideEqLogicName#">#name_display# <span class="object_name">#object_name#</span></span><br/>
-		</span>
-	</center>
-  <div class="verticalAlign">
-    <table border=0 style="border-spacing: 2px; width: 100%;">
-      <tr style="background-color:transparent !important;color:var(--link-color);">
-        <td style="text-align:center;font-size:12px!important;line-height:normal;" title="Collecte Jeedom: #collectDate#">
-          <center>
-            <div style="display:#displayIcon#"><i class="#icone#" style="font-size: 4em;"></i></div>
-            <div style="display:#displayImage#;background: url('plugins/weatherForecast/core/template/images/#icone#.png') no-repeat center;background-size:100% 100%;width:100px;height:100px;"></div>
-            <div class="state">#condition# </div>
-            <div class="state">#temperature# °C / #humidity# %</div>
-            <div class="state">#windspeed# km/h</div>
-          </center>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div>
-            <center>#forecast#</center>
-          </div>
-        </td>
-      </tr>
-    </table>
+<div class="eqLogic eqLogic-widget"
+     data-eqType="#eqType#"
+     data-translate-category="#translate_category#"
+     data-category="#category#"
+     data-tags="#tags#"
+     style="border:#border#;border-radius:#border-radius#;background-color:#background-color#;color:#color#;#style#"
+     data-eqLogic_id="#id#"
+     data-eqLogic_uid="#uid#"
+     data-version="#version#">
+  <!-- WI font -->
+  <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.css" />
+  <!-- Status -->
+  <span class="statusCmd" style="position:absolute;left:5px;width:30px;z-index:1030;"></span>
+  <!-- Refresh -->
+  <span class="cmd refresh cursor"
+        data-cmd_id="#refresh_id#"
+        style="position:absolute;top:5px;right:5px;">
+    <i class="fas fa-sync"></i>
+  </span>
+  <span class="cmd cmd-widget" data-cmd_id="#refresh_id#" style="display:none;"></span>
+  <!-- Header -->
+  <div style="text-align:center;padding-top:5px;">
+    <div class="widget-name" style="#hideEqLogicName#">
+      #name_display# <span class="object_name">#object_name#</span>
+    </div>
   </div>
-	<script>
-		$('.eqLogic[data-eqLogic_uid=#uid#] .cmd').on('click', function() {
-			jeedom.cmd.execute({id: $(this).data('cmd_id')});
-		});
-	</script>
+  <!-- Content -->
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;margin:4px 0;">
+    <!-- Icon -->
+    <div style="display:#displayIcon#;height:52px;margin-top:2px;">
+      <i class="#icone#" style="font-size:46px;line-height:1"></i>
+    </div>
+    <!-- Image -->
+    <div style="display:#displayImage#;
+            background:url('#icone#') no-repeat center;
+            background-size:contain;
+            width:80px;
+            height:80px;
+            margin:0;">
+    </div>
+    <!-- Infos -->
+    <div class="state">#condition#</div>
+    <div class="state">#temperature# °C / #humidity# %</div>
+    <div class="state">#windspeed# km/h</div>
+
+  </div>
+
+  <!-- Forecast scroll horizontal -->
+  <div style="overflow-x:auto;padding:5px;">
+    <div style="display:flex;gap:5px;min-width:max-content;">
+      #forecast#
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const cmd = document.querySelector('.eqLogic[data-eqLogic_uid="#uid#"] .cmd');
+      if (!cmd) return;
+      cmd.addEventListener('click', function() {
+        jeedom.cmd.execute({id: this.getAttribute('data-cmd_id')});
+      });
+    })();
+  </script>
 </div>

@@ -238,7 +238,7 @@
     <div>displayError: {{Affichage des erreurs JS et Copyright. 0/1 Défaut: 1}}</div>
     <div>displayHumidity: {{Affichage du pourcentage d'humidité. 0/1 Défaut: 1}}</div>
     <div>displayPressure: {{Affichage de la pression atmosphèrique. 0/1 Défaut: 1}}</div>
-    <div>displayRain: {{Affichage de la quantité de pluie dans l'heure. 0/1 Défaut: 1}}</div>
+    <div>displayRain: {{Affichage de la quantité de pluie. 0/1 Défaut: 1}}</div>
     <div>displaySaintOfTheDay: {{Affichage du saint du jour. 0/1 Défaut: 1 }}</div>
     <div>displaySeconds: {{Affichage des secondes sur l'horloge. 0/1 Défaut: 1}}</div>
     <div>displayWeather: {{Affichage de la météo. 0/1 Défaut: 1}}</div>
@@ -289,7 +289,7 @@ timeZones#id#.forEach(timeZone => {
       else {
         let lastHours = last#id#.substring(0,2);
         let lastMinutes = last#id#.substring(3,5);
-        let nowTime = now.toLocaleTimeString('fr-FR', {timeZone:timezone#id#});
+        let nowTime = now.toLocaleTimeString(undefined, {timeZone:timezone#id#});
         let nowHours = nowTime.substring(0,2);
         let nowMinutes = nowTime.substring(3,5);
         let nowSeconds = nowTime.substring(6,8);
@@ -372,13 +372,16 @@ timeZones#id#.forEach(timeZone => {
         let cd = new Date();
         try {
           if('#displayWeather#' != '0' &&  _options.display_value != '') {
-            let json = _options.display_value.replaceAll('&quot;','"');
-            json = json.replaceAll('&#34;','"');
+            let json = _options.display_value.replaceAll('&quot;','"').replaceAll('&#34;','"');
             let obj = JSON.parse(json);
             if(obj != null && typeof(obj.weather) != 'undefined') {
               if(typeof obj.timezone != 'undefined') timezone#id# = obj.timezone;
-              let icon = "url('plugins/weatherForecast/core/template/images/" +obj.weather.icon +".png')"
-              cmd.querySelector('.wIcon#uid#').style.setProperty('background-image', icon)
+              let icon;
+              if(obj.datasource == 'meteofrance')
+               icon = "url('plugins/weatherForecast/data/icones/" +obj.weather.icon +".svg')";
+              else
+                icon = "url('plugins/weatherForecast/core/template/images/" +obj.weather.icon +".png')";
+              cmd.querySelector('.wIcon#uid#').style.setProperty('background-image', icon);
               cmd.querySelector('.condition').innerHTML = obj.weather.desc;
                   
               cmd.querySelector('.Tvalue').innerHTML = Intl.NumberFormat(undefined,{minimumFractionDigits: 1,maximumFractionDigits: 1,style:"unit",unit:"celsius",unitDisplay:"narrow"}).format(obj.T.value);

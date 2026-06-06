@@ -57,9 +57,6 @@
           <div style="display:#displayIcon#"><i class="#icone#" style="font-size: 4em;"></i></div>
           <div style="display:#displayImage#;background: url('#icone#') no-repeat center; background-size: 100% 100%; width: #wImg#; height: #hImg#;"></div>
         </td>
-        <!--
-        <td style="font-size:12px!important;line-height:normal;max-width:120px;overflow:hidden;text-overflow: ellipsis;white-space: nowrap;">
-        -->
         <td style="font-size:12px!important;line-height:normal;">
           #condition#
           <br/>
@@ -79,8 +76,12 @@
         </td>
       </tr>
       <tr style="background-color:transparent !important;">
-        <td colspan="3" style="padding-top:2px;text-align:center">
-          #forecast#
+        <td colspan="3" style="padding-top:3px;max-width:0">
+          <div style="overflow-x:auto; width:100%; padding-bottom:6px; box-sizing:border-box;">
+            <div style="display:flex;gap:3px;justify-content:center;width:max-content;min-width:100%;">
+              #forecast#
+            </div>
+          </div>
         </td>
       </tr>
     </table>
@@ -113,30 +114,35 @@
   </div>
   #divGraphInfo#
   <script>
-    $('.eqLogic[data-eqLogic_uid=#uid#] .cmd').on('click', function() {
-      jeedom.cmd.execute({id: $(this).data('cmd_id')});
-    });
+    (function() {
+      const cmd = document.querySelector('.eqLogic[data-eqLogic_uid="#uid#"] .cmd');
+      if (!cmd) return;
+      cmd.addEventListener('click', function() {
+        jeedom.cmd.execute({id: this.getAttribute('data-cmd_id')});
+      });
+    })();
+
     (function() {
       const widget = document.querySelector('.WF-rain-widget[data-uid="#uid#"]');
       if (!widget) return;
-        const errorMessage = widget.querySelector('.errorMessage');
+      const errorMessage = widget.querySelector('.errorMessage');
       try {
         widget.classList.remove('WF-variant-img', 'WF-variant-svg');
-        if('#useIconFiles#' != '1') { widget.classList.add('WF-variant-svg'); }
-        else { widget.classList.add('WF-variant-img'); }
-            if ('#'+'widgetWidth#' != '#widgetWidth#') widget.style.width = '#widgetWidth#';
-            let jsonData;
+        widget.classList.add('#useIconFiles#' != '1' ? 'WF-variant-svg' : 'WF-variant-img');
+        if ('#'+'widgetWidth#' != '#widgetWidth#') widget.style.width = '#widgetWidth#';
         const rainData = '#1hRainForecast#';
-        console.log('Template ' +rainData);
+        // console.log('Template ' + rainData);
+        let jsonData;
         try {
           const json = rainData.replaceAll('&quot;', '"').replaceAll('&#34;', '"');
           if (!json.length) return;
           jsonData = JSON.parse(json);
         } catch (e) {
-          errorMessage.innerHTML = 'Invalid JSON for rain data ' +e.message;
+          errorMessage.innerHTML = 'Invalid JSON for rain data ' + e.message;
           return;
         }
-        if(jsonData != null && typeof(jsonData.forecast) != "undefined") {
+
+        if (jsonData != null && typeof(jsonData.forecast) != "undefined") {
           loadWFRain(() => {
             WFRain.render(widget, jsonData.forecast, {
               useIconFiles: '#useIconFiles#' === '1',
@@ -146,13 +152,11 @@
             });
           });
         }
-      }
-      catch(err) {
+      } catch(err) {
         errorMessage.innerHTML = err.message;
-        console.log("Erreur JS " +err.message);
-        return;
+        console.log("Erreur JS " + err.message);
       }
-
-    })();
+  })();
+    
 </script>
 </div>

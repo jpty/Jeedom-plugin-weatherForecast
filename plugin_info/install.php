@@ -19,13 +19,26 @@ require_once __DIR__ . '/../../../core/php/core.inc.php';
 
 // Fonction exécutée automatiquement après l'installation du plugin
 function weatherForecast_install() {
+  $pluginName = 'weatherForecast';
+  log::add($pluginName, 'info', "Installing $pluginName plugin dependencies in progress...");
+  $plugin = plugin::byId($pluginName);
+  $plugin->dependancy_install();
+  log::add($pluginName, 'info', "Installation  $pluginName's plugin dependencies complete.");
+  // TODO activer l'extension intl dans le php.ini utilisé
 }
 
 // Fonction exécutée automatiquement après la mise à jour du plugin
 function weatherForecast_update() {
+  $pluginName = 'weatherForecast';
+  log::add($pluginName, 'info', "Installing $pluginName plugin dependencies in progress...");
+  $plugin = plugin::byId($pluginName);
+  $plugin->dependancy_install();
+
+  log::add($pluginName, 'info', "Updating $pluginName's plugin equipments ...");
   foreach (eqLogic::byType('weatherForecast') as $eqLogic) {
     $eqLogic->save();
   }
+  log::add($pluginName, 'info', "Plugin update complete.");
 }
 
 // Fonction exécutée automatiquement après la suppression du plugin
