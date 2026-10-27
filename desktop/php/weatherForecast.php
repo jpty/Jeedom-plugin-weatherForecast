@@ -81,6 +81,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
 			<li role="presentation"><a href="#vigilancetab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Vigilances}}</a></li>
 			<li role="presentation"><a href="#raintab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Pluies 1h}}</a></li>
 			<li role="presentation"><a href="#jsontab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Json cmds}}</a></li>
+			<li role="presentation"><a href="#misctab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Cmds diverses}}</a></li>
 		</ul>
 		<div class="tab-content">
       <!-- Onglet de configuration de l'équipement -->
@@ -239,6 +240,12 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
 </label>
                 </div>
               </div>
+              <div class="form-group">
+                <label class="col-sm-4 control-label" style="line-height: normal">{{Seuil de signalement des variations de température}} </label>
+                <div class="col-sm-4">
+                  <input class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="tempVariationThreshold" type="text" placeholder="{{Défaut 4°C/h}}">
+                </div>
+              </div>
 
               <legend><i class="fas fa-exclamation-triangle"></i> {{Météo France. (Uniquement pour la France)}}</legend>
               <div class="form-group">
@@ -354,7 +361,7 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
               <legend><i class="fas fa-info"></i> {{Fonctionnement}}</legend>
               <div class="form-group">
                 <label class="col-sm-3 control-label">{{Refresh minute}}
-                  <sup><i class="fas fa-question-circle" tooltip="{{Les équipements sont rafraichis à cette minute.<br>Chaque demi-heure pour la source OpenWeather<br>Chaque quart d'heure pour Weather API}}"></i></sup>
+                  <sup><i class="fas fa-question-circle" tooltip="{{Les équipements sont rafraichis à cette minute.<br>Chaque demi-heure pour les sources OpenWeather et Météo France<br>Chaque quart d'heure pour Weather API}}"></i></sup>
                 </label>
                 <div class="col-sm-4">
                   <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="refreshMinute" readonly/>
@@ -481,8 +488,28 @@ $apikeyWapi = trim(config::byKey('apikeyWapi', 'weatherForecast', ''));
           </table>
         </div>
       </div><!-- /.tabpanel #jsontab-->
-		
-		
+
+      <!-- Onglet des commandes diverses de l'équipement -->
+			<div role="tabpanel" class="tab-pane" id="misctab">
+				<br>
+        <div class="table-responsive">
+          <table id="misc_cmd" class="table table-bordered table-condensed">
+            <thead>
+              <tr>
+                <th class="hidden-xs" style="min-width:50px;width:70px;">ID</th>
+                <th style="min-width:100px;width:200px;">{{LogicalId}}</th>
+                <th style="min-width:120px;width:250px;">{{Nom}}</th>
+                <th>{{Paramètres}}</th>
+                <th>{{Etat}}</th>
+                <th style="min-width:80px;">{{Actions}}</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /.tabpanel #misctab-->
+
     </div><!-- /.tab-content -->
   </div><!-- /.eqLogic -->
 </div><!-- /.row row-overflow -->
