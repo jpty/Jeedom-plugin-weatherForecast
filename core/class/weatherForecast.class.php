@@ -1907,7 +1907,21 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     $replace['#humidity#'] = is_object($humidity) ? $humidity->execCmd() : '';
 
     $rain = $this->getCmd(null, 'rain');
-    $replace['#rain#'] = is_object($rain) ? $rain->execCmd() : '0';
+    $rainTxt = '';
+    if(is_object($rain)) {
+      $rainValue = $rain->execCmd();
+      $rainTxt = '<span class="rain" style="color:#5688FF"><i title="Pluie" class="wi wi-raindrop"></i> ' .$rainValue.'mm</span>';
+    }
+    $replace['#rain#'] = $rainTxt;
+
+    $snow = $this->getCmd(null, 'snow');
+    $snowTxt = '';
+    if(is_object($snow)) {
+      $snowValue = $snow->execCmd();
+      if($snowValue > 0)
+        $snowTxt = '&nbsp; <span class="snow" style="color:#5688FF"><i title="Neige" class="wi wi-snowflake-cold"></i> ' .$snowValue.'cm</span>';
+    }
+    $replace['#snow#'] = $snowTxt;
 
     $uvCmd = $this->getCmd(null, 'uv_Hcur');
     $uv_Hcur = is_object($uvCmd) ? $uvCmd->execCmd() : -1;
