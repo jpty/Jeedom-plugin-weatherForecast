@@ -5,10 +5,12 @@
   <link rel="stylesheet" type="text/css" href="plugins/weatherForecast/desktop/weather-icons/css/weather-icons.css" />
   <div class="dateText"></div>
   <div class="weatherIcon" style="margin-top: -5px;margin-bottom: -5px"></div>
-  <div title="Température Min / Max" class="Tvalue"></div>
+  <div title="Température Min / Max">
+    <span style="color:#1B9BD3" class="TvalueMin"></span> <span style="color:#ED1C24" class="TvalueMax"></span>
+  </div>
   <div title="Indice UV" class="UVindex"></div>
   <div title="% Humidité" class="humidity"></div>
-  <div title="Précipitations 24h" class="precipitation"></div>
+  <div title="Précipitations 24h" style="color:#5688FF" class="precipitation"></div>
   <div title="Message" class="errorMessage"></div>
   <template>
     <div>color: rgb(20,20,20) ({{Couleur de fond}})</div>
@@ -63,8 +65,13 @@
           }
           cmd.find('.dateText').empty().append(dateTime);
 
-          let temp = Math.round(obj.T.min) + '°/' +Math.round(obj.T.max) +'°C';
-          if('#displayTemperature#' != '0') cmd.find('.Tvalue').empty().append(temp);
+          let tempMin = Math.round(obj.T.min) +'°';
+          let tempMax = Math.round(obj.T.max) +'°C';
+          let temp = tempMin + '/' +tempMax;
+          if('#displayTemperature#' != '0') {
+            cmd.find('.TvalueMin').empty().append(tempMin);
+            cmd.find('.TvalueMax').empty().append(tempMax);
+          }
           else weatherIconTitle += '<br/>Température: ' +temp;
 
           let uv = (obj.uv)? obj.uv : '-'; 

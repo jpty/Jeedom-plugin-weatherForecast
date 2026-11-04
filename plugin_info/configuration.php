@@ -70,7 +70,7 @@ if (!isConnect('admin')) {
       <label class="col-md-3 control-label">{{Commentaires}}
       </label>
       <div class="col-md-7">
-        <input type="text" class="configKey form-control" data-l1key="comment"/>
+        <textarea class="configKey form-control autogrow" data-l1key="comment"></textarea>
       </div>
     </div>
   </fieldset>

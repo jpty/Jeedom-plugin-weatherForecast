@@ -49,18 +49,22 @@ function addCmdToTable(_cmd) {
   }
   tr += '</td>';
   tr += '</tr>';
-  if (init(_cmd.configuration.type) == 'vigilance') {
+  const cmdCfgType = init(_cmd.configuration.type);
+  if (cmdCfgType == 'vigilance') {
     $('#vigilance_cmd tbody').append(tr);
     var tr = $('#vigilance_cmd tbody tr:last');
-  } else if (init(_cmd.configuration.type) == 'days') {
+  } else if (cmdCfgType == 'days') {
     $('#days_cmd tbody').append(tr);
     var tr = $('#days_cmd tbody tr:last');
-  } else if (init(_cmd.configuration.type) == 'rain') {
+  } else if (cmdCfgType == 'rain') {
     $('#rain_cmd tbody').append(tr);
     var tr = $('#rain_cmd tbody tr:last');
-  } else if (init(_cmd.configuration.type) == 'json') {
+  } else if (cmdCfgType == 'json') {
     $('#json_cmd tbody').append(tr);
     var tr = $('#json_cmd tbody tr:last');
+  } else if (cmdCfgType == 'misc' || cmdCfgType == 'MF') {
+    $('#misc_cmd tbody').append(tr);
+    var tr = $('#misc_cmd tbody tr:last');
   } else {
     $('#table_cmd tbody').append(tr);
     var tr = $('#table_cmd tbody tr:last');
