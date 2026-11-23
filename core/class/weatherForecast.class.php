@@ -3127,15 +3127,19 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           log::add(__CLASS__, 'warning', "  Unable to open file $fileResu for writing.");
           return 1;
         }
-      } // Code 403: API Subscription validation failed.
-        //      401: Your subscription has expired. Please resubscribe.
+      }
       else {
-        log::add(__CLASS__, 'info', "    API: $DPvers Code $http_code. Result: [$resu].");
+        if($http_code == 401) // Your subscription has expired. Please resubscribe.
+          log::add(__CLASS__, 'warning', "    " .__FUNCTION__  ." Your subscription to the API: $DPvers has expired. Please resubscribe. Code $http_code. Result: [$resu].");
+        elseif($http_code == 403) // API Subscription validation failed.
+          log::add(__CLASS__, 'warning', "    " .__FUNCTION__  ." API: $DPvers Subscription validation failed. Code $http_code. Result: [$resu].");
+        else
+          log::add(__CLASS__, 'warning', "    " .__FUNCTION__  ." API: $DPvers Code $http_code. Result: [$resu].");
         return 2;
       }
     }
     else {
-      log::add(__CLASS__, 'warning', "  Unable to fetch $url. Http_code: $http_code Curl_error: $curl_error");
+      log::add(__CLASS__, 'warning', "  " .__FUNCTION__  ." Unable to fetch $url. Http_code: $http_code Curl_error: $curl_error");
       return 1;
     }
     return 0; // OK
@@ -3197,7 +3201,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     }
     $date_nd = (int)date('nd');
       // Meteo des forets disponible de 31 mai à 30 septembre uniquement
-    if( $useForestAPI == 1 && $date_nd >= 531 && $date_nd < 1001) {
+    if($useForestAPI == 1 && $date_nd >= 531 && $date_nd < 1001) {
       $dateMaj = -1;
       $DPvers = 'DPMeteoForets/v1';
       $file = "/carte/departement/encours?format=json&echeance=J1J2";
@@ -3215,9 +3219,11 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
 
   public function updateVigilancesCmdsMF() {
     $changed = false;
-    $numDept = $this->getConfiguration('numDeptFr');
+    $numDept = trim($this->getConfiguration('numDeptFr'));
+    $useVigilanceAPI = config::byKey('useVigilanceAPI', __CLASS__, 0);
+    $useForestAPI = config::byKey('useForestAPI', __CLASS__, 0);
     if($numDept == '') {
-      // log::add(__CLASS__, 'debug', __FUNCTION__ ." ID:" .$this->getId() ." Département non défini.");
+      log::add(__CLASS__, 'debug', __FUNCTION__ ." ID:" .$this->getId() ." Département non défini.");
       foreach(self::getVigTyp() as $i => $vig) {
         if($i > 100) break; // Valeurs de Météoalarm 
         $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0) || $changed;
@@ -3232,7 +3238,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     log::add(__CLASS__, 'debug', __FUNCTION__ .". Département: $numDept");
       // Meteo des forets disponible de 31 mai à 30 septembre uniquement
     $date_nd = (int)date('nd');
-    if((config::byKey('useForestAPI', __CLASS__, 0)) && $date_nd >= 531 && $date_nd < 1001) {
+    if($useForestAPI == 1 && $date_nd >= 531 && $date_nd < 1001) {
       $fileData = __DIR__ ."/../../data/DataMeteoForetsJ1J2.json";
       $contents = @file_get_contents($fileData);
       if($contents !== false) {
@@ -3285,66 +3291,68 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $changed = $this->checkAndUpdateCmd('Vigilance_color_forest', 0) || $changed;
     }
 
-    $fileData = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
-    $contents = @file_get_contents($fileData);
-    if($contents === false) {
-      log::add(__CLASS__, 'warning', "  Unable to load data from $fileData");
-      // TODO clean des cmds ou pas ?
-      return $changed;
-    }
-    $return = json_decode($contents,true);
-    if($return === false) {
-      @unlink($fileData);
-      // TODO clean des cmds ou pas ?
-      return $changed;
-    }
-    $phenomColor = array(); $txtPhases = array();
-    $vigTyp = self::getVigTyp();
-    $vigCol = self::getVigCol();
-        // init all values
-    foreach($vigTyp as $i => $vig) {
-      $phenomColor[$i] = 0; $txtPhases[$i] = '';
-    }
-    $maxColor = 0; $now = time();
-    $vigJson = array();
-    $listVigilance = array();
-    foreach($return['product']['periods'] as $period) {
-      $startPeriod = strtotime($period['begin_validity_time']);
-      $endPeriod = strtotime($period['end_validity_time']);
-       // TODO today only or not
-      if($now > $endPeriod || $now < $startPeriod ) continue; // just one day
-      $vigJson['begin_validity_time'] = $period['begin_validity_time'];
-      $vigJson['end_validity_time'] = $period['end_validity_time'];
-      $vigJson['domain_id_picture'] = "none";
+    if($useVigilanceAPI == 1) {
+      $fileData = __DIR__ ."/../../data/CDP_CARTE_EXTERNE.json";
+      $contents = @file_get_contents($fileData);
+      if($contents === false) {
+        log::add(__CLASS__, 'warning', "  Unable to load data from $fileData");
+        // TODO clean des cmds ou pas ?
+        return $changed;
+      }
+      $return = json_decode($contents,true);
+      if($return === false) {
+        @unlink($fileData);
+        // TODO clean des cmds ou pas ?
+        return $changed;
+      }
+      $phenomColor = array(); $txtPhases = array();
+      $vigTyp = self::getVigTyp();
+      $vigCol = self::getVigCol();
+          // init all values
+      foreach($vigTyp as $i => $vig) {
+        $phenomColor[$i] = 0; $txtPhases[$i] = '';
+      }
+      $maxColor = 0; $now = time();
+      $vigJson = array();
+      $listVigilance = array();
+      foreach($return['product']['periods'] as $period) {
+        $startPeriod = strtotime($period['begin_validity_time']);
+        $endPeriod = strtotime($period['end_validity_time']);
+         // TODO today only or not
+        if($now > $endPeriod || $now < $startPeriod ) continue; // just one day
+        $vigJson['begin_validity_time'] = $period['begin_validity_time'];
+        $vigJson['end_validity_time'] = $period['end_validity_time'];
+        $vigJson['domain_id_picture'] = "none";
 
-      $prevVigRecup = trim(config::byKey('prevVigilanceRecovery', __CLASS__));
-      if(date('Y-m-d') != substr($prevVigRecup,0,10)) $img = 'VIGNETTE_NATIONAL_J1_500X500.png';
-      else $img = 'VIGNETTE_NATIONAL_J_500X500.png';
-      $vigJson['image'] = "$img?ts=" .@filemtime(__DIR__ ."/../../data/$img");
+        $prevVigRecup = trim(config::byKey('prevVigilanceRecovery', __CLASS__));
+        if(date('Y-m-d') != substr($prevVigRecup,0,10)) $img = 'VIGNETTE_NATIONAL_J1_500X500.png';
+        else $img = 'VIGNETTE_NATIONAL_J_500X500.png';
+        $vigJson['image'] = "$img?ts=" .@filemtime(__DIR__ ."/../../data/$img");
 
-      // log::add(__CLASS__, 'debug', "  Validity period start: " .date("d-m-Y H:i", $startPeriod) ." end: " .date("d-m-Y H:i", $endPeriod));
-      foreach($period['timelaps']['domain_ids'] as $domain_id) {
-        $dept = $domain_id['domain_id'];
-        if($dept == $numDept || $dept == $numDept .'10') { // concat 10 si departement bord de mer
-          log::add(__CLASS__, 'debug', "  Domain: $dept JSON: " .json_encode($domain_id));
-          if(strlen($dept) == 2 ) $txt = 'dept';
-          else $txt = 'littoral';
-          $vigJson[$txt] = $domain_id;
-          foreach($domain_id['phenomenon_items'] as $phenomenonItem) {
-            $phenId = $phenomenonItem['phenomenon_id'];
-            $color = $phenomenonItem['phenomenon_max_color_id'];
-            if($color > $maxColor) $maxColor = $color;
-            $phenomColor[$phenId] = $color;
-            if($color > 1) {
-              $listVigilance[] = $vigTyp[$phenId]['txt'] .' : ' .$vigCol[$color]['desc'];
-              foreach($phenomenonItem['timelaps_items'] as $timelapsItem) {
-                $colorTs = $timelapsItem['color_id'];
-                if($colorTs != 0) {
-                  $begin = strtotime($timelapsItem['begin_time']);
-                  $end = strtotime($timelapsItem['end_time']);
-                  if($now < $end) {
-                    $txtPhases[$phenId] .= '. ' .$vigCol[$colorTs]['desc'] .":  " .date('H:i', $begin) ." - " .date('H:i', $end);
-                    log::add(__CLASS__, 'debug', "  PhenomId: $phenId Color: $color start:" .date("d-m-Y H:i:s", $begin)." End:" .date("d-m-Y H:i:s", $end) ." MaxColor: $maxColor"); 
+        // log::add(__CLASS__, 'debug', "  Validity period start: " .date("d-m-Y H:i", $startPeriod) ." end: " .date("d-m-Y H:i", $endPeriod));
+        foreach($period['timelaps']['domain_ids'] as $domain_id) {
+          $dept = $domain_id['domain_id'];
+          if($dept == $numDept || $dept == $numDept .'10') { // concat 10 si departement bord de mer
+            log::add(__CLASS__, 'debug', "  Domain: $dept JSON: " .json_encode($domain_id));
+            if(strlen($dept) == 2 ) $txt = 'dept';
+            else $txt = 'littoral';
+            $vigJson[$txt] = $domain_id;
+            foreach($domain_id['phenomenon_items'] as $phenomenonItem) {
+              $phenId = $phenomenonItem['phenomenon_id'];
+              $color = $phenomenonItem['phenomenon_max_color_id'];
+              if($color > $maxColor) $maxColor = $color;
+              $phenomColor[$phenId] = $color;
+              if($color > 1) {
+                $listVigilance[] = $vigTyp[$phenId]['txt'] .' : ' .$vigCol[$color]['desc'];
+                foreach($phenomenonItem['timelaps_items'] as $timelapsItem) {
+                  $colorTs = $timelapsItem['color_id'];
+                  if($colorTs != 0) {
+                    $begin = strtotime($timelapsItem['begin_time']);
+                    $end = strtotime($timelapsItem['end_time']);
+                    if($now < $end) {
+                      $txtPhases[$phenId] .= '. ' .$vigCol[$colorTs]['desc'] .":  " .date('H:i', $begin) ." - " .date('H:i', $end);
+                      log::add(__CLASS__, 'debug', "  PhenomId: $phenId Color: $color start:" .date("d-m-Y H:i:s", $begin)." End:" .date("d-m-Y H:i:s", $end) ." MaxColor: $maxColor"); 
+                    }
                   }
                 }
               }
@@ -3352,50 +3360,60 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
           }
         }
       }
-    }
-    if(!count($vigJson)) message::add(__CLASS__, "Infos de vigilance pour département: $numDept non trouvées");
-    $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', $maxColor) || $changed;
-    $changed = $this->checkAndUpdateCmd('Vigilancelist', implode(', ', $listVigilance)) || $changed;
-    /*
-      // save departement file
-    $fileDept = __DIR__ ."/../template/images/dept_fr_$numDept-grey.svg";
-    $contents = @file_get_contents($fileDept);
-    if($contents !== false) {
-      $val = str_replace('#888888',$vigCol[$maxColor]['color'], $contents);
-      $fileNewDept = __DIR__ ."/../../data/dept_fr_$numDept.svg";
-      $res = file_put_contents($fileNewDept, $val);
-      if($res === false) log::add(__CLASS__,'debug',"Unable to save file: $fileNewDept");
-      else $vigJson['domain_id_picture'] = "dept_fr_$numDept.svg?ts=".time();
-    }
-    else log::add(__CLASS__, 'debug', "  File $fileDept not found");
-    */
-    // Recup Vigilance foret pour ajout dans Json vigilances
-    $cmd = $this->getCmd(null, "Vigilance_color_forest");
-    if(is_object($cmd))  {
-      $col = (int)$cmd->execCmd();
-      if($col > 0)
-      { $phenomenon_item = array('phenomenon_id' => "10",
-          'phenomenon_max_color_id' => $col, 'timelaps_items' => [] );
-        $vigJson[$txt]["phenomenon_items"][] = $phenomenon_item;
+      if(!count($vigJson)) log::add(__CLASS__, 'debug', "Infos de vigilance pour département: $numDept non trouvées");
+      $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', $maxColor) || $changed;
+      $changed = $this->checkAndUpdateCmd('Vigilancelist', implode(', ', $listVigilance)) || $changed;
+      /*
+        // save departement file
+      $fileDept = __DIR__ ."/../template/images/dept_fr_$numDept-grey.svg";
+      $contents = @file_get_contents($fileDept);
+      if($contents !== false) {
+        $val = str_replace('#888888',$vigCol[$maxColor]['color'], $contents);
+        $fileNewDept = __DIR__ ."/../../data/dept_fr_$numDept.svg";
+        $res = file_put_contents($fileNewDept, $val);
+        if($res === false) log::add(__CLASS__,'debug',"Unable to save file: $fileNewDept");
+        else $vigJson['domain_id_picture'] = "dept_fr_$numDept.svg?ts=".time();
+      }
+      else log::add(__CLASS__, 'debug', "  File $fileDept not found");
+      */
+      // Recup Vigilance foret pour ajout dans Json vigilances
+      $cmd = $this->getCmd(null, "Vigilance_color_forest");
+      if(is_object($cmd))  {
+        $col = (int)$cmd->execCmd();
+        if($col > 0)
+        { $phenomenon_item = array('phenomenon_id' => "10",
+            'phenomenon_max_color_id' => $col, 'timelaps_items' => [] );
+          $vigJson[$txt]["phenomenon_items"][] = $phenomenon_item;
+        }
+      }
+        // Save Json command
+      if(count($vigJson)) {
+        $contents = str_replace('"','&#34;',json_encode($vigJson,JSON_UNESCAPED_UNICODE));
+        $changed = $this->checkAndUpdateCmd("VigilanceJson", $contents) || $changed;
+        $len = strlen($contents);
+        if($len > 4000) log::add(__CLASS__, 'warning', "Cmd VigilanceJson Lg:". $len);
+        /*
+        $file = __DIR__ ."/../../data/" .__FUNCTION__ ."-$numDept.json";
+        $hdle = fopen($file, "wb");
+        if($hdle !== FALSE) { fwrite($hdle, $contents); fclose($hdle); }
+         */
+      }
+        // Other commands
+      foreach($vigTyp as $i => $vig) {
+        $changed = $this->checkAndUpdateCmd("Vigilancephases$i",
+          $vigCol[$phenomColor[$i]]['desc'] .$txtPhases[$i]) || $changed;
+        $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i", $phenomColor[$i]) || $changed;
       }
     }
-      // Save Json command
-    if(count($vigJson)) {
-      $contents = str_replace('"','&#34;',json_encode($vigJson,JSON_UNESCAPED_UNICODE));
-      $changed = $this->checkAndUpdateCmd("VigilanceJson", $contents) || $changed;
-      $len = strlen($contents);
-      if($len > 4000) log::add(__CLASS__, 'warning', "Cmd VigilanceJson Lg:". $len);
-      /*
-      $file = __DIR__ ."/../../data/" .__FUNCTION__ ."-$numDept.json";
-      $hdle = fopen($file, "wb");
-      if($hdle !== FALSE) { fwrite($hdle, $contents); fclose($hdle); }
-       */
-    }
-      // Other commands
-    foreach($vigTyp as $i => $vig) {
-      $changed = $this->checkAndUpdateCmd("Vigilancephases$i",
-        $vigCol[$phenomColor[$i]]['desc'] .$txtPhases[$i]) || $changed;
-      $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i", $phenomColor[$i]) || $changed;
+    else {
+      foreach(self::getVigTyp() as $i => $vig) {
+        if($i > 100) break; // Valeurs de Météoalarm 
+        $changed = $this->checkAndUpdateCmd("Vigilancephenomenon_max_color_id$i",0) || $changed;
+        $changed = $this->checkAndUpdateCmd("Vigilancephases$i",'') || $changed;
+      }
+      $changed = $this->checkAndUpdateCmd('Vigilancecolor_max', 0) || $changed;
+      $changed = $this->checkAndUpdateCmd('Vigilancelist', '') || $changed;
+      $changed = $this->checkAndUpdateCmd("VigilanceJson", '[]') || $changed;
     }
     return $changed;
   }
