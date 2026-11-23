@@ -19,7 +19,7 @@
       if (!script) {
         script = document.createElement('script');
         script.id = 'wf-rain-js';
-        script.src = 'plugins/weatherForecast/core/template/js/wf-rain.js';
+        script.src = 'plugins/weatherForecast/core/template/js/wf-rain.js?v=1';
         script.defer = true;
 
         script.onload = () => {
@@ -208,7 +208,7 @@
         widget.classList.remove('WF-variant-img', 'WF-variant-svg');
         widget.classList.add('#useIconFiles#' != '1' ? 'WF-variant-svg' : 'WF-variant-img');
         if ('#'+'widgetWidth#' != '#widgetWidth#') widget.style.width = '#widgetWidth#';
-        const rainData = '#1hRainForecast#';
+        const rainData = "#1hRainForecast#"; // " obligatoire le json peut contenir des '
         // console.log('Template ' + rainData);
         let jsonData;
         try {
@@ -238,3 +238,4 @@
     
 </script>
 </div>
+
