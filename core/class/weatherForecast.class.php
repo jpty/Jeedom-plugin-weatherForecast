@@ -1902,6 +1902,8 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
     $temperature = $this->getCmd(null, 'temperature');
     $replace['#temperature#'] = is_object($temperature) ? $temperature->execCmd() : '';
     $replace['#tempid#'] = is_object($temperature) ? $temperature->getId() : '';
+	  $feels_like = $this->getCmd(null, 'feels_like');
+    $replace['#feels_like#'] = is_object($feels_like) ? '(' .$feels_like->execCmd() .'°C)' : '';
 
     $humidity = $this->getCmd(null, 'humidity');
     $replace['#humidity#'] = is_object($humidity) ? $humidity->execCmd() : '';
