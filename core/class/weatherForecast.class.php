@@ -621,6 +621,19 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       $wfCmd->setDisplay('generic_type', 'WEATHER_TEMPERATURE');
     }
     $wfCmd->save();
+		$wfCmd = $this->getCmd(null, 'feels_like');
+    if(!is_object($wfCmd)) {
+      $wfCmd = new weatherForecastCmd();
+      $wfCmd->setIsVisible(0);
+      $wfCmd->setName(__('Température ressentie', __FILE__));
+      $wfCmd->setLogicalId('feels_like');
+      $wfCmd->setEqLogic_id($this->getId());
+      $wfCmd->setUnite('°C');
+      $wfCmd->setType('info');
+      $wfCmd->setSubType('numeric');
+      $wfCmd->setDisplay('generic_type', 'WEATHER_TEMPERATURE');
+    }
+    $wfCmd->save();
 
     $wfCmd = $this->getCmd(null, 'humidity');
     if(!is_object($wfCmd)) {
@@ -2150,7 +2163,8 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
       }
       $changed = $this->checkAndUpdateCmd($cmdTemp, $weatherTemp, date('Y-m-d H:i:s',$weather['dt'])) || $changed;
     }
-    $changed = $this->checkAndUpdateCmd('humidity', $weather['main']['humidity']) || $changed;
+    $changed = $this->checkAndUpdateCmd('feels_like', round($weather['main']['feels_like'], 1)) || $changed;
+		$changed = $this->checkAndUpdateCmd('humidity', $weather['main']['humidity']) || $changed;
     $changed = $this->checkAndUpdateCmd('pressure', $weather['main']['pressure']) || $changed;
     $weatherDesc = ucfirst($weather['weather']['0']['description']);
     $changed = $this->checkAndUpdateCmd('condition', $weatherDesc) || $changed;
@@ -2435,6 +2449,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
         }
         $changed = $this->checkAndUpdateCmd($cmdTemp, $weatherTemp, date('Y-m-d H:i:s', $current['last_updated_epoch'])) || $changed;
       }
+      $changed = $this->checkAndUpdateCmd('feels_like', $current['feels_like_c']) || $changed;
       $changed = $this->checkAndUpdateCmd('humidity', $current['humidity']) || $changed;
       $changed = $this->checkAndUpdateCmd('pressure', $current['pressure_mb']) || $changed;
       $weatherDesc = $current['condition']['text'];
@@ -2804,7 +2819,7 @@ log::add(__CLASS__, 'info', "    Downloading meteoAlarm info for $country / $reg
               }
               $this->checkAndUpdateCmd($cmdTemp, $weatherTemp, date('Y-m-d H:i:s',$updated_on));
             }
-            // $this->checkAndUpdateCmd('MeteonowTemperatureRes', $value['T']['windchill']);
+            $this->checkAndUpdateCmd('feels_like', $value['T']['windchill']);
             $this->checkAndUpdateCmd('humidity', $value['humidity']);
             $this->checkAndUpdateCmd('pressure', $value['sea_level']);
             $windSpeed = round($value['wind']['speed']*3.6);
