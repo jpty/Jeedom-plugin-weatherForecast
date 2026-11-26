@@ -55,12 +55,15 @@
       <tr style="background-color:transparent !important;color:var(--link-color);">
         <td style="text-align:center;width:100px;height:100px;" title="Collecte Jeedom: #collectDate#<br>Condition ID: #condition_id#<br>Lieu: #cityName#, #country#<br>Position: #lat#,#lon#<br>#localDateTime#">
           <div style="display:#displayIcon#"><i class="#icone#" style="font-size: 4em;"></i></div>
-          <div style="display:#displayImage#;background: url('#icone#') no-repeat center; background-size: 100% 100%; width: #wImg#; height: #hImg#;"></div>
+          <div style="display:#displayImage#;background: url('#icone#') no-repeat center;background-size:100% 100%;width:#wImg#;height:#hImg#;#filterDropShadow#"></div>
         </td>
         <td style="font-size:12px!important;line-height:normal;">
           #condition#
           <br/>
-          <i title="Température" class="wi wi-thermometer"></i> #temperature# °C &nbsp; <i title="Humidité" class="wi wi-humidity"></i> #humidity# % &nbsp; <i title="Pression atmosphérique" class="wi wi-barometer"></i> #pressure# hPa
+          <span title="Température"><i class="wi wi-thermometer"></i> #temperature# °C</span>
+          <span title="Ressentie">#feels_like#</span> &nbsp;
+          <span title="Humidité"><i class="wi wi-humidity"></i> #humidity# %</span> &nbsp;
+          <span title="Pression atmosphérique"><i class="wi wi-barometer"></i> #pressure# hPa</span>
           <br>
           <i title="Nuages" class="wi wi-cloud"></i> #clouds# % &nbsp; #rain# #snow# #uv_Hcur#
           <br/>
